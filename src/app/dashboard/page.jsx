@@ -1,3 +1,4 @@
+"use client";
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
 import { DataTable } from "@/components/data-table"
@@ -7,10 +8,29 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 import data from "./data.json"
 
 export default function Page() {
+  const { user, isLoaded } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Only run after Clerk user is loaded
+    if (!isLoaded) return;
+    const role = user?.unsafeMetadata?.role;
+    if (role === "seeker") {
+      router.replace("/discover");
+      return;
+    }
+    // Only recruiters can stay
+  }, [isLoaded, user, router]);
+
+
+
   return (
     (<SidebarProvider
       style={

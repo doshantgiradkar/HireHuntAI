@@ -103,7 +103,7 @@ const Home = () => {
               <Button variant="outline" className="border-slate-300 dark:border-slate-600" onClick={() => router.push('/login')}>
                 Login
               </Button>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push('/signup')}>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push('/register')}>
                 Get Started
               </Button>
             </div>
@@ -131,7 +131,7 @@ const Home = () => {
                 <Button variant="outline" className="w-full" onClick={() => router.push('/login')}>
                   Login
                 </Button>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push('/signup')}>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push('/register')}>
                   Get Started
                 </Button>
               </div>
@@ -177,7 +177,7 @@ const Home = () => {
               <Button 
                 size="lg" 
                 className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
-                onClick={() => router.push('/signup')}
+                onClick={() => router.push('/register')}
               >
                 Start Free Trial
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
