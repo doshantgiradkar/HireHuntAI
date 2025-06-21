@@ -17,9 +17,11 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconCalendar,
+  IconUser,
 } from "@tabler/icons-react"
 
-import { NavDocuments } from "@/components/nav-documents"
+import { NavDocuments } from "@/components/nav-documents" // Fix import
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
@@ -33,7 +35,55 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-const data = {
+const candidateNavData = {
+  user: {
+    name: "Candidate User",
+    email: "candidate@example.com",
+    avatar: "/avatars/default.jpg",
+  },
+  navMain: [
+    {
+      title: "Dashboard",
+      url: "/candidate/dashboard",
+      icon: IconDashboard,
+    },
+    {
+      title: "Job Listings",
+      url: "/candidate/jobs",
+      icon: IconFolder,
+    },
+    {
+      title: "My Applications",
+      url: "/candidate/applications",
+      icon: IconFileDescription,
+    },
+    {
+      title: "Interview Schedule",
+      url: "/candidate/schedule",
+      icon: IconCalendar,
+    },
+    {
+      title: "Feedback & Results",
+      url: "/candidate/feedback",
+      icon: IconReport,
+    },
+  ],
+  navSecondary: [
+    {
+      title: "My Profile",
+      url: "/candidate/profile/current-user", // Update this with actual user ID when implementing auth
+      icon: IconUser,
+    },
+    {
+      title: "Settings",
+      url: "/candidate/settings",
+      icon: IconSettings,
+    },
+  ],
+  documents: [],
+}
+
+const recruiterNavData = {
   user: {
     name: "shadcn",
     email: "m@example.com",
@@ -42,28 +92,33 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/recruiter/dashboard",
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
-      url: "#",
+      title: "Post Job",
+      url: "/recruiter/post-job",
+      icon: IconFileDescription,
+    },
+    {
+      title: "Manage Jobs",
+      url: "/recruiter/manage-jobs",
       icon: IconListDetails,
     },
     {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
+      title: "Applicants",
+      url: "/recruiter/applicants",
       icon: IconUsers,
+    },
+    {
+      title: "Interviews",
+      url: "/recruiter/interviews",
+      icon: IconCalendar,
+    },
+    {
+      title: "Feedback",
+      url: "/recruiter/feedback",
+      icon: IconReport,
     },
   ],
   navClouds: [
@@ -116,8 +171,13 @@ const data = {
   ],
   navSecondary: [
     {
+      title: "Profile",
+      url: "/recruiter/profile",
+      icon: IconUser,
+    },
+    {
       title: "Settings",
-      url: "#",
+      url: "/recruiter/settings",
       icon: IconSettings,
     },
     {
@@ -151,30 +211,42 @@ const data = {
 }
 
 export function AppSidebar({
+  dashboardType = 'recruiter',
   ...props
 }) {
+  const navData = dashboardType === 'candidate' ? candidateNavData : recruiterNavData;
+
   return (
-    (<Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
-              <a href="#">
+              <a href={dashboardType === 'candidate' ? '/candidate/dashboard' : '/'}>
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <span className="text-base font-semibold">
+                  {dashboardType === 'candidate' ? 'Interview Portal' : 'Acme Inc.'}
+                </span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={navData.navMain} dashboardType={dashboardType} />
+        {dashboardType === 'recruiter' && navData.documents && navData.documents.length > 0 && (
+          <>
+            <NavDocuments items={navData.documents} />
+            <NavSecondary items={navData.navSecondary} className="mt-auto" />
+          </>
+        )}
+        {dashboardType === 'candidate' && (
+          <NavSecondary items={navData.navSecondary} className="mt-auto" />
+        )}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={navData.user} />
       </SidebarFooter>
-    </Sidebar>)
+    </Sidebar>
   );
 }
