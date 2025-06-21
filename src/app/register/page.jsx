@@ -1,5 +1,5 @@
 import { GalleryVerticalEnd } from "lucide-react";
-import { LoginForm } from "@/components/login-form";
+import { RegisterForm } from "@/components/register-form";
 export default function LoginPage() {
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
@@ -10,7 +10,7 @@ export default function LoginPage() {
           </div>
           Resumer Inc.
         </a>
-        <LoginForm />
+        <RegisterForm />
       </div>
     </div>
   );
