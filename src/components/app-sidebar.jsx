@@ -19,9 +19,9 @@ import {
   IconUsers,
   IconCalendar,
   IconUser,
-  
 } from "@tabler/icons-react"
 
+import { NavDocuments } from "@/components/nav-documents" // Fix import
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
@@ -92,28 +92,33 @@ const recruiterNavData = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/recruiter/dashboard",
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
-      url: "#",
+      title: "Post Job",
+      url: "/recruiter/post-job",
+      icon: IconFileDescription,
+    },
+    {
+      title: "Manage Jobs",
+      url: "/recruiter/manage-jobs",
       icon: IconListDetails,
     },
     {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
+      title: "Applicants",
+      url: "/recruiter/applicants",
       icon: IconUsers,
+    },
+    {
+      title: "Interviews",
+      url: "/recruiter/interviews",
+      icon: IconCalendar,
+    },
+    {
+      title: "Feedback",
+      url: "/recruiter/feedback",
+      icon: IconReport,
     },
   ],
   navClouds: [
@@ -166,8 +171,13 @@ const recruiterNavData = {
   ],
   navSecondary: [
     {
+      title: "Profile",
+      url: "/recruiter/profile",
+      icon: IconUser,
+    },
+    {
       title: "Settings",
-      url: "#",
+      url: "/recruiter/settings",
       icon: IconSettings,
     },
     {
@@ -224,7 +234,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navData.navMain} dashboardType={dashboardType} />
-        {dashboardType === 'recruiter' && (
+        {dashboardType === 'recruiter' && navData.documents && navData.documents.length > 0 && (
           <>
             <NavDocuments items={navData.documents} />
             <NavSecondary items={navData.navSecondary} className="mt-auto" />
