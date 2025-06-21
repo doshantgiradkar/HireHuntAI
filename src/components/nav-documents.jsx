@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import {
   SidebarGroup,
-  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuButton,
@@ -24,51 +24,53 @@ export function NavDocuments({
 }) {
   const { isMobile } = useSidebar()
 
-  if (!items || items.length === 0) return null;
-
   return (
     (<SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupContent className="flex flex-col gap-2">
-        <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.name}>
-              <SidebarMenuButton asChild>
-                <a href={item.url}>
-                  {item.icon && <item.icon />}
-                  <span>{item.name}</span>
-                </a>
-              </SidebarMenuButton>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuAction showOnHover className="data-[state=open]:bg-accent rounded-sm">
-                    <IconDots />
-                    <span className="sr-only">More</span>
-                  </SidebarMenuAction>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="w-24 rounded-lg"
-                  side={isMobile ? "bottom" : "right"}
-                  align={isMobile ? "end" : "start"}>
-                  <DropdownMenuItem>
-                    <IconFolder />
-                    <span>Open</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <IconShare3 />
-                    <span>Share</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem variant="destructive">
-                    <IconTrash />
-                    <span>Delete</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarGroupContent>
+      <SidebarGroupLabel>Documents</SidebarGroupLabel>
+      <SidebarMenu>
+        {items.map((item) => (
+          <SidebarMenuItem key={item.name}>
+            <SidebarMenuButton asChild>
+              <a href={item.url}>
+                <item.icon />
+                <span>{item.name}</span>
+              </a>
+            </SidebarMenuButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuAction showOnHover className="data-[state=open]:bg-accent rounded-sm">
+                  <IconDots />
+                  <span className="sr-only">More</span>
+                </SidebarMenuAction>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-24 rounded-lg"
+                side={isMobile ? "bottom" : "right"}
+                align={isMobile ? "end" : "start"}>
+                <DropdownMenuItem>
+                  <IconFolder />
+                  <span>Open</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <IconShare3 />
+                  <span>Share</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive">
+                  <IconTrash />
+                  <span>Delete</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        ))}
+        <SidebarMenuItem>
+          <SidebarMenuButton className="text-sidebar-foreground/70">
+            <IconDots className="text-sidebar-foreground/70" />
+            <span>More</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
     </SidebarGroup>)
   );
 }
-   
