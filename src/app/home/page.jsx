@@ -3,7 +3,7 @@
 import NewsletterSection from "@/components/newsletter-section";
 import StickyCTA from "@/components/sticky-cta";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, Badge, Brain, Clock, Menu, Shield, Sparkles, SparklesIcon, Zap, Play } from "lucide-react";
+import { ArrowRight, Brain, Clock, Menu, Shield, Sparkles, SparklesIcon, Zap, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import HowItWorksSection from "@/components/how-it-works";
 import TestimonialCarousel from "@/components/testimonial-carousel";
 import PricingSection from "@/components/pricing-section";
 import { usePathname } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 
 const Home = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

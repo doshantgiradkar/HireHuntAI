@@ -33,7 +33,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-const data = {
+const recruiterRoutes = {
   user: {
     name: "shadcn",
     email: "m@example.com",
@@ -42,119 +42,130 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/recruiter/dashboard",
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
-      url: "#",
+      title: "Job Listings",
+      url: "/recruiter/jobs",
       icon: IconListDetails,
     },
     {
+      title: "Candidates",
+      url: "/recruiter/candidates",
+      icon: IconUsers,
+    },
+    {
       title: "Analytics",
-      url: "#",
+      url: "/recruiter/analytics",
       icon: IconChartBar,
     },
     {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
+      title: "Interview Panel",
+      url: "/recruiter/panel",
       icon: IconUsers,
     },
   ],
-  navClouds: [
+  documents: [
     {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
+      name: "Resume Database",
+      url: "/recruiter/resumes",
+      icon: IconDatabase,
     },
     {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
+      name: "Reports",
+      url: "/recruiter/reports",
+      icon: IconReport,
     },
     {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
+      name: "Templates",
+      url: "/recruiter/templates",
+      icon: IconFileWord,
     },
   ],
   navSecondary: [
     {
       title: "Settings",
-      url: "#",
+      url: "/recruiter/settings",
       icon: IconSettings,
     },
     {
-      title: "Get Help",
-      url: "#",
+      title: "Help",
+      url: "/recruiter/help",
       icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
     },
   ],
 }
 
+const candidateRoutes = {
+  user: {
+    name: "shadcn",
+    email: "m@example.com",
+    avatar: "/avatars/shadcn.jpg",
+  },
+  navMain: [
+    {
+      title: "Dashboard",
+      url: "/candidate/dashboard",
+      icon: IconDashboard,
+    },
+    {
+      title: "My Applications",
+      url: "/candidate/applications",
+      icon: IconListDetails,
+    },
+    {
+      title: "Job Search",
+      url: "/candidate/jobs",
+      icon: IconSearch,
+    },
+    {
+      title: "Interviews",
+      url: "/candidate/interviews",
+      icon: IconCamera,
+    },
+  ],
+  documents: [
+    {
+      name: "My Resume",
+      url: "/candidate/resume",
+      icon: IconFileWord,
+    },
+    {
+      name: "Documents",
+      url: "/candidate/documents",
+      icon: IconDatabase,
+    },
+  ],
+  navSecondary: [
+    {
+      title: "Profile Settings",
+      url: "/candidate/settings",
+      icon: IconSettings,
+    },
+    {
+      title: "Help Center",
+      url: "/candidate/help",
+      icon: IconHelp,
+    },
+  ],
+}
+
+const user = {
+    name: "shadcn",
+    email: "m@example.com",
+    avatar: "/avatars/shadcn.jpg",
+}
+
 export function AppSidebar({
+  dashboardType = "candidate", // 'recruiter' or 'candidate'
   ...props
 }) {
+  const routes =
+    dashboardType === "recruiter" ? recruiterRoutes : candidateRoutes
+
   return (
-    (<Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="offcanvas" className="flex flex-col h-full" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -167,14 +178,15 @@ export function AppSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+      <SidebarContent className="flex-1 flex flex-col">
+        <NavMain items={routes.navMain} />
+        <NavDocuments items={routes.documents} />
+        <NavSecondary items={routes.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser />
+        <NavUser user={user} />
       </SidebarFooter>
-    </Sidebar>)
-  );
+    </Sidebar>
+  )
 }
+
