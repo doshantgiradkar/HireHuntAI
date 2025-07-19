@@ -7,7 +7,7 @@ import {
   IconNotification,
   IconUserCircle,
 } from "@tabler/icons-react"
-import { useUser, useClerk } from "@clerk/nextjs"
+import { useSession, signOut } from "next-auth/react"
 
 import {
   Avatar,
@@ -31,11 +31,11 @@ import {
 } from "@/components/ui/sidebar"
 
 export function NavUser() {
-  const { user, isSignedIn } = useUser()
+  const { data: session } = useSession()
+  const user = session?.user
   const { isMobile } = useSidebar()
-  const clerk = useClerk()
 
-  if (!isSignedIn || !user) return null
+  if (!user) return null
 
   return (
     <SidebarMenu>
@@ -97,7 +97,7 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => clerk.signOut()}>
+            <DropdownMenuItem onClick={() => signOut()}>
               <IconLogout />
               Log out
             </DropdownMenuItem>

@@ -151,12 +151,6 @@ const candidateRoutes = {
   ],
 }
 
-const user = {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-}
-
 export function AppSidebar({
   dashboardType = "candidate", // 'recruiter' or 'candidate'
   ...props
@@ -184,9 +178,10 @@ export function AppSidebar({
         <NavSecondary items={routes.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   )
 }
+    
 
