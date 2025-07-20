@@ -1,5 +1,7 @@
 import "./globals.css";
 import { ThemeProviderWrapper } from "@/components/theme-provider-wrapper";
+import { ClerkProvider } from "@clerk/nextjs";
+import { SessionProvider } from "next-auth/react";
 import { Geist, Geist_Mono } from "next/font/google";
 
 const geistSans = Geist({
@@ -19,16 +21,20 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-      <html lang="en" suppressHydrationWarning>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          <ThemeProviderWrapper>
-            <div className="flex min-h-screen flex-col">
-              <main className="flex-1">{children}</main>
-            </div>
-          </ThemeProviderWrapper>
-        </body>
-      </html>
+    <ClerkProvider>
+      <SessionProvider>
+        <html lang="en" suppressHydrationWarning>
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          >
+            <ThemeProviderWrapper>
+              <div className="flex min-h-screen flex-col">
+                <main className="flex-1">{children}</main>
+              </div>
+            </ThemeProviderWrapper>
+          </body>
+        </html>
+      </SessionProvider>
+    </ClerkProvider>
   );
 }
