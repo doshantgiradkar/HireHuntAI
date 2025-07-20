@@ -17,7 +17,8 @@ export async function POST(req) {
   }
 
   try {
-    const client = await clerkClient(); // ✅ get the actual client object
+    // ✅ get the actual client object
+    const client = await clerkClient(); 
     await client.users.updateUser(userId, {
       publicMetadata: { role },
     });
