@@ -2,7 +2,7 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-const isPublicRoute = createRouteMatcher(['/login', '/sign-in']);
+const isPublicRoute = createRouteMatcher(['/login', '/sign-in',"/"]);
 const isSelectRoleRoute = createRouteMatcher(['/select-role']);
 const isCandidateRoute = createRouteMatcher(['/candidate', '/candidate/(.*)']);
 const isRecruiterRoute = createRouteMatcher(['/recruiter', '/recruiter/(.*)']);
