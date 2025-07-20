@@ -1,7 +1,6 @@
 import "./globals.css";
 import { ThemeProviderWrapper } from "@/components/theme-provider-wrapper";
 import { ClerkProvider } from "@clerk/nextjs";
-import { SessionProvider } from "next-auth/react";
 import { Geist, Geist_Mono } from "next/font/google";
 
 const geistSans = Geist({
@@ -22,7 +21,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
-      <SessionProvider>
+       
         <html lang="en" suppressHydrationWarning>
           <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased`}
@@ -34,7 +33,7 @@ export default function RootLayout({ children }) {
             </ThemeProviderWrapper>
           </body>
         </html>
-      </SessionProvider>
+      
     </ClerkProvider>
   );
 }

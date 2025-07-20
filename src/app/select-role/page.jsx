@@ -18,6 +18,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import axios from "axios";
+import { useSession } from "@clerk/nextjs";
 
 // Utility function for conditional classes
 function cn(...classes) {
@@ -25,6 +26,7 @@ function cn(...classes) {
 }
 
 export default function SelectRolePage() {
+  const { session } = useSession();
   const [selectedRole, setSelectedRole] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -38,7 +40,7 @@ export default function SelectRolePage() {
     const res = await axios.post("/api/set-role", {
       role: selectedRole,
     });
-
+    await session.reload();
     // Axios only reaches here if the request was successful
     if (res.status === 200) {
       window.location.href = `/${selectedRole}/dashboard`;
