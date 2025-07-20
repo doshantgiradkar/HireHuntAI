@@ -340,13 +340,8 @@ const ApplicationCard = ({ application, onViewDetails, onWithdraw }) => {
   );
 };
 
-// Main Applications Dashboard Component
-const ApplicationsDashboard = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all');
 
-  // Only show jobs with status "applied"
-  const filteredApplications = useMemo(() => {
-    return applicationData.filter(app => {
+export default function Page() {
+  return <div>Hello</div>
+}
       
