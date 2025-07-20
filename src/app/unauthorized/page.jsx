@@ -2,7 +2,7 @@
 
 const UnauthorizedPage = () => {
   return (
-    <div>page</div>
+    <div>unauthorized user</div>
   )
 }
 

@@ -101,10 +101,10 @@ const Home = () => {
               <a href="#about" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors">
                 About
               </a>
-              <Button variant="outline" className="border-slate-300 dark:border-slate-600" onClick={() => router.push('/login')}>
+              <Button variant="outline" className="border-slate-300 dark:border-slate-600" onClick={() => router.push('/sign-in')}>
                 Login
               </Button>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push('/register')}>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push('/sign-in')}>
                 Get Started
               </Button>
             </div>
@@ -129,10 +129,10 @@ const Home = () => {
                 About
               </a>
               <div className="flex flex-col space-y-2 pt-4">
-                <Button variant="outline" className="w-full" onClick={() => router.push('/login')}>
+                <Button variant="outline" className="w-full" onClick={() => router.push('/sign-in')}>
                   Login
                 </Button>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push('/register')}>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push('/sign-in')}>
                   Get Started
                 </Button>
               </div>

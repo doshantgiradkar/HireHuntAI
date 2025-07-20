@@ -1,6 +1,6 @@
 import "./globals.css";
-import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProviderWrapper } from "@/components/theme-provider-wrapper";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 
 const geistSans = Geist({
@@ -21,17 +21,19 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          <ThemeProviderWrapper>
-            <div className="flex min-h-screen flex-col">
-              <main className="flex-1">{children}</main>
-            </div>
-          </ThemeProviderWrapper>
-        </body>
-      </html>
+       
+        <html lang="en" suppressHydrationWarning>
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          >
+            <ThemeProviderWrapper>
+              <div className="flex min-h-screen flex-col">
+                <main className="flex-1">{children}</main>
+              </div>
+            </ThemeProviderWrapper>
+          </body>
+        </html>
+      
     </ClerkProvider>
   );
 }
