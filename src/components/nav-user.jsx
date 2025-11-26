@@ -43,7 +43,7 @@ export function NavUser() {
                             size="lg"
                             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                         >
-                            <Avatar className="h-8 w-8 rounded-lg grayscale">
+                            <Avatar className="h-8 w-8 rounded-lg">
                                 <AvatarImage
                                     src={user.imageUrl}
                                     alt={
@@ -51,6 +51,7 @@ export function NavUser() {
                                         user.username ||
                                         user.emailAddresses[0]?.emailAddress
                                     }
+                                    className={"object-cover"}
                                 />
                                 <AvatarFallback className="rounded-lg">
                                     {user.fullName ? user.fullName[0] : "U"}
@@ -85,6 +86,7 @@ export function NavUser() {
                                             user.username ||
                                             user.emailAddresses[0]?.emailAddress
                                         }
+                                        className={"object-cover"}
                                     />
                                     <AvatarFallback className="rounded-lg">
                                         {user.fullName ? user.fullName[0] : "U"}
