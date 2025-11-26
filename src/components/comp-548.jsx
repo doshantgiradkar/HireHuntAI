@@ -1,14 +1,11 @@
 "use client"
 
 import { AlertCircleIcon, PaperclipIcon, UploadIcon, XIcon } from "lucide-react"
-
-import {
-  formatBytes,
-  useFileUpload,
-} from "@/hooks/use-file-upload"
+import { formatBytes, useFileUpload } from "@/hooks/use-file-upload"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
-// Create some dummy initial files
 const initialFiles = [
   {
     name: "document.pdf",
@@ -20,7 +17,7 @@ const initialFiles = [
 ]
 
 export default function Component() {
-  const maxSize = 10 * 1024 * 1024 // 10MB default
+  const maxSize = 10 * 1024 * 1024 // 10MB
 
   const [
     { files, isDragging, errors },
@@ -41,78 +38,92 @@ export default function Component() {
   const file = files[0]
 
   return (
-    (<div className="flex flex-col gap-2">
-      {/* Drop area */}
-      <div
-        role="button"
-        onClick={openFileDialog}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        data-dragging={isDragging || undefined}
-        className="border-input hover:bg-accent/50 data-[dragging=true]:bg-accent/50 has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed p-4 transition-colors has-disabled:pointer-events-none has-disabled:opacity-50 has-[input:focus]:ring-[3px]">
-        <input
-          {...getInputProps()}
-          className="sr-only"
-          aria-label="Upload file"
-          disabled={Boolean(file)} />
+    <Card className="w-full max-w-md mx-auto space-y-4">
+      <CardHeader>
+        <CardTitle>File Upload</CardTitle>
+        <CardDescription>
+          Drag & drop or click to upload a single file (max {formatBytes(maxSize)})
+        </CardDescription>
+      </CardHeader>
 
-        <div className="flex flex-col items-center justify-center text-center">
-          <div
-            className="bg-background mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border"
-            aria-hidden="true">
-            <UploadIcon className="size-4 opacity-60" />
+      {/* Drop area */}
+      <CardContent>
+        <div
+          role="button"
+          onClick={openFileDialog}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          data-dragging={isDragging || undefined}
+          className={`relative flex flex-col items-center justify-center rounded-lg border border-dashed p-6 min-h-[180px] w-full transition-all cursor-pointer 
+            hover:bg-accent/20 data-[dragging=true]:bg-accent/30`}
+        >
+          <input {...getInputProps()} className="sr-only" aria-label="Upload file" disabled={Boolean(file)} />
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border bg-background">
+              <UploadIcon className="h-6 w-6 opacity-60" />
+            </div>
+            <p className="text-sm font-medium">Upload file</p>
           </div>
-          <p className="mb-1.5 text-sm font-medium">Upload file</p>
-          <p className="text-muted-foreground text-xs">
-            Drag & drop or click to browse (max. {formatBytes(maxSize)})
-          </p>
+          {isDragging && (
+            <div className="absolute inset-0 rounded-lg border-2 border-accent border-dashed animate-pulse pointer-events-none"></div>
+          )}
         </div>
-      </div>
-      {errors.length > 0 && (
-        <div className="text-destructive flex items-center gap-1 text-xs" role="alert">
-          <AlertCircleIcon className="size-3 shrink-0" />
-          <span>{errors[0]}</span>
-        </div>
-      )}
-      {/* File list */}
-      {file && (
-        <div className="space-y-2">
-          <div
-            key={file.id}
-            className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2">
-            <div className="flex items-center gap-3 overflow-hidden">
-              <PaperclipIcon className="size-4 shrink-0 opacity-60" aria-hidden="true" />
-              <div className="min-w-0">
-                <p className="truncate text-[13px] font-medium">
-                  {file.file.name}
-                </p>
+
+        {/* Errors */}
+        {errors.length > 0 && (
+          <div className="mt-2 flex items-center gap-1 text-xs text-destructive" role="alert">
+            <AlertCircleIcon className="h-4 w-4" />
+            <span>{errors[0]}</span>
+          </div>
+        )}
+
+        {/* File preview */}
+        {file && (
+          <div className="mt-4 space-y-2 w-full">
+            <div className="flex items-center justify-between gap-2 rounded-lg border p-3 shadow-sm hover:shadow-md transition-shadow w-full">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <PaperclipIcon className="h-5 w-5 text-muted-foreground/60" />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{file.file.name}</p>
+                  <Badge className="mt-1">{formatBytes(file.file.size)}</Badge>
+                </div>
               </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-muted-foreground/80 hover:text-destructive hover:bg-transparent"
+                onClick={() => removeFile(file.id)}
+                aria-label="Remove file"
+              >
+                <XIcon className="h-4 w-4" />
+              </Button>
             </div>
 
-            <Button
-              size="icon"
-              variant="ghost"
-              className="text-muted-foreground/80 hover:text-foreground -me-2 size-8 hover:bg-transparent"
-              onClick={() => removeFile(files[0]?.id)}
-              aria-label="Remove file">
-              <XIcon className="size-4" aria-hidden="true" />
-            </Button>
+            {/* Image preview */}
+            {file.file.type.startsWith("image/") && (
+              <img
+                src={URL.createObjectURL(file.file)}
+                alt={file.file.name}
+                className="mt-2 w-full max-h-64 rounded-lg border object-cover"
+              />
+            )}
           </div>
-        </div>
-      )}
-      <p
-        aria-live="polite"
-        role="region"
-        className="text-muted-foreground mt-2 text-center text-xs">
-        Single file uploader w/ max size ∙{" "}
-        <a
-          href="https://github.com/origin-space/originui/tree/main/docs/use-file-upload.md"
-          className="hover:text-foreground underline">
-          API
-        </a>
-      </p>
-    </div>)
-  );
+        )}
+      </CardContent>
+
+      <CardContent>
+        <p className="text-center text-xs text-muted-foreground" aria-live="polite" role="region">
+          Single file uploader ∙{" "}
+          <a
+            href="https://github.com/origin-space/originui/tree/main/docs/use-file-upload.md"
+            className="underline hover:text-foreground"
+          >
+            API
+          </a>
+        </p>
+      </CardContent>
+    </Card>
+  )
 }
