@@ -107,11 +107,19 @@ export default function JobSearchPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header Section */}
+<<<<<<< HEAD
     <header className="border-b bg-card rounded-lg mx-4 my-4">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-2 mb-6">
             <Briefcase className="h-8 w-8" />
             <h1 className="text-2xl font-bold">JobFinder</h1>
+=======
+     <header className="border-b bg-card rounded-lg mx-4 my-4">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center gap-2 mb-6">
+            <Briefcase className="h-8 w-8" />
+            <h1 className="text-2xl font-bold">HireHunt AI</h1>
+>>>>>>> main
           </div>
 
           {/* Search Bar */}
@@ -147,6 +155,10 @@ export default function JobSearchPage() {
           </div>
         </div>
       </header>
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
@@ -316,4 +328,8 @@ export default function JobSearchPage() {
       </div>
     </div>
   );
+<<<<<<< HEAD
 }   
+=======
+}
+>>>>>>> main
