@@ -19,7 +19,7 @@ export async function POST(req) {
     }
 
     try {
-        const client = await clerkClient(); // ✅ get the actual client object
+        const client = await clerkClient();
         await client.users.updateUser(userId, {
             publicMetadata: { role },
         });
@@ -35,7 +35,7 @@ export async function POST(req) {
         }
         return NextResponse.json({ success: true });
     } catch (err) {
-        console.error("Failed to update metadata:", err); // ✅ log actual error
+        console.error("Failed to update metadata:", err);
         return NextResponse.json(
             { error: "Failed to update metadata" },
             { status: 500 }
