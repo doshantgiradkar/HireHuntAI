@@ -340,13 +340,8 @@ const ApplicationCard = ({ application, onViewDetails, onWithdraw }) => {
   );
 };
 
-<<<<<<< HEAD
-
-export default function Page() {
-=======
 // Main Applications Dashboard Component
 const ApplicationsDashboard = () => {
->>>>>>> main
   return <div>Hello</div>
 }
       
