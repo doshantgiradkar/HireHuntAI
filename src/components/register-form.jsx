@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { signIn } from 'next-auth/react';
 
 export function RegisterForm({ className, ...props }) {
     const [email, setEmail] = useState('');
@@ -66,13 +67,13 @@ export function RegisterForm({ className, ...props }) {
                             <Button type="submit" className="w-full">
                                 Sign Up
                             </Button>
-                            {error && <p className="text-red-500 text-sm">{error}</p>}
+                            {error && <p className="text-destructive text-sm">{error}</p>}
                             <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
                                 <span className="bg-card text-muted-foreground relative z-10 px-2">
                                     Or continue with
                                 </span>
                             </div>
-                            <div className="grid grid-cols-2 gap-10">
+                            <div className="grid grid-cols-2 gap-4">
                                 <Button
                                     variant="outline"
                                     type="button"
