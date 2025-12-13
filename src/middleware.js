@@ -1,5 +1,5 @@
 // middleware.ts
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { clerkClient, clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 const isPublicRoute = createRouteMatcher(['/login', '/sign-in', "/", "/api/(.*)"]);
@@ -48,57 +48,7 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next();
 });
 
+
 export const config = {
     matcher: ['/((?!_next|.\\..|favicon.ico).*)'],
 };
-
-// middleware.ts
-// import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-// import { NextResponse } from 'next/server';
-// 
-// const isPublicRoute = createRouteMatcher(['/login', '/sign-in', "/", "/api/(.*)"]);
-// const isSelectRoleRoute = createRouteMatcher(['/select-role', "/api/(.*)"]);
-// const isCandidateRoute = createRouteMatcher(['/candidate', '/candidate/(.*)']);
-// const isRecruiterRoute = createRouteMatcher(['/recruiter', '/recruiter/(.*)']);
-// 
-// export default clerkMiddleware(async (auth, req) => {
-//     const { userId, sessionClaims, redirectToSignIn } = await auth();
-//     const role = sessionClaims?.metadata?.role;
-// 
-//     console.log('sessionClaims.metadata:', sessionClaims?.metadata);
-//     // 1. Not signed in → send to sign-in
-//     if (!userId && !isPublicRoute(req)) {
-//         return redirectToSignIn();
-//     }
-// 
-//     // 2. Signed-in users
-//     if (userId) {
-// 
-//         // check if role is selected redirect to /select-role dashboard if not
-//         if (!role && !isSelectRoleRoute(req) && !isPublicRoute(req)) {
-//             return NextResponse.redirect(new URL('/select-role', req.url));
-//         }
-// 
-//         else if (isSelectRoleRoute(req)) {
-//             // check if role is selected if it is, redirect to particular dashboard
-//             if (role === 'candidate') {
-//                 return NextResponse.redirect(new URL('/candidate/dashboard', req.url))
-//             }
-//             if (role === 'recruiter') {
-//                 return NextResponse.redirect(new URL('/recruiter/dashboard', req.url))
-//             }
-//         }
-//         // verify if users wander off
-//         if (role === 'candidate' && isRecruiterRoute(req)) {
-//             return NextResponse.redirect(new URL('/candidate/dashboard', req.url))
-//         }
-//         if (role === 'recruiter' && isCandidateRoute(req)) {
-//             return NextResponse.redirect(new URL('/recruiter/dashboard', req.url))
-//         }
-//     }
-//     return NextResponse.next();
-// });
-// 
-// export const config = {
-//     matcher: ['/((?!_next|.*\\..*|favicon.ico).*)'],
-// };
