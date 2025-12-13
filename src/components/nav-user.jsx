@@ -1,132 +1,146 @@
 "use client";
 
 import {
-  IconCreditCard,
-  IconDotsVertical,
-  IconLogout,
-  IconNotification,
-  IconUserCircle,
+    IconCreditCard,
+    IconDotsVertical,
+    IconLogout,
+    IconNotification,
+    IconUserCircle,
 } from "@tabler/icons-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    useSidebar,
 } from "@/components/ui/sidebar";
-import { SignOutButton, UserButton, useSession } from "@clerk/nextjs";
-
+import { SignOutButton, UserProfile, useSession } from "@clerk/nextjs";
+import { Sheet, SheetTrigger, SheetHeader, SheetTitle, SheetContent, SheetDescription } from "./ui/sheet";
 export function NavUser() {
-  const { session } = useSession();
-  const user = session?.user;
-  const { isMobile } = useSidebar();
+    const { session } = useSession();
+    const user = session?.user;
+    const { isMobile } = useSidebar();
 
-  if (!user) return null;
+    if (!user) return null;
 
-  return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <Avatar className="h-8 w-8 rounded-lg grayscale">
-                <AvatarImage
-                  src={user.imageUrl}
-                  alt={
-                    user.fullName ||
-                    user.username ||
-                    user.emailAddresses[0]?.emailAddress
-                  }
-                />
-                <AvatarFallback className="rounded-lg">
-                  {user.fullName ? user.fullName[0] : "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">
-                  {user.fullName ||
-                    user.username ||
-                    user.emailAddresses[0]?.emailAddress}
-                </span>
-                <span className="text-muted-foreground truncate text-xs">
-                  {user.emailAddresses[0]?.emailAddress}
-                </span>
-              </div>
-              <IconDotsVertical className="ml-auto size-4" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage
-                    src={user.imageUrl}
-                    alt={
-                      user.fullName ||
-                      user.username ||
-                      user.emailAddresses[0]?.emailAddress
-                    }
-                  />
-                  <AvatarFallback className="rounded-lg">
-                    {user.fullName ? user.fullName[0] : "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    {user.fullName ||
-                      user.username ||
-                      user.emailAddresses[0]?.emailAddress}
-                  </span>
-                  <span className="text-muted-foreground truncate text-xs">
-                    {user.emailAddresses[0]?.emailAddress}
-                  </span>
-                </div>
-              </div>
-            </DropdownMenuLabel>
+    return (
+        <SidebarMenu>
+            <SidebarMenuItem>
 
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <IconUserCircle />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconCreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconNotification />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <SignOutButton>
-              <DropdownMenuItem>
-                <IconLogout />
-                Log out
-              </DropdownMenuItem>
-            </SignOutButton>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
-  );
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <SidebarMenuButton
+                            size="lg"
+                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                        >
+                            <Avatar className="h-8 w-8 rounded-lg">
+                                <AvatarImage
+                                    src={user.imageUrl}
+                                    alt={
+                                        user.fullName ||
+                                        user.username ||
+                                        user.emailAddresses[0]?.emailAddress
+                                    }
+                                    className={"object-cover"}
+                                />
+                                <AvatarFallback className="rounded-lg">
+                                    {user.fullName ? user.fullName[0] : "U"}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="grid flex-1 text-left text-sm leading-tight">
+                                <span className="truncate font-medium">
+                                    {user.fullName ||
+                                        user.username ||
+                                        user.emailAddresses[0]?.emailAddress}
+                                </span>
+                                <span className="text-muted-foreground truncate text-xs">
+                                    {user.emailAddresses[0]?.emailAddress}
+                                </span>
+                            </div>
+                            <IconDotsVertical className="ml-auto size-4" />
+                        </SidebarMenuButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                        side={isMobile ? "bottom" : "right"}
+                        align="end"
+                        sideOffset={4}
+                    >
+                        <DropdownMenuLabel className="p-0 font-normal">
+                            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                                <Avatar className="h-8 w-8 rounded-lg">
+                                    <AvatarImage
+                                        src={user.imageUrl}
+                                        alt={
+                                            user.fullName ||
+                                            user.username ||
+                                            user.emailAddresses[0]?.emailAddress
+                                        }
+                                        className={"object-cover"}
+                                    />
+                                    <AvatarFallback className="rounded-lg">
+                                        {user.fullName ? user.fullName[0] : "U"}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="grid flex-1 text-left text-sm leading-tight">
+                                    <span className="truncate font-medium">
+                                        {user.fullName ||
+                                            user.username ||
+                                            user.emailAddresses[0]?.emailAddress}
+                                    </span>
+                                    <span className="text-muted-foreground truncate text-xs">
+                                        {user.emailAddresses[0]?.emailAddress}
+                                    </span>
+                                </div>
+                            </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuGroup>
+                            <Sheet>
+                                <SheetTrigger asChild >
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                        <IconUserCircle />
+                                        Profile
+                                    </DropdownMenuItem>
+                                </SheetTrigger>
+                                <SheetContent className={"p-0 inset-0 !w-full !h-full translate-x-0 translate-y-0 rounded-none !max-h-full !max-w-full flex items-center justify-center"}>
+                                    <SheetHeader>
+                                        <SheetTitle></SheetTitle>
+                                        <SheetDescription>
+                                        </SheetDescription>
+                                    </SheetHeader>
+                                    <UserProfile routing="hash" />
+                                </SheetContent>
+                            </Sheet>
+                            <DropdownMenuItem>
+                                <IconCreditCard />
+                                Billing
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                                <IconNotification />
+                                Notifications
+                            </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <SignOutButton>
+                            <DropdownMenuItem>
+                                <IconLogout />
+                                Log out
+                            </DropdownMenuItem>
+                        </SignOutButton>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </SidebarMenuItem>
+        </SidebarMenu >
+    );
 }
