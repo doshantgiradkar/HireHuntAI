@@ -35,15 +35,11 @@ const resumeSchema = new mongoose.Schema({
     skills: { type: String },
 });
 
-const profileSchema = new mongoose.Schema({
-    resume: { resumeSchema },
-    date_of_birth: { type: Date },
-    mobile_no: { type: Number, match: /^\d{10}$/, }
-})
-
 const candidateSchema = new mongoose.Schema({
     user_id: { type: SchemaTypes.ObjectId },
-    profile: { profileSchema },
+    resume: { resumeSchema },
+    date_of_birth: { type: Date },
+    mobile_no: { type: Number, match: /^\d{10}$/ },
     ats_score: { type: Number },
     applied_jobs: [{ type: SchemaTypes.ObjectId }],
     total_experience_duration: { type: Number },
