@@ -1,16 +1,17 @@
 import mongoose from 'mongoose';
 
 const experienceSchema = new mongoose.Schema({
-    job_title: { type: String, required: true },
-    job_desc: { type: String, required: true }
+    jobTitle: { type: String, required: true },
+    jobDesc: { type: String, required: true }
 });
 
 const educationSchema = new mongoose.Schema({
-    edu_type: { type: String, enum: ['SSC', 'HSC', 'UG', 'PG', 'Diploma'], required: true },
-    institute_name: { type: String, required: true },
+    eduType: { type: String, enum: ['SSC', 'HSC', 'UG', 'PG', 'Diploma'], required: true },
+    instituteName: { type: String, required: true },
     course: { type: String, required: true },
     score: { type: Number, required: true },
-    year_of_comp: { type: Number, required: true }
+    isCGPA: { type: Boolean, required: true },
+    yearOfComp: { type: Number, required: true }
 });
 
 const socialSchema = new mongoose.Schema({
@@ -22,31 +23,28 @@ const certificateSchema = new mongoose.Schema({
     name: { type: String, required: true },
     provider: { type: String, required: true },
     url: { type: String },
-    year_of_comp: { type: Number }
+    yearOfComp: { type: Number }
 });
 
 const resumeSchema = new mongoose.Schema({
-    resume_url: { type: String, required: true },
+    resumeUrl: { type: String, required: true },
     socials: [socialSchema],
     education: [educationSchema],
     certifications: [certificateSchema],
     experience: [experienceSchema],
-    ats_score: { type: Number },
+    atsScore: { type: Number },
     skills: { type: String },
 });
 
-const profileSchema = new mongoose.Schema({
-    resume: { resumeSchema },
-    date_of_birth: { type: Date },
-    mobile_no: { type: Number, match: /^\d{10}$/, }
-})
-
 const candidateSchema = new mongoose.Schema({
-    user_id: { type: SchemaTypes.ObjectId },
-    profile: { profileSchema },
-    ats_score: { type: Number },
-    applied_jobs: [{ type: SchemaTypes.ObjectId }],
-    total_experience_duration: { type: Number },
+    userId: { type: SchemaTypes.ObjectId },
+    description: { type: string, required: true },
+    resume: { resumeSchema },
+    dateOfBirth: { type: Date },
+    mobileNo: { type: Number, match: /^\d{10}$/ },
+    atsScore: { type: Number },
+    appliedJobs: [{ type: SchemaTypes.ObjectId }],
+    totalExperienceDuration: { type: Number },
     skills: [{ type: String }]
 });
 
