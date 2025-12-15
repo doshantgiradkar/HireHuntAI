@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server"
-
 import { connect } from "@/lib/db"
 import recruiterModel from "@/models/recruiterModel"
 
-
+/* =========================
+   CREATE RECRUITER (POST)
+   ========================= */
 export async function POST(req) {
   try {
     await connect()
@@ -27,7 +28,7 @@ export async function POST(req) {
       admin,
     } = body
 
-    // Basic validation (matches required fields in schema)
+    // Basic validation
     if (
       !name ||
       !industry ||
@@ -85,6 +86,34 @@ export async function POST(req) {
 
     return NextResponse.json(
       { message: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
+
+/* =========================
+   GET ALL RECRUITERS (GET)
+   ========================= */
+export async function GET() {
+  try {
+    await connect()
+
+    const recruiters = await recruiterModel
+      .find()
+      .sort({ createdAt: -1 }) // latest first (optional)
+
+    return NextResponse.json(
+      {
+        recruiters,
+        count: recruiters.length,
+      },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error("GET_RECRUITERS_ERROR:", error)
+
+    return NextResponse.json(
+      { message: "Failed to fetch recruiters" },
       { status: 500 }
     )
   }
