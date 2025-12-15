@@ -85,8 +85,8 @@ const recruiterRoutes = {
   ],
   navSecondary: [
     {
-      title: "Settings",
-      url: "/recruiter/settings",
+      title: "Recruiter Profile",
+      url: "/recruiter/recruiter-profile",
       icon: IconSettings,
     },
     {
