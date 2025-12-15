@@ -38,7 +38,11 @@ const COMPANY_TYPES = [
 
 const INTERVIEW_PROCESS_TYPES = ["Live", "AI", "Hybrid"]
 
-export default function CompanyProfileForm({ initialData = null, mode = "create", onSubmit, onCancel }) {
+export default function CompanyProfileForm({  initialData = null,
+  mode = "create",
+  apiUrl = "https://aeffc9b6771c.ngrok-free.app",
+  onSuccess,
+  onCancel, }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [newRole, setNewRole] = useState("")
   
@@ -105,14 +109,39 @@ export default function CompanyProfileForm({ initialData = null, mode = "create"
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    try {
-      await onSubmit(formData)
-    } finally {
-      setIsSubmitting(false)
+  e.preventDefault()
+  setIsSubmitting(true)
+
+  try {
+    const res = await fetch(`${apiUrl}/api/recruiter`, {
+      method: mode === "create" ? "POST" : "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      console.error("API ERROR:", data)
+      alert(data.message || "Failed to save company profile")
+      return
     }
+
+    console.log("SUCCESS:", data)
+
+    if (onSuccess) {
+      onSuccess(data)
+    }
+  } catch (error) {
+    console.error("SUBMIT_ERROR:", error)
+    alert("Something went wrong. Please try again.")
+  } finally {
+    setIsSubmitting(false)
   }
+}
+
 
   const handleReset = () => {
     if (initialData) {
