@@ -1,120 +1,75 @@
-import { NextResponse } from "next/server"
-import { connect } from "@/lib/db"
-import recruiterModel from "@/models/recruiterModel"
+import { NextResponse } from "next/server";
+import { connect } from "@/lib/db";
 
-/* =========================
-   CREATE RECRUITER (POST)
-   ========================= */
+import { auth } from "@clerk/nextjs/server";
+import recruiterModel from "@/models/recruiterModel";
+import mongoose from "mongoose";
+
 export async function POST(req) {
   try {
-    await connect()
+    await connect();
 
-    const body = await req.json()
-
-    const {
-      logo,
-      name,
-      industry,
-      size,
-      status,
-      overview,
-      website,
-      headquarters,
-      founded,
-      companyType,
-      primaryRoles,
-      contactEmail,
-      contactPhone,
-      admin,
-    } = body
-
-    // Basic validation
-    if (
-      !name ||
-      !industry ||
-      !size ||
-      !overview ||
-      !website ||
-      !headquarters ||
-      !founded ||
-      !companyType ||
-      !contactEmail ||
-      !contactPhone ||
-      !admin?.name ||
-      !admin?.role ||
-      !admin?.email ||
-      !admin?.phone
-    ) {
-      return NextResponse.json(
-        { message: "Missing required fields" },
-        { status: 400 }
-      )
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const recruiter = await recruiterModel.create({
-      logo,
-      name,
-      industry,
-      size,
-      status,
-      overview,
-      website,
-      headquarters,
-      founded,
-      companyType,
-      primaryRoles,
-      contactEmail,
-      contactPhone,
+    const body = await req.json();
+
+    // Always trust server-side Clerk user id as owner
+    const payload = {
+      ...body,
+      clerkId: userId,
       admin: {
-        avatar: admin.avatar,
-        name: admin.name,
-        role: admin.role,
-        email: admin.email,
-        phone: admin.phone,
+        ...(body.admin || {}),
+        clerkId: userId,
       },
-    })
+    };
 
-    return NextResponse.json(
+    // Validate required fields server-side via Mongoose validators
+
+    const recruiter = await recruiterModel.findOneAndUpdate(
+      { clerkId: userId },    // filter by owner
+      { $set: payload },      // set provided fields
       {
-        message: "Recruiter profile created successfully",
-        recruiter,
-      },
-      { status: 201 }
-    )
-  } catch (error) {
-    console.error("CREATE_RECRUITER_ERROR:", error)
+        upsert: true, // create if missing
+        new: true,
+        runValidators: true,
+        setDefaultsOnInsert: true,
+      }
+    );
 
+    return NextResponse.json({ recruiter }, { status: 201 });
+  } catch (error) {
+    console.error("RECRUITER_POST_ERROR:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
-    )
+    );
   }
 }
 
-/* =========================
-   GET ALL RECRUITERS (GET)
-   ========================= */
 export async function GET() {
   try {
-    await connect()
+    await connect();
 
-    const recruiters = await recruiterModel
-      .find()
-      .sort({ createdAt: -1 }) // latest first (optional)
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
-    return NextResponse.json(
-      {
-        recruiters,
-        count: recruiters.length,
-      },
-      { status: 200 }
-    )
+    const recruiter = await recruiterModel.findOne({ clerkId: userId });
+
+    if (!recruiter) {
+      return NextResponse.json({ message: "Recruiter not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ recruiter }, { status: 200 });
   } catch (error) {
-    console.error("GET_RECRUITERS_ERROR:", error)
-
+    console.error("RECRUITER_GET_ERROR:", error);
     return NextResponse.json(
-      { message: "Failed to fetch recruiters" },
+      { message: "Failed to fetch recruiter" },
       { status: 500 }
-    )
+    );
   }
 }
