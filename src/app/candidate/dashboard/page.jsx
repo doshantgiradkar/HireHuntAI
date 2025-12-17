@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, MapPin, Briefcase, DollarSign, Clock, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+
+
 
 // Mock job data
 const mockJobs = [
@@ -103,6 +105,32 @@ export default function JobSearchPage() {
   const loadMoreJobs = () => {
     setVisibleJobs(prev => Math.min(prev + 4, filteredJobs.length));
   };
+
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+  async function fetchUsers() {
+    try {
+      const res = await fetch("/api/users");
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch users");
+      }
+      console.log(res)
+      const data = await res.json();
+      console.log("Fetched users:", data);
+
+      setUsers(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  fetchUsers();
+}, []);
 
   return (
     <div className="min-h-screen bg-background">
