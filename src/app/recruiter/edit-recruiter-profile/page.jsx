@@ -60,9 +60,11 @@ export default function Page() {
     return <div className="p-6 text-destructive">Failed to load recruiter profile.</div>;
   }
 
+  const apiUrl = process.env.BASE_URL ;
+
   return (
     <div className="p-6">
-      <CompanyProfileForm initialData={initialData} mode={mode} onSuccess={(res) => {
+      <CompanyProfileForm apiUrl={apiUrl} initialData={initialData} mode={mode} onSuccess={(res) => {
         // after success, refresh initialData and mode
         if (res?.recruiter) {
           setInitialData(res.recruiter);

@@ -48,7 +48,7 @@ const COMPANY_TYPES = [
 export default function CompanyProfileForm({
   initialData = null,
   mode = "create",
-  apiUrl = "https://140ea11aca52.ngrok-free.app",
+  apiUrl ,
   onSuccess,
   onCancel,
 }) {
