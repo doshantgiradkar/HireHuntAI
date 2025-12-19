@@ -9,15 +9,13 @@ export async function GET(req, { params }) {
   try {
     await connect()
 
-    const id = params.id
+   const { id } = await params
 
     let recruiter = null
-    // 1️⃣ If MongoDB ObjectId → fetch by _id
     if (mongoose.Types.ObjectId.isValid(id)) {
       recruiter = await recruiterModel.findById(id)
     }
 
-    // 2️⃣ Else → treat as Clerk ID
     if (!recruiter) {
       recruiter = await recruiterModel.findOne({ clerkId: id })
     }
@@ -45,7 +43,7 @@ export async function PUT(req, { params }) {
   try {
     await connect()
 
-    const id = params.id;
+    const { id } = await params
     const body = await req.json()
 
     // find existing recruiter by id or clerkId
@@ -63,13 +61,11 @@ export async function PUT(req, { params }) {
 
    
 
-    // Prevent changing ownership: clerkId in payload must match existing clerkId (if provided)
-    const payloadClerkId = body.clerkId || body?.admin?.clerkId || null
+    const payloadClerkId = body.clerkId || null
     if (payloadClerkId && payloadClerkId !== existing.clerkId) {
       return NextResponse.json({ message: "Cannot change recruiter owner (clerkId)" }, { status: 403 })
     }
 
-    // prepare update object (only allow known fields)
     const updates = {}
     const allowedFields = [
       'logo', 'name', 'industry', 'size', 'status', 'overview', 'website', 'headquarters', 'founded', 'companyType', 'primaryRoles', 'contactEmail', 'contactPhone'
@@ -78,7 +74,6 @@ export async function PUT(req, { params }) {
       if (body[f] !== undefined) updates[f] = body[f]
     })
 
-    // admin updates
     if (body.admin) {
       updates.admin = {
         avatar: body.admin.avatar ?? existing.admin.avatar,
@@ -86,7 +81,6 @@ export async function PUT(req, { params }) {
         role: body.admin.role ?? existing.admin.role,
         email: body.admin.email ?? existing.admin.email,
         phone: body.admin.phone ?? existing.admin.phone,
-        clerkId: existing.clerkId, // keep owner
       }
     }
 
@@ -100,5 +94,44 @@ export async function PUT(req, { params }) {
   } catch (error) {
     console.error("UPDATE_RECRUITER_ERROR:", error)
     return NextResponse.json({ message: "Failed to update recruiter" }, { status: 500 })
+  }
+}
+
+export async function DELETE(req, { params }) {
+  try {
+    await connect();
+
+    const { id } = await params;
+
+    let query = {};
+
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      query = { _id: id };
+    } else {
+      query = { clerkId: id };
+    }
+
+    const deletedRecruiter = await recruiterModel.findOneAndDelete(query);
+
+    if (!deletedRecruiter) {
+      return NextResponse.json(
+        { message: "Recruiter not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        message: "Recruiter deleted successfully",
+        recruiter: deletedRecruiter,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("DELETE_RECRUITER_ERROR:", error);
+    return NextResponse.json(
+      { message: "Failed to delete recruiter" },
+      { status: 500 }
+    );
   }
 }
