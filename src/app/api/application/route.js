@@ -46,7 +46,6 @@ export async function POST(req) {
       );
     }
 
-    // 📝 Create application (NO lookups)
     const application = await Application.create({
       jobId,
       recruiterId,
