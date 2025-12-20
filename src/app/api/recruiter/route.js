@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { connect } from "@/lib/db";
 
-import { auth } from "@clerk/nextjs/server";
 import recruiterModel from "@/models/recruiterModel";
-import mongoose from "mongoose";
+
 
 export async function POST(req) {
   try {

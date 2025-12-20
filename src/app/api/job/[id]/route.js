@@ -81,18 +81,14 @@ export async function PUT(req, { params }) {
 export async function DELETE(req, { params }) {
   try {
     await connect();
-
     const { id } = await params;
-
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { message: "Invalid job id" },
         { status: 400 }
       );
     }
-
     const deletedJob = await jobModel.findByIdAndDelete(id);
-
     if (!deletedJob) {
       return NextResponse.json(
         { message: "Job not found" },
