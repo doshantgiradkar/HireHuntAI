@@ -44,7 +44,13 @@ export async function POST(req) {
         }, { status: 500 });
     }
 
-    const result = uploadResume(resumePath);
+  let result;
+    try {
+      result = uploadResume(resumePath);
+    } catch (err) {
+      fs.rmSync(resumePath);
+      return NextResponse.json({ success: false, message: "Failed to Upload to Cloudinary" }, {status: 500});
+    }
 
     let parsed;
     try {
