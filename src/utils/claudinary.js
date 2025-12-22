@@ -5,14 +5,11 @@ import path from 'path';
 dotenv.config({ path: path.resolve(".env.local") })
 
 
-console.log(process.env.CLOUDINARY_CLOUD_NAME);
-
 // Configure cloudinary
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
-    secure: true
 });
 
 // Upload function
@@ -44,10 +41,8 @@ export const uploadResume = async (filePath) => {
                 },
                 (error, result) => {
                     if (error) {
-                        console.error('Cloudinary upload error:', error);
                         reject(error);
                     } else {
-                        console.log('Cloudinary upload success:', result?.secure_url);
                         resolve(result);
                     }
                 }
