@@ -1,6 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { PDFParse } from "pdf-parse";
 
+export const runtime = "nodejs";
+
 export const LoadResume = async (resume) => {
     const parser = new PDFParse({ url: resume });
     const res = parser.getText();
@@ -15,222 +17,144 @@ export class Resume {
     }
     async extractJson() {
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-        const prompt = `You are an information extraction engine.
+        const prompt = `
+      You are an information extraction engine.
 
-Your task is to extract structured data from a **raw resume text** and return **only one valid JSON document** that strictly matches the following MongoDB/Mongoose schema.
+      Extract structured data from a raw resume text, calculate an ATS score, and return ONLY one valid JSON document matching the schema below.
 
----
+      🎯 Target JSON Schema (STRICT)
+      {
+        "resume": {
+          "socials": [
+            { "name": "", "url": "" }
+          ],
+          "education": [
+            {
+              "eduType": "",
+              "instituteName": "",
+              "course": "",
+              "score": 0,
+              "isCGPA": false,
+              "yearOfComp": 0
+            }
+          ],
+          "certifications": [
+            {
+              "name": "",
+              "provider": "",
+              "url": "",
+              "yearOfComp": 0
+            }
+          ],
+          "experience": [
+            {
+              "jobTitle": "",
+              "jobDesc": ""
+            }
+          ],
+          "atsScore": 0,
+          "skills": [""]
+        },
+        "dateOfBirth": "",
+        "totalExperienceDuration": 0
+      }
 
-## \uD83C\uDFAF Target Output Schema
+      🔒 Mandatory Rules
 
-⚠️ **Do NOT add, remove, rename, or restructure any fields**
-\`\`\`json
-{
-"bio": "",
-"resume": {
-"resumeUrl": "",
-"socials": [
-{
-"name": "",
-"url": ""
-}
-],
-"education": [
-{
-"eduType": "",
-"instituteName": "",
-"course": "",
-"score": 0,
-"isCGPA": false,
-"yearOfComp": 0
-}
-],
-"certifications": [
-{
-"name": "",
-"provider": "",
-"url": "",
-"yearOfComp": 0
-}
-],
-"experience": [
-{
-"jobTitle": "",
-"jobDesc": ""
-}
-],
-"atsScore": 0
-},
-"dateOfBirth": "",
-"mobileNo": 0,
-"atsScore": 0,
-"appliedJobs": [],
-"totalExperienceDuration": 0,
-"skills": []
-}
+      Output ONLY valid JSON
 
-\`\`\`
+      ❌ No markdown, explanations, or extra text
 
----
+      ❌ No extra fields
 
+      Missing values:
 
-## \uD83D\uDD12 Mandatory Extraction Rules
+      string → ""
 
-### 1. **Output Rules**
+      number → 0
 
-* ✅ Output **ONLY valid JSON**
-* ❌ No explanations
-* ❌ No markdown
-* ❌ No comments
-* ❌ No extra text before or after JSON
+      boolean → false
 
----
+      array → []
 
-### 2. **Missing or Unavailable Fields**
+      Numbers must be numbers, not strings
 
-* **String fields** → \`""\`
-* **Number fields** → \`0\`
-* **Boolean fields** → \`false\`
-* **Array fields** → \`[]\`
-* ❌ Never guess or infer missing data
+      Never guess or hallucinate data
 
----
+      📌 Field Rules
 
-### 3. **Strict Data Types**
+      Socials
 
-* All numeric fields **MUST be numbers**, never strings:
+      name ∈ leetcode | linkedin | github | others
 
-* \`score\`
-* \`yearOfComp\`
-* \`mobileNo\`
-* \`totalExperienceDuration\`
-* \`isCGPA\` **must be boolean**
+      If platform present but URL missing → url: ""
 
----
+      Education
 
-### 4. **ATS Score Rule (IMPORTANT)**
+      eduType ∈ SSC | HSC | UG | PG | Diploma
 
-* \`resume.atsScore\` **must always be \`0\`**
-* Root-level \`atsScore\` **must always be \`0\`**
-* ❌ Never calculate, infer, or extract ATS score from text
+      Percentage → isCGPA: false
 
----
+      CGPA → isCGPA: true
 
-### 5. **Bio (\`bio\`)**
+      Experience
 
-* Populate from:
+      Only professional jobs
 
-* Profile summary
-* About section
-* Professional overview
-* Keep it concise and factual
-* Set character limit of 255 characters * If not present → \`""\`
+      ❌ Exclude projects, hackathons, academics
 
----
+      Skills
 
-### 6. **Social Links (\`resume.socials\`)**
+      Mongodb Array of strings
 
-* Allowed \`name\` values ONLY:
+      Normalize casing, remove duplicates
 
-* \`"leetcode"\`, \`"linkedin"\`, \`"github"\`, \`"others"\`
-* If platform name is present but **URL is missing or implied**
+      totalExperienceDuration → years (number), else 0
 
-* Set \`"url": ""\`
-* If platform cannot be identified → \`"others"\`
-* ❌ Do not fabricate URLs
+      📊 ATS Score (0–100)
 
----
+      Store result in resume.atsScore.
 
-### 7. **Education Mapping**
+      Weights:
 
-* \`eduType\` must be exactly one of:
+      Skills: 40
 
-* \`SSC\`, \`HSC\`, \`UG\`, \`PG\`, \`Diploma\`
-* If education level is unclear → **exclude that entry**
-* \`score\`:
+      Experience: 30
 
-* Numeric only
-* Percentage → \`isCGPA: false\`
-* CGPA → \`isCGPA: true\`
-* Unknown → \`score: 0\`, \`isCGPA: false\`
-* \`yearOfComp\` → completion year only (number)
+      Education: 15
 
----
+      Certifications: 10
 
-### 8. **Experience**
+      Resume completeness: 5
 
-* Include **only professional work experience**
-* ❌ Do NOT include:
+      Rules:
 
-* Academic projects
-* Hackathons
-* College final-year projects
-* \`jobDesc\` should be a concise merged summary of responsibilities
+      Integer only
 
----
+      Max 100
 
-### 9. **Skills**
+      No explanation
 
-* Populate **only the root-level \`skills\`**
-* Extract from:
+      🔽 Input
 
-* Technical skills
-* Tools
-* Languages
-* Frameworks
-* Normalize casing (e.g., \`React.js\`, \`MongoDB\`)
-* Avoid duplicates
-
----
-
-### 10. **Resume URL**
-
-* Always return \`""\` unless explicitly provided
-
----
-
-### 11. **Date & Phone Rules**
-
-* \`dateOfBirth\`:
-
-* Empty string unless explicitly stated
-* \`mobileNo\`:
-
-* Exactly 10 digits
-* Remove country code, spaces, symbols
-* If missing → \`0\`
-
----
-
-## ✅ Final Validation Checklist (Before Responding)
-
-* ✔ JSON only
-* ✔ Exact schema match
-* ✔ \`resume.skills\` NOT present
-* ✔ ATS scores always \`0\`
-* ✔ Correct data types
-* ✔ No hallucinated data
-* ✔ No extra keys
-
----
-
-### \uD83D\uDD3D Input
-
-You will now receive a **raw resume text**.
-Extract and return the JSON strictly following all rules above.
-NOTE: DO NOT ADD MARKDOWN CODE FENCE
+      You will receive raw resume text.
+      Extract data, calculate ATS, and return JSON only.
+      NOTE: DO NOT ADD MARKDOWN CODE FENCE
 
 TEXT:
 `;
         const res = await ai.models.generateContent({
             model: "gemini-2.5-flash",
-            contents: prompt + this.text
+            contents: prompt + this.text,
         });
         try {
             if (typeof res.text === "undefined") {
                 throw Error("Promise is unresolved");
             }
-            const newJson = res.text.replace(/```json\s*/i, "").replace(/```$/, "").trim();
+            const newJson = res.text
+                .replace(/```json\s*/i, "")
+                .replace(/```$/, "")
+                .trim();
             return JSON.parse(newJson);
         } catch (err) {
             console.error("Invalid AI JSON:", err);
