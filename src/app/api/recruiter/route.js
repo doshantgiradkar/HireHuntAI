@@ -1,38 +1,29 @@
 import { NextResponse } from "next/server";
 import { connect } from "@/lib/db";
 
-import { auth } from "@clerk/nextjs/server";
 import recruiterModel from "@/models/recruiterModel";
-import mongoose from "mongoose";
+
 
 export async function POST(req) {
   try {
     await connect();
 
-    const { userId } = auth();
-    if (!userId) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await req.json();
 
-    // Always trust server-side Clerk user id as owner
-    const payload = {
-      ...body,
-      clerkId: userId,
-      admin: {
-        ...(body.admin || {}),
-        clerkId: userId,
-      },
-    };
+    const { clerkId } = body;
 
-    // Validate required fields server-side via Mongoose validators
+    if (!clerkId) {
+      return NextResponse.json(
+        { message: "clerkId is required" },
+        { status: 400 }
+      );
+    }
 
     const recruiter = await recruiterModel.findOneAndUpdate(
-      { clerkId: userId },    // filter by owner
-      { $set: payload },      // set provided fields
+      { clerkId },              
+      { $set: body },
       {
-        upsert: true, // create if missing
+        upsert: true,
         new: true,
         runValidators: true,
         setDefaultsOnInsert: true,
@@ -53,22 +44,16 @@ export async function GET() {
   try {
     await connect();
 
-    const { userId } = auth();
-    if (!userId) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    const recruiters = await recruiterModel.find({}); 
 
-    const recruiter = await recruiterModel.findOne({ clerkId: userId });
-
-    if (!recruiter) {
-      return NextResponse.json({ message: "Recruiter not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ recruiter }, { status: 200 });
+    return NextResponse.json(
+      { recruiters, count: recruiters.length },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("RECRUITER_GET_ERROR:", error);
     return NextResponse.json(
-      { message: "Failed to fetch recruiter" },
+      { message: "Failed to fetch recruiters" },
       { status: 500 }
     );
   }

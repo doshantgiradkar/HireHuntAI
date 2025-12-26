@@ -117,6 +117,28 @@ export default function CompanyProfileForm({
     }));
   }, [initialData, mode]);
 
+  useEffect(() => {
+  if (!isLoaded || !clerkUser) return;
+
+  setFormData((prev) => {
+    // prevent overwriting if admin already filled (edit mode)
+    if (prev.admin?.clerkId) return prev;
+
+    return {
+      ...prev,
+      clerkId: clerkUser.id,
+      admin: {
+        avatar: clerkUser.imageUrl || "",
+        name: clerkUser.fullName || "",
+        role: "Admin",
+        email: clerkUser.primaryEmailAddress?.emailAddress || "",
+        phone: "",
+        clerkId: clerkUser.id,
+      },
+    };
+  });
+}, [isLoaded, clerkUser]);
+
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,

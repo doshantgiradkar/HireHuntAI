@@ -17,6 +17,7 @@ const isRecruiterRoute = createRouteMatcher(['/recruiter(.*)']);
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims, redirectToSignIn } = await auth();
   const role = sessionClaims?.metadata?.role;
+  
   const { pathname } = req.nextUrl;
 
   // 🔥 1. ALWAYS allow API routes
