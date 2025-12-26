@@ -11,6 +11,7 @@
 !.yarn/versions
 test.js
 test/
+tmp/
 
 # testing
 /coverage

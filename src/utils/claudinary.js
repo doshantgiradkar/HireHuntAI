@@ -13,7 +13,7 @@ cloudinary.config({
 });
 
 // Upload function
-export const uploadResume = async (filePath) => {
+ const uploadToCloudinary = async (filePath,folder="resume") => {
     try {
         if (!filePath) {
             throw new Error('No file path provided');
@@ -36,7 +36,7 @@ export const uploadResume = async (filePath) => {
                 filePath,
                 {
                     resource_type: "auto",
-                    folder: "hirehuntai/resume",
+                    folder: `hirehuntai/${folder}`,
                     timeout: 120000,
                 },
                 (error, result) => {
@@ -52,18 +52,17 @@ export const uploadResume = async (filePath) => {
         return result;
     } catch (error) {
         console.error('Upload to Cloudinary failed:', error);
-        throw new Error('Failed to upload image to cloud storage');
+        // throw new Error('Failed to upload image to cloud storage');
     }
 };
 
 
 // Delete function
-export const deleteResume = async (resumeUrl) => {
+ const deleteFromCloudinary = async (url) => {
     try {
-        if (!resumeUrl) return null;
+        if (!url) return null;
 
-        // Extract public_id from the URL
-        const publicId = resumeUrl.match(/(hirehuntai\/resume\/[^/.]+)\.pdf$/);
+        const publicId = url.match(/(hirehuntai\/(resume|logo)\/[^/.]+)\.(pdf|jpeg)$/);
         const result = await cloudinary.uploader.destroy(publicId[1]);
         return result;
     } catch (error) {
@@ -71,3 +70,20 @@ export const deleteResume = async (resumeUrl) => {
         throw new Error('Failed to delete image from cloudinary');
     }
 };
+
+export const uploadResume = async (filePath) => {
+    return await uploadToCloudinary(filePath,"resume");
+}
+
+export const deleteResume = async (url) => {
+    return await deleteFromCloudinary(url);
+}
+
+export const uploadLogo = async (filePath) => {
+    return await uploadToCloudinary(filePath,"logo");
+}   
+
+export const deleteLogo = async (url) => {
+    return await deleteFromCloudinary(url);
+}
+
