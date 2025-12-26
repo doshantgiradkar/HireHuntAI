@@ -58,12 +58,12 @@ export const uploadResume = async (filePath) => {
 
 
 // Delete function
-export const deleteResume = async (imageUrl) => {
+export const deleteResume = async (resumeUrl) => {
     try {
-        if (!imageUrl) return null;
+        if (!resumeUrl) return null;
 
         // Extract public_id from the URL
-        const publicId = imageUrl.match(/resume\/([^/.]+)\.pdf$/);
+        const publicId = resumeUrl.match(/(hirehuntai\/resume\/[^/.]+)\.pdf$/);
         const result = await cloudinary.uploader.destroy(publicId[1]);
         return result;
     } catch (error) {
