@@ -4,6 +4,7 @@ import { Webhook } from "svix";
 import { NextResponse } from "next/server";
 import { connect } from "@/lib/db";
 import User from "@/models/userModel";
+import { strict } from "assert";
 
 
 export async function POST(req) {
@@ -51,18 +52,21 @@ export async function POST(req) {
       }
 
       await User.findOneAndUpdate(
-        { clerk_id: data.id }, // 🔑 unique identifier
+        { clerkId: data.id },
         {
-          clerk_id: data.id,
+          clerkId: data.id,
           email,
-          first_name: data.first_name,
-          last_name: data.last_name,
-          image_url: data.image_url,
+          firstName: data.first_name,
+          lastName: data.last_name,
+          imageUrl: data.image_url,
           role: data.public_metadata?.role || "candidate",
         },
-        { upsert: true, new: true }
+        { upsert: true, new: true,strict:false }
       );
 
+      if(data.public_metadata?.role == "recruiter"){
+      }
+      
       console.log(`User synced: ${data.id}`);
     }
 

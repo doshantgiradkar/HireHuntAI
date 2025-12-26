@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { connect } from "@/lib/db";
 import jobModel from "@/models/jobModel";
+import { auth } from "@clerk/nextjs/dist/types/server";
 
 export async function GET(req, { params }) {
   try {
     await connect();
 
     const { id } = await params;
+    const {userId} = auth()
+    console.log(userId)
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(

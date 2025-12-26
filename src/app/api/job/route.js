@@ -1,14 +1,21 @@
 import { connect } from "@/lib/db";
 import jobModel from "@/models/jobModel";
 import recruiterModel from "@/models/recruiterModel";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
     await connect();
-
+    const { userId, sessionClaims } = await auth();
+    console.log(sessionClaims?.metadata?.role);
+    if (!userId) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
     const body = await req.json();
-
     const {
       recruiterClerkId,
       title,
@@ -32,7 +39,9 @@ export async function POST(req) {
       );
     }
 
-    const recruiter = await recruiterModel.findOne({ clerkId: recruiterClerkId });
+    const recruiter = await recruiterModel.findOne({
+      clerkId: recruiterClerkId,
+    });
 
     if (!recruiter) {
       return NextResponse.json(
@@ -41,7 +50,6 @@ export async function POST(req) {
       );
     }
 
-   
     const job = await jobModel.create({
       ...body,
       recruiterId: recruiter._id,
