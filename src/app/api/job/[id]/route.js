@@ -2,16 +2,22 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { connect } from "@/lib/db";
 import jobModel from "@/models/jobModel";
-import { auth } from "@clerk/nextjs/dist/types/server";
+import { checkAuth } from "@/utils/checkAuth";
+
 
 export async function GET(req, { params }) {
+  const authResult = await checkAuth({ allowedRoles: ["recruiter","candidate"] });
+  if (!authResult.authenticated) {
+    return NextResponse.json(
+      { message: authResult.error },
+      { status: authResult.error === "Forbidden" ? 403 : 401 }
+    );
+  }
   try {
     await connect();
 
     const { id } = await params;
-    const {userId} = auth()
-    console.log(userId)
-
+   
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { message: "Invalid job id" },
@@ -39,6 +45,13 @@ export async function GET(req, { params }) {
 }
 
 export async function PUT(req, { params }) {
+  const authResult = await checkAuth({ allowedRoles: ["recruiter"] });
+  if (!authResult.authenticated) {
+    return NextResponse.json(
+      { message: authResult.error },
+      { status: authResult.error === "Forbidden" ? 403 : 401 }
+    );
+  }
   try {
     await connect();
 
@@ -82,6 +95,14 @@ export async function PUT(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
+  const authResult = await checkAuth({ allowedRoles: ["recruiter"] });
+  if (!authResult.authenticated) {
+    return NextResponse.json(
+      { message: authResult.error },
+      { status: authResult.error === "Forbidden" ? 403 : 401 }
+    );
+  }
+  
   try {
     await connect();
     const { id } = await params;

@@ -7,49 +7,12 @@ import recruiterModel from "@/models/recruiterModel";
 import { uploadLogo } from "@/utils/claudinary";
 import { checkAuth } from "@/utils/checkAuth";
 
-
-// export async function POST(req) {
-//   try {
-//     await connect();
-
-//     const body = await req.json();
-
-//     const { clerkId } = body;
-
-//     if (!clerkId) {
-//       return NextResponse.json(
-//         { message: "clerkId is required" },
-//         { status: 400 }
-//       );
-//     }
-
-//     const recruiter = await recruiterModel.findOneAndUpdate(
-//       { clerkId },              
-//       { $set: body },
-//       {
-//         upsert: true,
-//         new: true,
-//         runValidators: true,
-//         setDefaultsOnInsert: true,
-//       }
-//     );
-
-//     return NextResponse.json({ recruiter }, { status: 201 });
-//   } catch (error) {
-//     console.error("RECRUITER_POST_ERROR:", error);
-//     return NextResponse.json(
-//       { message: "Internal server error" },
-//       { status: 500 }
-//     );
-//   }
-// }
-
 export async function POST(req) {
   let filePath = "";
 
   try {
-      const authResult = await checkAuth({
-      allowedRoles: ["recruiter"], // or ["candidate"] if needed
+    const authResult = await checkAuth({
+      allowedRoles: ["recruiter"],
     });
 
     if (!authResult.authenticated) {
@@ -73,9 +36,7 @@ export async function POST(req) {
       if (key.startsWith("admin.")) {
         admin[key.replace("admin.", "")] = value;
       } else if (key === "primaryRoles") {
-        recruiterData.primaryRoles = value
-          .split(",")
-          .map((r) => r.trim());
+        recruiterData.primaryRoles = value.split(",").map((r) => r.trim());
       } else {
         recruiterData[key] = value;
       }
@@ -84,8 +45,6 @@ export async function POST(req) {
     if (Object.keys(admin).length) {
       recruiterData.admin = admin;
     }
-
-    
 
     if (!clerkId) {
       return NextResponse.json(
@@ -141,7 +100,6 @@ export async function POST(req) {
       { message: "Recruiter saved", recruiter },
       { status: 201 }
     );
-
   } catch (error) {
     console.error("RECRUITER_POST_ERROR:", error);
 
@@ -157,10 +115,18 @@ export async function POST(req) {
 }
 
 export async function GET() {
+  const authResult = await checkAuth({ allowedRoles: ["recruiter", "candidate"] });
+  if (!authResult.authenticated) {
+    return NextResponse.json(
+      { message: authResult.error },
+      { status: authResult.error === "Forbidden" ? 403 : 401 }
+    );
+  }
+
   try {
     await connect();
 
-    const recruiters = await recruiterModel.find({}); 
+    const recruiters = await recruiterModel.find({});
 
     return NextResponse.json(
       { recruiters, count: recruiters.length },

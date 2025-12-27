@@ -2,10 +2,21 @@ import { NextResponse } from "next/server"
 import { connect } from "@/lib/db"
 import recruiterModel from "@/models/recruiterModel"
 import mongoose from "mongoose"
-import { auth } from "@clerk/nextjs/server"
+import { checkAuth } from "@/utils/checkAuth"
 
 
 export async function GET(req, { params }) {
+  const authResult = checkAuth({
+    allowedRoles: ["recruiter","candidate"],
+  })
+
+  if (!authResult.authenticated) {
+    return NextResponse.json(
+      { message: authResult.error },
+      { status: authResult.error === "Forbidden" ? 403 : 401 }
+    )
+  }
+
   try {
     await connect()
 
@@ -38,8 +49,17 @@ export async function GET(req, { params }) {
   }
 }
 
-
 export async function PUT(req, { params }) {
+  const authResult = checkAuth({
+    allowedRoles: ["recruiter"],
+  })
+
+  if (!authResult.authenticated) {
+    return NextResponse.json(
+      { message: authResult.error },
+      { status: authResult.error === "Forbidden" ? 403 : 401 }
+    )
+  }
   try {
     await connect()
 
@@ -98,6 +118,13 @@ export async function PUT(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
+  const authResult = await checkAuth({ allowedRoles: ["recruiter"] });
+  if (!authResult.authenticated) {
+    return NextResponse.json(
+      { message: authResult.error },
+      { status: authResult.error === "Forbidden" ? 403 : 401 }
+    );
+  }
   try {
     await connect();
 
