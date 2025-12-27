@@ -7,9 +7,9 @@ import { XIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 function Sheet({
-  ...props
+  modal = false, ...props
 }) {
-  return <SheetPrimitive.Root data-slot="sheet" {...props} />;
+  return <SheetPrimitive.Root data-slot="sheet" modal={modal} {...props} />;
 }
 
 function SheetTrigger({
