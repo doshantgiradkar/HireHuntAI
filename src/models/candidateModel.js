@@ -44,13 +44,23 @@ const resumeSchema = new mongoose.Schema({
     skills: [{ type: String }],
 });
 
+const addressSchema = new mongoose.Schema({
+  line: {type: String, required: true },
+  city: { type: String, required: true },
+  state: { type: String, required: true },
+  pinCode: { type: String, required: true },
+  country: { type: String, require: true, default: "India" }
+})
+
 export const candidateSchema = new mongoose.Schema({
     clerkId: { type: String, unique: true },
     resume: { type: resumeSchema, required: true },
+    address: { type: addressSchema },
     dateOfBirth: { type: Date },
     appliedJobs: [{ type: mongoose.Schema.Types.ObjectId, default: null }],
     totalExperienceDuration: { type: Number },
 });
+
 const Candidate =
     mongoose.models.Candidate || mongoose.model("Candidate", candidateSchema);
 
