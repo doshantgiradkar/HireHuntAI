@@ -101,3 +101,64 @@ export async function GET() {
   }
 }
 
+export async function POST(req) {
+  try {
+    const { candidate } = await req.json();
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!candidate) {
+      return NextResponse.json(
+        { error: "Candidate data with resume is required" },
+        { status: 400 }
+      );
+    }
+
+    await connect();
+
+    // Check if candidate already exists
+    const existingCandidate = await Candidate.findOne({ clerkId: userId });
+
+    if (existingCandidate) {
+      return NextResponse.json({
+        success: true,
+        message: "Candidate already exists",
+        candidate: existingCandidate,
+      }, { status: 409 });
+    }
+
+    // Create new candidate
+    const newCandidate = new Candidate({
+      clerkId: userId,
+      resume: {
+        resumeUrl: candidate.resume.resumeUrl,
+        atsScore: candidate.resume.atsScore ?? 0,
+        skills: candidate.resume.skills ?? [],
+        socials: candidate.resume.socials ?? [],
+        education: candidate.resume.education ?? [],
+        certifications: candidate.resume.certifications ?? [],
+        experience: candidate.resume.experience ?? [],
+      },
+      dateOfBirth: candidate.dateOfBirth ?? null,
+      appliedJobs: candidate.appliedJobs ?? [],
+      totalExperienceDuration: candidate.totalExperienceDuration ?? 0,
+    });
+
+    await newCandidate.save();
+
+    return NextResponse.json({
+      success: true,
+      message: "Candidate created successfully",
+      candidate: newCandidate,
+    }, { status: 200 });
+  } catch (error) {
+    console.error("CREATE_CANDIDATE_ERROR:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
