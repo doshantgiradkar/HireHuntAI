@@ -125,16 +125,22 @@ export function NavUser() {
                   className={
                     "p-0 inset-0 !w-full !h-full translate-x-0 translate-y-0 rounded-none !max-h-full !max-w-full flex items-center justify-center"
                   }
-                  onPoiterDropOutside={(e) => e.preventDefault()}
+                  onPointerDownOutside={(e) => e.preventDefault()}
                   onInteractOutside={(e) => e.preventDefault()}
                   modal={false}
                   disableOutsidePointerEvents={false}
                 >
-                  <SheetHeader>
+                  <SheetHeader className="flex-shrink-0">
                     <SheetTitle></SheetTitle>
                     <SheetDescription></SheetDescription>
                   </SheetHeader>
-                  <UserProfile routing="hash" />
+                  <div className="flex-1 overflow-y-auto min-h-0">
+                    <div className="min-h-full flex items-center justify-center p-4">
+                      <UserProfile
+                        routing="hash"
+                      />
+                    </div>
+                  </div>
                 </SheetContent>
               </Sheet>
 
