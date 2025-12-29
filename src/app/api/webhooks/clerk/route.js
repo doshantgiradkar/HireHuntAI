@@ -54,7 +54,6 @@ export async function POST(req) {
       await User.findOneAndUpdate(
         { clerkId: data.id },
         {
-          clerkId: data.id,
           email,
           firstName: data.first_name,
           lastName: data.last_name,
@@ -66,7 +65,7 @@ export async function POST(req) {
 
       if(data.public_metadata?.role == "recruiter"){
       }
-      
+
       console.log(`User synced: ${data.id}`);
     }
 
