@@ -1,57 +1,93 @@
-// middleware.ts
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+// middleware.js
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-// ✅ ROUTE MATCHERS (NO API HERE)
+// ✅ PUBLIC ROUTES (no auth required)
 const isPublicRoute = createRouteMatcher([
-  '/',
-  '/login',
-  '/sign-in',
-  '/sign-up',
+  "/",
+  "/login",
+  "/sign-in",
+  "/sign-up",
 ]);
 
-const isSelectRoleRoute = createRouteMatcher(['/select-role']);
-const isCandidateRoute = createRouteMatcher(['/candidate(.*)']);
-const isRecruiterRoute = createRouteMatcher(['/recruiter(.*)']);
+// ROLE / FLOW ROUTES
+const isSelectRoleRoute = createRouteMatcher(["/select-role"]);
+
+const isCandidateUploadResume = createRouteMatcher(["/candidate/resume"]);
+const isCandidateEditProfile = createRouteMatcher(["/candidate/edit-profile"]);
+const isCandidateDashboard = createRouteMatcher(["/candidate/dashboard"]);
+const isCandidateRoute = createRouteMatcher(["/candidate(.*)"]);
+const isRecruiterEditProfile = createRouteMatcher(["/recruiter/edit-profile"]);
+const isRecruiterDashboard = createRouteMatcher(["/recruiter/dashboard"]);
+const isRecruiterRoute = createRouteMatcher(["/recruiter(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims, redirectToSignIn } = await auth();
-  const role = sessionClaims?.metadata?.role;
-  
+  const { userId, sessionClaims } = await auth();
   const { pathname } = req.nextUrl;
 
-  // 🔥 1. ALWAYS allow API routes
-  if (pathname.startsWith('/api')) {
+  const role = sessionClaims?.metadata?.role;
+  const isProfileComplete = sessionClaims?.metadata?.isProfileComplete ?? false;
+  const hasResume = sessionClaims?.metadata?.hasResume ?? false;
+
+  // ALWAYS allow API routes
+  if (pathname.startsWith("/api")) {
     return NextResponse.next();
   }
 
-  // 🔐 2. Not signed in
+  // Not authenticated → redirect to home
   if (!userId && !isPublicRoute(req)) {
-    return redirectToSignIn({ returnBackUrl: req.url });
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // 🔐 3. Signed in users
-  if (userId) {
+  // Authenticated but role not selected → select role
+  if (userId && !role && !isSelectRoleRoute(req)) {
+    return NextResponse.redirect(new URL("/select-role", req.url));
+  }
 
-    // a) No role yet → force role selection
-    if (!role && !isSelectRoleRoute(req)) {
-      return NextResponse.redirect(new URL('/select-role', req.url));
+  // Prevent role-selected users from visiting select-role again
+  if (userId && role && isSelectRoleRoute(req)) {
+    return NextResponse.redirect(new URL(`/${role}/dashboard`, req.url));
+  }
+
+  // Candidate flow
+  if (userId && role === "candidate") {
+    // Resume NOT uploaded → upload resume
+    if (!hasResume && !isCandidateUploadResume(req)) {
+      console.log(sessionClaims.metadata.hasResume);
+      return NextResponse.redirect(new URL("/candidate/resume", req.url));
     }
 
-    // b) Role users cannot visit select-role
-    if (role && isSelectRoleRoute(req)) {
-      return NextResponse.redirect(
-        new URL(`/${role}/dashboard`, req.url)
-      );
+    // Resume uploaded but profile NOT complete → edit profile
+    if (hasResume && !isProfileComplete && !isCandidateEditProfile(req)) {
+      return NextResponse.redirect(new URL("/candidate/edit-profile", req.url));
     }
 
-    // c) Role-based protection
-    if (role === 'candidate' && !isCandidateRoute(req)) {
-      return NextResponse.redirect(new URL('/candidate/dashboard', req.url));
+    // Resume uploaded + profile complete → dashboard
+    if (hasResume && isProfileComplete && !isCandidateRoute(req)) {
+      return NextResponse.redirect(new URL("/candidate/dashboard", req.url));
     }
 
-    if (role === 'recruiter' && !isRecruiterRoute(req)) {
-      return NextResponse.redirect(new URL('/recruiter/dashboard', req.url));
+    // Prevent candidate from accessing recruiter routes
+    if (!isCandidateRoute(req)) {
+      return NextResponse.redirect(new URL("/candidate/dashboard", req.url));
+    }
+  }
+
+  // Recruiter flow
+  if (userId && role === "recruiter") {
+    // Profile NOT complete → edit profile
+    if (!isProfileComplete && !isRecruiterEditProfile(req)) {
+      return NextResponse.redirect(new URL("/recruiter/edit-profile", req.url));
+    }
+
+    // Profile complete → dashboard
+    if (isProfileComplete && !isRecruiterRoute(req)) {
+      return NextResponse.redirect(new URL("/recruiter/dashboard", req.url));
+    }
+
+    // Prevent recruiter from accessing candidate routes
+    if (!isRecruiterRoute(req)) {
+      return NextResponse.redirect(new URL("/recruiter/dashboard", req.url));
     }
   }
 
@@ -59,5 +95,5 @@ export default clerkMiddleware(async (auth, req) => {
 });
 
 export const config = {
-  matcher: ['/((?!_next|.*\\..*|favicon.ico).*)'],
+  matcher: ["/((?!_next|.*\\..*|favicon.ico).*)"],
 };
