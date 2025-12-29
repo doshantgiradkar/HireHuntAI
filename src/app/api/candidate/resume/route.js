@@ -105,6 +105,12 @@ export async function POST(req) {
         resumeUrl: (await result).secure_url,
       };
       await existing.save();
+
+      const client = await clerkClient();
+      await client.users.updateUser(userId, {
+        hasResume: true
+      });
+
       return NextResponse.json({
         success: true,
         message: "Resume Updated Successfully",

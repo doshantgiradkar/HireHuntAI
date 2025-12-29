@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connect } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import Candidate from "@/models/candidateModel";
 
 export async function PUT(req) {
@@ -59,6 +59,26 @@ export async function PUT(req) {
       { new: true, runValidators: true },
     );
 
+    if (
+      existing.resume.resumeUrl &&
+      existing.resume.atsScore &&
+      existing.resume.skills &&
+      existing.resume.socials &&
+      existing.resume.education &&
+      existing.resume.certifications &&
+      existing.resume.experience &&
+      existing.dateOfBirth
+    ) {
+      await Candidate.findOneAndUpdate(
+        { _id: existing._id },
+        { $set: { isProfileComplete: true } },
+      );
+      const client = await clerkClient();
+      await client.users.updateUser(userId, {
+        isProfileComplete: true,
+      });
+    }
+
     return NextResponse.json(
       { message: "Candidate updated", candidate: updatedCandidate },
       { status: 200 },
@@ -113,7 +133,7 @@ export async function POST(req) {
     if (!candidate) {
       return NextResponse.json(
         { error: "Candidate data with resume is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -123,11 +143,14 @@ export async function POST(req) {
     const existingCandidate = await Candidate.findOne({ clerkId: userId });
 
     if (existingCandidate) {
-      return NextResponse.json({
-        success: true,
-        message: "Candidate already exists",
-        candidate: existingCandidate,
-      }, { status: 409 });
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Candidate already exists",
+          candidate: existingCandidate,
+        },
+        { status: 409 },
+      );
     }
 
     // Create new candidate
@@ -149,16 +172,37 @@ export async function POST(req) {
 
     await newCandidate.save();
 
-    return NextResponse.json({
-      success: true,
-      message: "Candidate created successfully",
-      candidate: newCandidate,
-    }, { status: 200 });
+    if (
+      candidate.resume.resumeUrl &&
+      candidate.resume.atsScore &&
+      candidate.resume.skills &&
+      candidate.resume.socials &&
+      candidate.resume.education &&
+      candidate.dateOfBirth
+    ) {
+      await Candidate.findOneAndUpdate(
+        { _id: existing._id },
+        { $set: { isProfileComplete: true } },
+      );
+      const client = await clerkClient();
+      await client.users.updateUser(userId, {
+        isProfileComplete: true,
+      });
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Candidate created successfully",
+        candidate: newCandidate,
+      },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("CREATE_CANDIDATE_ERROR:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

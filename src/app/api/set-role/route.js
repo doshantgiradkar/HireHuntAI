@@ -21,7 +21,7 @@ export async function POST(req) {
   try {
     const client = await clerkClient();
     await client.users.updateUser(userId, {
-      publicMetadata: { role },
+      publicMetadata: { role, hasResume: false, isPofileComplete: false },
     });
 
     await connect();
