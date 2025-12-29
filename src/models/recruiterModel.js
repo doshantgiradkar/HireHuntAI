@@ -1,10 +1,18 @@
 import mongoose from "mongoose";
 
+const addressSchema = new mongoose.Schema({
+  line: {type: String, required: true },
+  city: { type: String, required: true },
+  state: { type: String, required: true },
+  pinCode: { type: String, required: true },
+  country: { type: String, require: true, default: "India" }
+})
+
 const recruiterSchema = new mongoose.Schema(
   {
     clerkId: {
       type: String,
-  
+
       unique: true,
       index: true,
     },
@@ -17,6 +25,7 @@ const recruiterSchema = new mongoose.Schema(
     overview: { type: String  },
     website: { type: String  },
     headquarters: { type: String  },
+    address: { type: addressSchema },
     founded: { type: String  },
     companyType: { type: String  },
     primaryRoles: [String],

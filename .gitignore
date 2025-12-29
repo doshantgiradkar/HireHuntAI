@@ -11,6 +11,9 @@
 !.yarn/versions
 test.js
 test/
+.node*
+
+# temp folder
 tmp/
 
 # testing
