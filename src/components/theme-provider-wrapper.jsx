@@ -1,19 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "next-themes";
 
-export const ThemeProviderWrapper = ({ children }) => {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
+export function ThemeProviderWrapper({ children }) {
   return (
     <ThemeProvider
       attribute="class"
@@ -24,4 +13,4 @@ export const ThemeProviderWrapper = ({ children }) => {
       {children}
     </ThemeProvider>
   );
-};
+}

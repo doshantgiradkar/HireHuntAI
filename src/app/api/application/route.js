@@ -79,3 +79,17 @@ export async function POST(req) {
     );
   }
 }
+
+export async function GET(req) {
+  try {
+    await connect();
+    const applications = await Application.find();
+    return NextResponse.json({ applications }, { status: 200 });
+  } catch (error) {
+    console.error("Fetch applications error:", error);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

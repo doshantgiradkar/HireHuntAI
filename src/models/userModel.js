@@ -13,8 +13,12 @@ const userSchema = new mongoose.Schema(
     },
     imageUrl: { type: String, required: false },
     role: { type: String, enum: ["recruiter", "candidate"], required: false },
+    isProfileComplete: {
+      type: Boolean,
+      default: false,
+    },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);
