@@ -13,12 +13,12 @@ const isPublicRoute = createRouteMatcher([
 // ROLE / FLOW ROUTES
 const isSelectRoleRoute = createRouteMatcher(["/select-role"]);
 
+const isCandidateRoot = createRouteMatcher(["/candidate"]);
 const isCandidateUploadResume = createRouteMatcher(["/candidate/resume"]);
 const isCandidateEditProfile = createRouteMatcher(["/candidate/edit-profile"]);
-const isCandidateDashboard = createRouteMatcher(["/candidate/dashboard"]);
 const isCandidateRoute = createRouteMatcher(["/candidate(.*)"]);
+const isRecruiterRoot = createRouteMatcher(["/recruiter"]);
 const isRecruiterEditProfile = createRouteMatcher(["/recruiter/edit-profile"]);
-const isRecruiterDashboard = createRouteMatcher(["/recruiter/dashboard"]);
 const isRecruiterRoute = createRouteMatcher(["/recruiter(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
@@ -68,7 +68,7 @@ export default clerkMiddleware(async (auth, req) => {
     }
 
     // Prevent candidate from accessing recruiter routes
-    if (!isCandidateRoute(req)) {
+    if (!isCandidateRoute(req) || isCandidateRoot(req)) {
       return NextResponse.redirect(new URL("/candidate/dashboard", req.url));
     }
   }
@@ -86,7 +86,7 @@ export default clerkMiddleware(async (auth, req) => {
     }
 
     // Prevent recruiter from accessing candidate routes
-    if (!isRecruiterRoute(req)) {
+    if (!isRecruiterRoute(req) || isRecruiterRoot(req)) {
       return NextResponse.redirect(new URL("/recruiter/dashboard", req.url));
     }
   }

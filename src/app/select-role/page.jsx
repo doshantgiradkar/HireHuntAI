@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { useUser } from "@clerk/nextjs";
+import { useHeader } from "@/store/user.store";
 
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -29,7 +30,7 @@ export default function SelectRolePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
- const handleSubmit = async () => {
+  const handleSubmit = async () => {
   if (!selectedRole || !isLoaded) return;
 
   setIsLoading(true);

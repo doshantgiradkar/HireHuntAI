@@ -6,18 +6,19 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Clock, 
-  Video, 
-  Mic, 
-  Wifi, 
-  CheckCircle2, 
+import {
+  Clock,
+  Video,
+  Mic,
+  Wifi,
+  CheckCircle2,
   AlertCircle,
   Calendar,
   Briefcase,
   FileText,
   Monitor
 } from 'lucide-react';
+import { useHeader } from '@/store/user.store';
 
 const InterviewLobbyPage = () => {
   const [timeUntilStart, setTimeUntilStart] = useState(300);
@@ -52,7 +53,9 @@ const InterviewLobbyPage = () => {
     "Ask clarifying questions if needed"
   ];
 
+  const setTitle = useHeader((state) => state.setTitle);
   useEffect(() => {
+    setTitle("Interviews");
     const timer = setInterval(() => {
       setTimeUntilStart(prev => {
         if (prev <= 0) {
@@ -193,9 +196,9 @@ const InterviewLobbyPage = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="bg-muted p-4 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <Avatar className="w-12 h-12">
@@ -326,7 +329,7 @@ const InterviewLobbyPage = () => {
         {/* Emergency Contact */}
         <div className="text-center mt-6">
           <p className="text-sm text-muted-foreground">
-            Having technical issues? 
+            Having technical issues?
             <Button variant="link" className="px-2">Contact Support</Button>
           </p>
         </div>

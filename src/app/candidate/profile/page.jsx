@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
+import { useHeader } from "@/store/user.store";
 
 
 
@@ -34,9 +35,12 @@ export default  function CompanyProfilePage() {
 const { user, isLoaded } = useUser();
   const [companyData, setCompanyData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const setTitle = useHeader(state => state.setTitle);
 
   useEffect(() => {
+    setTitle("My Profile")
     if (!isLoaded || !user) return;
+
 
     const fetchCompany = async () => {
       try {

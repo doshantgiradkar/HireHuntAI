@@ -5,23 +5,14 @@ import {
   IconCamera,
   IconChartBar,
   IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
   IconFileWord,
-  IconFolder,
   IconHelp,
   IconInfoCircle,
-  IconInnerShadowTop,
   IconListDetails,
-  IconReport,
   IconSearch,
-  IconSettings,
   IconUser,
-  IconUsers,
 } from "@tabler/icons-react";
 
-import { NavDocuments } from "@/components/nav-documents";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
@@ -34,7 +25,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Icon, Sparkles, SparklesIcon } from "lucide-react";
+import { SparklesIcon } from "lucide-react";
 
 const recruiterRoutes = {
   user: {

@@ -34,8 +34,10 @@ export default  function CompanyProfilePage() {
 const { user, isLoaded } = useUser();
   const [companyData, setCompanyData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const setTitle = useHeader(state => state.setTitle)
 
   useEffect(() => {
+    setTitle("Candidate Profile");
     if (!isLoaded || !user) return;
 
     const fetchCompany = async () => {
@@ -43,7 +45,7 @@ const { user, isLoaded } = useUser();
         const res = await fetch(`/api/recruiter/${user.id}`);
         const data = await res.json();
         setCompanyData(data.recruiter);
-        
+
       } catch (err) {
         console.error("Fetch failed", err);
       } finally {

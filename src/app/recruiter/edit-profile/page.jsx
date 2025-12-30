@@ -3,14 +3,17 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import CompanyProfileForm from "./CompanyProfileForm";
+import { useHeader } from "@/store/user.store";
 
 export default function Page() {
   const { user, isLoaded } = useUser();
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [initialData, setInitialData] = useState(null);
   const [mode, setMode] = useState("create");
+  const setTitle = useHeader(state => state.setTitle);
 
   useEffect(() => {
+    setTitle("Edit Company Profile");
     if (!isLoaded) return; // wait for Clerk
 
     const fetchRecruiter = async () => {
@@ -74,4 +77,3 @@ export default function Page() {
     </div>
   );
 }
-

@@ -3,8 +3,14 @@ import { ChartAreaInteractive } from "@/components/chart-area-interactive"
 import { DataTable } from "@/components/data-table"
 import { SectionCards } from "@/components/section-cards"
 import data from "./data.json"
+import { useHeader } from "@/store/user.store";
+import { useEffect } from "react";
 
 export default function Page() {
+  const setTitle = useHeader(state => state.setTitle)
+  useEffect(()=> {
+    setTitle("Recruiter Dashboard");
+  }, [])
   return (
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">
@@ -19,4 +25,3 @@ export default function Page() {
     </div>
   );
 }
-  

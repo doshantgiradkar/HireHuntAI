@@ -1,12 +1,7 @@
 "use client";
 import React, { useState, useMemo, useEffect } from "react";
 import axios from "axios";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,6 +25,7 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
+import { useHeader } from "@/store/user.store";
 
 // ----------------------
 // Sample fallback data
@@ -113,7 +109,8 @@ const statusConfig = {
   },
   interview_scheduled: {
     label: "Interview Scheduled",
-    color: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    color:
+      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
     icon: Users,
   },
   hired: {
@@ -140,11 +137,36 @@ const StatsCards = ({ applications }) => {
     }, {});
 
     return [
-      { title: "Total Applied", value: total, icon: Briefcase, color: "text-blue-600 dark:text-blue-400" },
-      { title: "Under Review", value: statusCounts.under_review || 0, icon: Clock, color: "text-yellow-600 dark:text-yellow-400" },
-      { title: "Interviews Scheduled", value: statusCounts.interview_scheduled || 0, icon: Users, color: "text-purple-600 dark:text-purple-400" },
-      { title: "Offers Received", value: statusCounts.hired || 0, icon: CheckCircle, color: "text-green-600 dark:text-green-400" },
-      { title: "Rejections", value: statusCounts.rejected || 0, icon: XCircle, color: "text-red-600 dark:text-red-400" },
+      {
+        title: "Total Applied",
+        value: total,
+        icon: Briefcase,
+        color: "text-blue-600 dark:text-blue-400",
+      },
+      {
+        title: "Under Review",
+        value: statusCounts.under_review || 0,
+        icon: Clock,
+        color: "text-yellow-600 dark:text-yellow-400",
+      },
+      {
+        title: "Interviews Scheduled",
+        value: statusCounts.interview_scheduled || 0,
+        icon: Users,
+        color: "text-purple-600 dark:text-purple-400",
+      },
+      {
+        title: "Offers Received",
+        value: statusCounts.hired || 0,
+        icon: CheckCircle,
+        color: "text-green-600 dark:text-green-400",
+      },
+      {
+        title: "Rejections",
+        value: statusCounts.rejected || 0,
+        icon: XCircle,
+        color: "text-red-600 dark:text-red-400",
+      },
     ];
   }, [applications]);
 
@@ -153,7 +175,10 @@ const StatsCards = ({ applications }) => {
       {stats.map((stat, index) => {
         const Icon = stat.icon;
         return (
-          <Card key={index} className="hover:shadow-md transition-shadow duration-200">
+          <Card
+            key={index}
+            className="hover:shadow-md transition-shadow duration-200"
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 {stat.title}
@@ -208,7 +233,9 @@ const ApplicationFilters = ({
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="applied">Applied</SelectItem>
               <SelectItem value="under_review">Under Review</SelectItem>
-              <SelectItem value="interview_scheduled">Interview Scheduled</SelectItem>
+              <SelectItem value="interview_scheduled">
+                Interview Scheduled
+              </SelectItem>
               <SelectItem value="hired">Hired</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
             </SelectContent>
@@ -273,18 +300,20 @@ const ApplicationCard = ({ application, onViewDetails, onWithdraw }) => {
           </Badge>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
           <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
             <Calendar className="h-4 w-4" />
             <span>Applied {formatDate(application.appliedAt)}</span>
           </div>
-          
+
           {application.interview.scheduled && (
             <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
               <Users className="h-4 w-4" />
-              <span>Interview: {formatInterviewDate(application.interview.date)}</span>
+              <span>
+                Interview: {formatInterviewDate(application.interview.date)}
+              </span>
             </div>
           )}
         </div>
@@ -293,7 +322,7 @@ const ApplicationCard = ({ application, onViewDetails, onWithdraw }) => {
           <div className="text-sm text-gray-600 dark:text-gray-400">
             {application.location} • {application.salary}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -304,8 +333,8 @@ const ApplicationCard = ({ application, onViewDetails, onWithdraw }) => {
               <Eye className="h-3 w-3 mr-1" />
               View
             </Button>
-            
-            {application.status === 'applied' && (
+
+            {application.status === "applied" && (
               <Button
                 variant="outline"
                 size="sm"
@@ -334,8 +363,10 @@ const ApplicationsDashboard = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
 
+  const setTitle = useHeader((state) => state.setTitle);
   // Fetch applications on mount
   useEffect(() => {
+    setTitle("My Applications");
     const fetchApplications = async () => {
       try {
         const response = await axios.get("/api/applications");
@@ -365,7 +396,8 @@ const ApplicationsDashboard = () => {
         app.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
         app.company.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus = statusFilter === "all" || app.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "all" || app.status === statusFilter;
 
       const matchesDate =
         dateFilter === "all" || new Date(app.appliedAt).getTime() >= cutoff;
@@ -379,7 +411,10 @@ const ApplicationsDashboard = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
         {[...Array(5)].map((_, i) => (
-          <Card key={i} className="h-32 animate-pulse bg-gray-100 dark:bg-gray-800" />
+          <Card
+            key={i}
+            className="h-32 animate-pulse bg-gray-100 dark:bg-gray-800"
+          />
         ))}
       </div>
     );
@@ -409,7 +444,9 @@ const ApplicationsDashboard = () => {
       />
 
       {filteredApplications.length === 0 ? (
-        <div className="text-gray-500 dark:text-gray-400">No applications found.</div>
+        <div className="text-gray-500 dark:text-gray-400">
+          No applications found.
+        </div>
       ) : (
         <div className="space-y-4">
           {filteredApplications.map((application) => (

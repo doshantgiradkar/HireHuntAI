@@ -88,7 +88,7 @@ const Home = () => {
                                 <SparklesIcon className="h-6 w-6 text-white" />
                             </div>
                             <span className="text-xl font-bold text-slate-900 dark:text-white">
-                                Agentic Interview
+                                HireHunt AI
                             </span>
                         </div>
                         {/* Desktop Navigation */}
@@ -156,7 +156,7 @@ const Home = () => {
                         {/* Badge */}
                         <Badge variant="secondary" className="inline-flex items-center rounded-full bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 px-6 py-3 text-sm font-medium text-blue-700 dark:text-blue-300 mb-8 border border-blue-200/50 dark:border-blue-700/50">
                             <Zap className="h-4 w-4 mr-2" />
-                            <span>AI-Powered Interview Management</span>
+                            <span>Streamline Your Hiring</span>
                         </Badge>
 
                         {/* Main Heading */}

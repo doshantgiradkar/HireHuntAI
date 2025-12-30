@@ -1,14 +1,15 @@
-"use client"
 import { useHeader } from "@/store/user.store";
+import React from "react";
 import { useEffect } from "react";
 
-const Page = () => {
+const page = () => {
   const setTitle = useHeader((state) => state.setTitle);
 
   useEffect(() => {
-    setTitle("Edit Profile");
+    setTitle("User Documents");
   }, []);
 
-  return <div> Edit Profile Page </div>;
-}
-export default Page;
+  return <div>page</div>;
+};
+
+export default page;

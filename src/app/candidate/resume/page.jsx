@@ -7,10 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useHeader } from "@/store/user.store";
+import { useEffect } from "react";
 
 const ResumeViewerPage = () => {
   const [resumeFile, setResumeFile] = useState(null);
   const [resumeData, setResumeData] = useState(null);
+  const setTitle = useHeader(state => state.setTitle);
 
   // Placeholder resume parsing logic
   const handleUpload = () => {
@@ -56,6 +59,10 @@ const ResumeViewerPage = () => {
       setResumeFile(e.target.files[0]);
     }
   };
+
+  useEffect(() => {
+    setTitle("Resume");
+  },[])
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
