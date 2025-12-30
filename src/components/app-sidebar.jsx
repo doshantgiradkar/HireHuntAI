@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   IconCamera,
   IconChartBar,
@@ -11,18 +11,20 @@ import {
   IconFileWord,
   IconFolder,
   IconHelp,
+  IconInfoCircle,
   IconInnerShadowTop,
   IconListDetails,
   IconReport,
   IconSearch,
   IconSettings,
+  IconUser,
   IconUsers,
-} from "@tabler/icons-react"
+} from "@tabler/icons-react";
 
-import { NavDocuments } from "@/components/nav-documents"
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
+import { NavDocuments } from "@/components/nav-documents";
+import { NavMain } from "@/components/nav-main";
+import { NavSecondary } from "@/components/nav-secondary";
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -31,7 +33,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+import { Icon, Sparkles, SparklesIcon } from "lucide-react";
 
 const recruiterRoutes = {
   user: {
@@ -50,52 +53,35 @@ const recruiterRoutes = {
       url: "/recruiter/jobs",
       icon: IconListDetails,
     },
-    {
-      title: "Candidates",
-      url: "/recruiter/candidates",
-      icon: IconUsers,
+     {
+      title: "Interviews",
+      url: "/candidate/interviews",
+      icon: IconCamera,
     },
     {
       title: "Analytics",
       url: "/recruiter/analytics",
       icon: IconChartBar,
     },
-    {
-      title: "Interview Panel",
-      url: "/recruiter/panel",
-      icon: IconUsers,
-    },
-  ],
-  documents: [
-    {
-      name: "Resume Database",
-      url: "/recruiter/resumes",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "/recruiter/reports",
-      icon: IconReport,
-    },
-    {
-      name: "Templates",
-      url: "/recruiter/templates",
-      icon: IconFileWord,
-    },
   ],
   navSecondary: [
     {
-      title: "Recruiter Profile",
-      url: "/recruiter/recruiter-profile",
-      icon: IconSettings,
+      title: "Profile",
+      url: "/recruiter/profile",
+      icon: IconUser,
     },
     {
       title: "Help",
       url: "/recruiter/help",
       icon: IconHelp,
     },
+    {
+      title: "About",
+      url: "/candidate/about",
+      icon: IconInfoCircle,
+    }
   ],
-}
+};
 
 const candidateRoutes = {
   user: {
@@ -124,64 +110,68 @@ const candidateRoutes = {
       url: "/candidate/interviews",
       icon: IconCamera,
     },
-  ],
-  documents: [
     {
-      name: "My Resume",
+      title: "My Resume",
       url: "/candidate/resume",
       icon: IconFileWord,
     },
-    {
-      name: "Documents",
-      url: "/candidate/documents",
-      icon: IconDatabase,
-    },
   ],
+
   navSecondary: [
     {
-      title: "Profile Settings",
-      url: "/candidate/settings",
-      icon: IconSettings,
+      title: "Profile ",
+      url: "/candidate/profile",
+      icon: IconUser,
     },
     {
       title: "Help Center",
       url: "/candidate/help",
       icon: IconHelp,
     },
+    {
+      title: "About",
+      url: "/candidate/about",
+      icon: IconInfoCircle,
+    }
   ],
-}
+};
 
 export function AppSidebar({
   dashboardType = "candidate", // 'recruiter' or 'candidate'
   ...props
 }) {
   const routes =
-    dashboardType === "recruiter" ? recruiterRoutes : candidateRoutes
+    dashboardType === "recruiter" ? recruiterRoutes : candidateRoutes;
 
   return (
-    <Sidebar collapsible="offcanvas" className="flex flex-col h-full" {...props}>
+    <Sidebar
+      collapsible="offcanvas"
+      className="flex flex-col h-full"
+      {...props}
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
+            <SidebarMenuButton
+              asChild
+              className="data-[slot=sidebar-menu-button]:!p-1.5"
+            >
               <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <SparklesIcon className="!size-5" />
+                <span className="text-base font-semibold">HireHunt AI</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="flex-1 flex flex-col">
-        <NavMain items={routes.navMain} />
-        <NavDocuments items={routes.documents} />
+        <NavMain items={routes.navMain} dashboardType={dashboardType} />
+        {/* <NavDocuments items={routes.documents} /> */}
         <NavSecondary items={routes.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
-    
-
