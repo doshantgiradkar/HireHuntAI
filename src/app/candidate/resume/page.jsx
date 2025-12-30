@@ -1,57 +1,42 @@
 "use client";
-
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { redirect } from "next/navigation";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { useHeader } from "@/store/user.store";
-import { useEffect } from "react";
+import { Upload, FileText, X } from "lucide-react";
+import axios from "axios";
 
 const ResumeViewerPage = () => {
   const [resumeFile, setResumeFile] = useState(null);
-  const [resumeData, setResumeData] = useState(null);
-  const setTitle = useHeader(state => state.setTitle);
+  const setTitle = useHeader((state) => state.setTitle);
+  const fileInputRef = useRef(null);
 
-  // Placeholder resume parsing logic
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!resumeFile) return;
+    const formData = new FormData();
+    formData.append("resume", resumeFile);
+    const clerkToken = await window.Clerk.session.getToken();
 
-    // Simulated resume data (replace with real parser later)
-    const mockData = {
-      name: "John Doe",
-      role: "Full Stack Developer",
-      email: "john.doe@example.com",
-      phone: "+1 (555) 123-4567",
-      skills: ["React", "Node.js", "TypeScript", "TailwindCSS", "Python"],
-      experience: [
-        {
-          company: "Tech Solutions Inc.",
-          role: "Software Engineer",
-          duration: "2021 - Present",
-          details:
-            "Developed scalable web apps using React, Node.js, and PostgreSQL.",
-        },
-        {
-          company: "Innovate Labs",
-          role: "Frontend Developer",
-          duration: "2019 - 2021",
-          details:
-            "Built and optimized UI components using React and TailwindCSS.",
-        },
-      ],
-      education: [
-        {
-          institution: "University of Technology",
-          degree: "B.Sc. in Computer Science",
-          year: "2015 - 2019",
-        },
-      ],
-    };
+    const resp = await axios.post("/api/candidate/resume", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${clerkToken}`,
+      },
+    });
 
-    setResumeData(mockData);
+    if(resp.status != 200) {
+      alert(resp.data.message);
+    } else {
+      redirect("/candidate/edit-profile");
+    }
   };
 
   const handleFileChange = (e) => {
@@ -59,105 +44,96 @@ const ResumeViewerPage = () => {
       setResumeFile(e.target.files[0]);
     }
   };
+  const handleClearFile = () => {
+    setResumeFile(null);
 
-  useEffect(() => {
-    setTitle("Resume");
-  },[])
+    // Reset native file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  useEffect( () => {
+    setTitle("Upload Your Resume");
+  }, []);
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
-      {/* Upload Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Upload Resume</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col sm:flex-row items-center gap-4">
-          <Input
-            type="file"
-            accept=".pdf,.doc,.docx"
-            onChange={handleFileChange}
-          />
-          <Button onClick={handleUpload}>Upload</Button>
-        </CardContent>
-      </Card>
-
-      {/* Resume Summary */}
-      {resumeData && (
-        <div className="space-y-6">
-          <Card>
-            <CardContent className="flex flex-col sm:flex-row items-center sm:items-start gap-4 py-6">
-              <Avatar className="w-20 h-20">
-                <AvatarImage src="/avatar-placeholder.png" />
-                <AvatarFallback>{resumeData.name[0]}</AvatarFallback>
-              </Avatar>
-              <div className="text-center sm:text-left">
-                <h2 className="text-xl font-semibold">{resumeData.name}</h2>
-                <p className="text-sm text-muted-foreground">
-                  {resumeData.role}
-                </p>
-                <div className="mt-2 text-sm">
-                  <p>{resumeData.email}</p>
-                  <p>{resumeData.phone}</p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Upload Section */}
+        <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+          <div className="w-full max-w-2xl">
+            <div className="text-center mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-2 px-4">
+                Upload Your Resume
+              </h1>
+              <p className="text-sm sm:text-base text-muted-foreground px-4">
+                Get started by uploading your resume
+              </p>
+            </div>
+            <Card className="border-dashed border-2 hover:border-primary/50 transition-colors mx-4">
+              <CardHeader className="space-y-3 sm:space-y-4">
+                <div className="flex items-center justify-center">
+                  <div className="p-3 sm:p-4 rounded-full bg-primary/10">
+                    <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+                <CardTitle className="text-center text-lg sm:text-xl">
+                  Upload Your Resume
+                </CardTitle>
+                <CardDescription className="text-center text-sm sm:text-base px-2">
+                  Support for PDF, DOC, and DOCX files
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
+                  <label className="relative flex-1">
+                    <Input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleFileChange}
+                      className="h-11 sm:h-12 cursor-pointer"
+                    />
+                  </label>
 
-          <Separator />
-
-          {/* Skills Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Skills</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              {resumeData.skills.map((skill) => (
-                <Badge key={skill}>{skill}</Badge>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Experience Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Experience</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {resumeData.experience.map((exp, index) => (
-                <Card key={index} className="p-4">
-                  <h3 className="font-semibold">{exp.role}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {exp.company} • {exp.duration}
-                  </p>
-                  <p className="mt-2 text-sm">{exp.details}</p>
-                </Card>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Education Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Education</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {resumeData.education.map((edu, index) => (
-                <div key={index}>
-                  <h3 className="font-semibold">{edu.degree}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {edu.institution} • {edu.year}
-                  </p>
+                  <Button
+                    onClick={handleUpload}
+                    disabled={!resumeFile}
+                    size="lg"
+                    className="h-11 sm:h-12 whitespace-nowrap"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Resume
+                  </Button>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
 
-          {/* View/Download Button */}
-          <div className="flex justify-end">
-            <Button variant="outline">View / Download Original Resume</Button>
+                {resumeFile && (
+                  <div className="mt-2 p-3 sm:p-4 bg-muted rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs sm:text-sm font-medium flex items-center gap-2 break-all">
+                        <FileText className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{resumeFile.name}</span>
+                      </p>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleClearFile}
+                        className="h-8 w-8"
+                        aria-label="Remove selected file"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

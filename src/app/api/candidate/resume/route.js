@@ -6,6 +6,7 @@ import Candidate from "@/models/candidateModel";
 import { auth } from "@clerk/nextjs/server";
 import { connect } from "@/lib/db";
 import { deleteResume, uploadResume } from "@/utils/claudinary";
+import { checkAuth } from "@/utils/checkAuth";
 
 export const config = {
   api: {
@@ -15,7 +16,15 @@ export const config = {
 
 export async function POST(req) {
   connect();
-  const { userId } = await auth();
+  const authResult = await checkAuth({allowedRoles:["candidate"]});
+
+  if (!authResult.authenticated) {
+    return NextResponse.json({
+      messgae: authResult.error
+    }, {status: authResult.error === "Forbidden"? 403 : 401})
+  }
+
+  const userId = authResult.userId;
   let resumePath;
   let resumeName;
   try {

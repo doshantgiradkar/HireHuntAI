@@ -1,6 +1,10 @@
 "use client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Link from "next/link";
+
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,286 +14,317 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import {
-  Building2,
+  Briefcase,
+  GraduationCap,
+  FileText,
   MapPin,
   Calendar,
-  Globe,
-  Users,
-  Briefcase,
-  Mail,
-  Phone,
-  Clock,
+  Link as LinkIcon,
   Edit,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
+import Link from "next/link";
 import { useHeader } from "@/store/user.store";
+export const dummyCandidate = {
+  _id: "65b9f1a2c9d1a12f9c001234",
+  clerkId: "user_2abcdEFGH12345",
+
+  totalExperienceDuration: 3,
+
+  dateOfBirth: "1999-06-15T00:00:00.000Z",
+
+  address: {
+    line: "Flat 203, Shree Residency",
+    city: "Pune",
+    state: "Maharashtra",
+    country: "India",
+    pinCode: "411038",
+  },
+
+  resume: {
+    resumeUrl:
+      "https://res.cloudinary.com/demo/raw/upload/sample_resume.pdf",
+
+    skills: [
+      "JavaScript",
+      "React",
+      "Next.js",
+      "Node.js",
+      "MongoDB",
+      "Tailwind CSS",
+    ],
+
+    experience: [
+      {
+        jobTitle: "Frontend Developer",
+        jobDesc:
+          "Built scalable UI components using React and Tailwind. Worked closely with backend team to integrate REST APIs.",
+      },
+      {
+        jobTitle: "Junior Full Stack Developer",
+        jobDesc:
+          "Developed full-stack features using Next.js, Express, and MongoDB. Implemented authentication using Clerk.",
+      },
+    ],
+
+    education: [
+      {
+        course: "B.Tech Computer Engineering",
+        eduType: "Full Time",
+        instituteName: "Savitribai Phule Pune University",
+        yearOfComp: 2022,
+      },
+      {
+        course: "Higher Secondary (12th)",
+        eduType: "Science",
+        instituteName: "Fergusson College",
+        yearOfComp: 2018,
+      },
+    ],
+
+    certifications: [
+      {
+        name: "Full Stack Web Development",
+        provider: "Udemy",
+        yearOfComp: 2023,
+      },
+      {
+        name: "React Advanced",
+        provider: "Coursera",
+        yearOfComp: 2022,
+      },
+    ],
+
+    socials: [
+      {
+        name: "GitHub",
+        url: "https://github.com/devmulkalwar",
+      },
+      {
+        name: "LinkedIn",
+        url: "https://linkedin.com/in/devmulkalwar",
+      },
+      {
+        name: "Portfolio",
+        url: "https://devmulkalwar.vercel.app",
+      },
+    ],
+  },
+
+  createdAt: "2024-10-12T10:20:30.000Z",
+  updatedAt: "2024-12-01T15:45:10.000Z",
+};
 
 
-
-/* ---------------- PAGE ---------------- */
-export default  function CompanyProfilePage() {
-const { user, isLoaded } = useUser();
-  const [companyData, setCompanyData] = useState(null);
+export default function CandidateProfilePage() {
+  const { user, isLoaded } = useUser();
+  const [candidate, setCandidate] = useState(null);
   const [loading, setLoading] = useState(true);
   const setTitle = useHeader(state => state.setTitle);
 
-  useEffect(() => {
-    setTitle("My Profile")
-    if (!isLoaded || !user) return;
+useEffect(() => {
+  setTitle("Candidate Profile");
 
-
-    const fetchCompany = async () => {
-      try {
-        const res = await fetch(`/api/recruiter/${user.id}`);
-        const data = await res.json();
-        setCompanyData(data.recruiter);
-
-      } catch (err) {
-        console.error("Fetch failed", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCompany();
-  }, [isLoaded, user]);
-
+  // ⛔ Skip API for now
+  setCandidate(dummyCandidate);
+  setLoading(false);
+}, []);
 
   if (!isLoaded || loading) {
-    return <div className="p-8 text-center">Loading company profile...</div>;
+    return <div className="p-8 text-center">Loading profile…</div>;
   }
 
-  if (!companyData) {
-    return <div className="p-8 text-center">No company profile found.</div>;
+  if (!candidate) {
+    return <div className="p-8 text-center">No profile found.</div>;
   }
+
+  const { resume, address } = candidate;
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="space-y-6">
-          {/* ================= HEADER ================= */}
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={companyData.logo} alt={companyData.name} />
-                  <AvatarFallback>
-                    <Building2 className="h-12 w-12" />
-                  </AvatarFallback>
-                </Avatar>
+      <div className="container mx-auto px-4 py-8 max-w-6xl space-y-6">
 
-                <div className="flex-1 space-y-2">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <CardTitle className="text-3xl">
-                      {companyData.name}
-                    </CardTitle>
-                    <Badge
-                      variant={
-                        companyData.status === "Active"
-                          ? "default"
-                          : "secondary"
-                      }
-                    >
-                      {companyData.status}
-                    </Badge>
-                  </div>
+        {/* ================= HEADER ================= */}
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={user.imageUrl} />
+                <AvatarFallback>
+                  {user.firstName?.[0]}
+                </AvatarFallback>
+              </Avatar>
 
-                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <div className="flex-1 space-y-2">
+                <CardTitle className="text-3xl">
+                  {user.fullName}
+                </CardTitle>
+
+                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                  {candidate.totalExperienceDuration && (
                     <div className="flex items-center gap-1">
                       <Briefcase className="h-4 w-4" />
-                      <span>{companyData.industry}</span>
+                      {candidate.totalExperienceDuration} yrs experience
                     </div>
+                  )}
+                  {candidate.dateOfBirth && (
                     <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      <span>{companyData.size}</span>
+                      <Calendar className="h-4 w-4" />
+                      {new Date(candidate.dateOfBirth).toLocaleDateString()}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      <span>{companyData.headquarters}</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
-
-                <Button asChild>
-                  <Link href="/recruiter/edit-recruiter-profile">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Company Profile
-                  </Link>
-                </Button>
               </div>
-            </CardHeader>
-          </Card>
 
-          {/* ================= TABS ================= */}
-          <Tabs defaultValue="about" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="about">About Company</TabsTrigger>
-              <TabsTrigger value="contact">Contact Info</TabsTrigger>
-              <TabsTrigger value="admin">Admin Info</TabsTrigger>
-            </TabsList>
+              <Button asChild>
+                <Link href="/candidate/edit-profile">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </Link>
+              </Button>
+            </div>
+          </CardHeader>
+        </Card>
 
-            {/* ========== ABOUT TAB ========== */}
-            <TabsContent value="about" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Company Information</CardTitle>
-                  <CardDescription>
-                    Overview and key details about the company
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">
-                      Company Overview
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {companyData.overview}
+        {/* ================= TABS ================= */}
+        <Tabs defaultValue="resume" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="resume">Resume</TabsTrigger>
+            <TabsTrigger value="education">Education</TabsTrigger>
+            <TabsTrigger value="extras">Extras</TabsTrigger>
+          </TabsList>
+
+          {/* ========== RESUME TAB ========== */}
+          <TabsContent value="resume" className="space-y-6">
+            {/* Skills */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Skills</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                {resume.skills?.map((skill, i) => (
+                  <Badge key={i} variant="secondary">
+                    {skill}
+                  </Badge>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Experience */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Experience</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {resume.experience?.map((exp, i) => (
+                  <Card key={i} className="p-4">
+                    <h3 className="font-medium">{exp.jobTitle}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {exp.jobDesc}
+                    </p>
+                  </Card>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Resume Download */}
+            <div className="flex justify-end">
+              <Button asChild variant="outline">
+                <a href={resume.resumeUrl} target="_blank">
+                  <FileText className="h-4 w-4 mr-2" />
+                  View Resume
+                </a>
+              </Button>
+            </div>
+          </TabsContent>
+
+          {/* ========== EDUCATION TAB ========== */}
+          <TabsContent value="education">
+            <Card>
+              <CardHeader>
+                <CardTitle>Education</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {resume.education?.map((edu, i) => (
+                  <div key={i} className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4" />
+                      <span className="font-medium">
+                        {edu.course} ({edu.eduType})
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground ml-6">
+                      {edu.instituteName} • {edu.yearOfComp}
                     </p>
                   </div>
+                ))}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                  <Separator />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <Globe className="h-4 w-4 text-muted-foreground" />
-                        <span>Website</span>
-                      </div>
-                      <a
-                        href={companyData.website}
-                        className="text-sm text-primary hover:underline ml-6"
-                      >
-                        {companyData.website}
-                      </a>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>Headquarters</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground ml-6">
-                        {companyData.headquarters}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>Founded</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground ml-6">
-                        {companyData.founded}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <span>Hiring Model</span>
-                      </div>
-                      <Badge variant="outline" className="ml-6">
-                        {companyData.hiringModel}
-                      </Badge>
-                    </div>
+          {/* ========== EXTRAS TAB ========== */}
+          <TabsContent value="extras" className="space-y-6">
+            {/* Certifications */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Certifications</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {resume.certifications?.map((cert, i) => (
+                  <div key={i}>
+                    <p className="font-medium">{cert.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {cert.provider} • {cert.yearOfComp}
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
+                ))}
+              </CardContent>
+            </Card>
 
+            {/* Social Links */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Social Profiles</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {resume.socials?.map((social, i) => (
+                  <a
+                    key={i}
+                    href={social.url}
+                    target="_blank"
+                    className="flex items-center gap-2 text-sm text-primary hover:underline"
+                  >
+                    <LinkIcon className="h-4 w-4" />
+                    {social.name}
+                  </a>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Address */}
+            {address && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Company Details</CardTitle>
-                  <CardDescription>
-                    Additional information and hiring preferences
-                  </CardDescription>
+                  <CardTitle>Address</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-1">
-                      <h3 className="text-sm font-medium">Company Type</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {companyData.companyType}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1">
-                      <h3 className="text-sm font-medium">Interview Process</h3>
-                      <Badge variant="secondary">
-                        {companyData.interviewProcess}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium">
-                      Primary Hiring Roles
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {companyData.primaryRoles?.map((role, index) => (
-                        <Badge key={index} variant="outline">
-                          {role}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
+                <CardContent className="text-sm text-muted-foreground">
+                  <MapPin className="inline h-4 w-4 mr-2" />
+                  {address.line}, {address.city}, {address.state},{" "}
+                  {address.pinCode}, {address.country}
                 </CardContent>
               </Card>
-            </TabsContent>
-
-            {/* ========== CONTACT TAB ========== */}
-            <TabsContent value="contact" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Contact Information</CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Mail className="inline h-4 w-4 mr-2" />
-                    {companyData.contactEmail}
-                  </div>
-                  <div>
-                    <Phone className="inline h-4 w-4 mr-2" />
-                    {companyData.contactPhone}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* ========== ADMIN TAB ========== */}
-            <TabsContent value="admin">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Administrator</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <Avatar>
-                      <AvatarImage src={companyData.admin.avatar} />
-                      <AvatarFallback>
-                        {companyData.admin.name
-                          ?.split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{companyData.admin.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {companyData.admin.role}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

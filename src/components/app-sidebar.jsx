@@ -46,7 +46,7 @@ const recruiterRoutes = {
     },
      {
       title: "Interviews",
-      url: "/candidate/interviews",
+      url: "/recruiter/interviews",
       icon: IconCamera,
     },
     {
