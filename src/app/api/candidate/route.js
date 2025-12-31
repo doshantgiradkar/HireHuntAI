@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connect } from "@/lib/db";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import Candidate from "@/models/candidateModel";
+import { checkAuth } from "@/utils/checkAuth";
 
 export async function PUT(req) {
   try {
@@ -96,10 +97,10 @@ export async function GET() {
   try {
     await connect();
 
-    const { userId } = await auth();
-    console.log(userId);
-    if (!userId) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    const { userId, error, authenticated, status } = await checkAuth({ allowedRoles: ["candidate"] });
+
+    if (!authenticated) {
+      return NextResponse.json({ message: error }, { status });
     }
 
     const candidate = await Candidate.findOne({ clerkId: userId });
