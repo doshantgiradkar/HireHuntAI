@@ -37,7 +37,7 @@ export default function Page() {
   }, []);
 
   return (
-    <div className="w-full flex justify-center">
+    <div className="min-h-screen bg-background">
       {candidateData && Object.keys(candidateData).length > 0 ? (
         <EditCandidateProfileForm
           initialData={candidateData}
