@@ -68,7 +68,7 @@ const recruiterRoutes = {
     },
     {
       title: "About",
-      url: "/candidate/about",
+      url: "/recruiter/about",
       icon: IconInfoCircle,
     }
   ],

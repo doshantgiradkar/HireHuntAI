@@ -33,7 +33,7 @@ export default function RecruiterProfile() {
   const [error, setError] = useState(null);
   const router = useRouter();
   const { getToken } = useAuth();
-  const { user, isLoaded,isSignedIn } = useUser();
+  const { user, isLoaded, isSignedIn } = useUser();
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn || !user?.id) return;
@@ -165,9 +165,7 @@ export default function RecruiterProfile() {
                 {/* Edit Button */}
                 <div className="w-full md:w-auto flex justify-center md:justify-end">
                   <Button
-                    onClick={() =>
-                      router.push("/recruiter/edit-profile")
-                    }
+                    onClick={() => router.push("/recruiter/edit-profile")}
                     className="flex items-center gap-2"
                   >
                     <Edit className="h-4 w-4" />
@@ -182,6 +180,124 @@ export default function RecruiterProfile() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Company Info & Contact */}
           <div className="lg:col-span-1 space-y-6">
+            {/* Contact Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Mail className="h-5 w-5" />
+                  Contact Information
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                {/* Email & Phone in same row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {companyData.contactEmail && (
+                    <div className="flex items-start gap-3">
+                      <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Email</p>
+                        <p className="text-sm text-muted-foreground break-all">
+                          {companyData.contactEmail}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {companyData.contactPhone && (
+                    <div className="flex items-start gap-3">
+                      <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Phone</p>
+                        <p className="text-sm text-muted-foreground">
+                          {companyData.contactPhone}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Full-width Address */}
+                {companyData.address?.line && (
+                  <div className="flex items-start gap-3">
+                    <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">Address</p>
+                      <p className="text-sm text-muted-foreground break-all">
+                        {companyData.address.line}, {companyData.address.city},{" "}
+                        {companyData.address.state} -{" "}
+                        {companyData.address.pinCode},{" "}
+                        {companyData.address.country}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* ================= ADMINISTRATOR ================= */}
+            {companyData.admin && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Users className="h-5 w-5" />
+                    Administrator
+                  </CardTitle>
+                </CardHeader>
+
+                <CardContent className="pt-4">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                    {/* Avatar */}
+                    <Avatar className="h-20 w-20 flex-shrink-0">
+                      <AvatarImage src={companyData.admin.avatar} />
+                      <AvatarFallback className="text-lg">
+                        {companyData.admin.name
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    {/* Admin Info */}
+                    <div className="w-full space-y-2 text-center md:text-left">
+                      <h3 className="text-xl font-semibold">
+                        {companyData.admin.name}
+                      </h3>
+
+                      {companyData.admin.role && (
+                        <Badge variant="outline" className="mt-1">
+                          {companyData.admin.role}
+                        </Badge>
+                      )}
+
+                      <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+                        {companyData.admin.email && (
+                          <p>
+                            <span className="font-medium text-foreground">
+                              Email:
+                            </span>{" "}
+                            {companyData.admin.email}
+                          </p>
+                        )}
+
+                        {companyData.admin.phone && (
+                          <p>
+                            <span className="font-medium text-foreground">
+                              Phone:
+                            </span>{" "}
+                            {companyData.admin.phone}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Right Column - Overview & Roles */}
+          <div className="lg:col-span-2 space-y-6">
             {/* Company Details */}
             <Card>
               <CardHeader>
@@ -190,7 +306,8 @@ export default function RecruiterProfile() {
                   Company Details
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Company Size */}
                 <div className="flex items-start gap-3">
                   <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
@@ -201,6 +318,7 @@ export default function RecruiterProfile() {
                   </div>
                 </div>
 
+                {/* Headquarters */}
                 <div className="flex items-start gap-3">
                   <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
@@ -211,6 +329,7 @@ export default function RecruiterProfile() {
                   </div>
                 </div>
 
+                {/* Founded */}
                 {companyData.founded && (
                   <div className="flex items-start gap-3">
                     <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -223,6 +342,7 @@ export default function RecruiterProfile() {
                   </div>
                 )}
 
+                {/* Website */}
                 {companyData.website && (
                   <div className="flex items-start gap-3">
                     <Globe className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -243,110 +363,6 @@ export default function RecruiterProfile() {
               </CardContent>
             </Card>
 
-            {/* Contact Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Mail className="h-5 w-5" />
-                  Contact Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {companyData.contactEmail && (
-                  <div className="flex items-start gap-3">
-                    <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium">Email</p>
-                      <p className="text-sm text-muted-foreground break-all">
-                        {companyData.contactEmail}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {companyData.contactPhone && (
-                  <div className="flex items-start gap-3">
-                    <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium">Phone</p>
-                      <p className="text-sm text-muted-foreground">
-                        {companyData.contactPhone}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Hiring Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Briefcase className="h-5 w-5" />
-                  Hiring Model
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {companyData.hiringModel && (
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium">Model Type</p>
-                      <Badge variant="outline" className="mt-1">
-                        {companyData.hiringModel}
-                      </Badge>
-                    </div>
-                  </div>
-                )}
-
-                {companyData.interviewProcess && (
-                  <div className="flex items-start gap-3">
-                    <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium">Interview Process</p>
-                      <Badge variant="secondary" className="mt-1">
-                        {companyData.interviewProcess}
-                      </Badge>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Administrator */}
-            {companyData.admin && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Users className="h-5 w-5" />
-                    Administrator
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-4">
-                    <Avatar>
-                      <AvatarImage src={companyData.admin.avatar} />
-                      <AvatarFallback>
-                        {companyData.admin.name
-                          ?.split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{companyData.admin.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {companyData.admin.role}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          {/* Right Column - Overview & Roles */}
-          <div className="lg:col-span-2 space-y-6">
             {/* Company Overview */}
             <Card>
               <CardHeader>
