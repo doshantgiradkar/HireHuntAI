@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { LoadResume } from "@/lib/resume_parser";
 import Candidate from "@/models/candidateModel";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { connect } from "@/lib/db";
 import { deleteResume, uploadResume } from "@/utils/claudinary";
 import { checkAuth } from "@/utils/checkAuth";

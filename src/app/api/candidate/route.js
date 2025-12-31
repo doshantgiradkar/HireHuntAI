@@ -102,7 +102,7 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const candidate = await candidateModel.findOne({ clerkId: userId });
+    const candidate = await Candidate.findOne({ clerkId: userId });
 
     if (!candidate) {
       return NextResponse.json(

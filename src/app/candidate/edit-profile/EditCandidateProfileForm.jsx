@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -14,12 +14,47 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Plus, X, FileText, Link2 } from "lucide-react";
+import {
+  Plus,
+  X,
+  FileText,
+  Link2,
+  GraduationCap,
+  Briefcase,
+  Award,
+  Building,
+  User,
+} from "lucide-react";
+import { useUser } from "@clerk/nextjs";
 
 export default function EditCandidateProfileForm({ initialData, onSubmit }) {
-  const [formData, setFormData] = useState(initialData);
+  const [formData, setFormData] = useState({
+  firstName: "",
+  lastName: "",
+  email: "",
+  profileImageUrl: "",
+  totalExperienceDuration: 0,
+  dateOfBirth: "",
+  address: {
+    line: "",
+    city: "",
+    state: "",
+    pinCode: "",
+  },
+  resume: {
+    resumeUrl: "",
+    skills: [],
+    socials: [],
+    education: [],
+    experience: [],
+    certifications: [],
+  },
+});
+
   const [newSkill, setNewSkill] = useState("");
   const [newSocial, setNewSocial] = useState({ name: "", url: "" });
+  const { isSignedIn, user } = useUser();
+  
 
   /* ---------------- HANDLERS ---------------- */
   const updateAddress = (field, value) => {
@@ -73,6 +108,45 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
     );
   };
 
+  useEffect(() => {
+    if (isSignedIn && user) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.emailAddresses[0]?.emailAddress || "",
+        profileImageUrl: user.imageUrl,
+      }));
+    }
+  }, [isSignedIn, user]);
+
+ useEffect(() => {
+  if (initialData && Object.keys(initialData).length > 0) {
+    setFormData({
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      email: user.emailAddresses[0]?.emailAddress || "",
+      profileImageUrl: user.imageUrl || "",
+      totalExperienceDuration: initialData.totalExperienceDuration || 0,
+      dateOfBirth: initialData.dateOfBirth || "",
+      address: {
+        line: initialData.address?.line || "",
+        city: initialData.address?.city || "",
+        state: initialData.address?.state || "",
+        pinCode: initialData.address?.pinCode || "",
+      },
+      resume: {
+        resumeUrl: initialData.resume?.resumeUrl || "",
+        skills: initialData.resume?.skills || [],
+        socials: initialData.resume?.socials || [],
+        education: initialData.resume?.education || [],
+        experience: initialData.resume?.experience || [],
+        certifications: initialData.resume?.certifications || [],
+      },
+    });
+  }
+}, [initialData]);
+
   /* ---------------- UI ---------------- */
   return (
     <form
@@ -80,33 +154,71 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
         e.preventDefault();
         onSubmit?.(formData);
       }}
-      className="space-y-6"
+      className="w-full max-w-5xl mx-auto space-y-6 min-w-0"
     >
       {/* ================= BASIC INFO ================= */}
       <Card>
-        <CardHeader>
-          <CardTitle>Candidate Profile</CardTitle>
-          <CardDescription>Personal and resume information</CardDescription>
-        </CardHeader>
+        <CardContent>
+          {/* ---------- PROFILE HEADER ---------- */}
+          <div className="flex items-center gap-6">
+            {/* Avatar */}
+            <img
+              src={formData.profileImageUrl}
+              alt="Profile"
+              className="h-24 w-24 rounded-full border object-cover"
+            />
 
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
+            {/* Name and Email */}
+            <div className="flex-1 space-y-1">
+              <p className="text-xl font-semibold">{`${formData.firstName} ${formData.lastName}`}</p>
+              <p className="text-sm text-muted-foreground">{formData.email}</p>
+            </div>
+          </div>
+
+          <Separator className="my-4" />
+
+          {/* ---------- PROFILE STATS (Like IG) ---------- */}
+          <div className="flex justify-around text-center">
+            <div>
+              <p className="font-semibold">
+                {formData.totalExperienceDuration || 0}
+              </p>
+              <p className="text-sm text-muted-foreground">Years Exp</p>
+            </div>
+
+            <div>
+              <p className="font-semibold">{formData.resume.skills.length}</p>
+              <p className="text-sm text-muted-foreground">Skills</p>
+            </div>
+
+            <div>
+              <p className="font-semibold">
+                {formData.resume.education.length}
+              </p>
+              <p className="text-sm text-muted-foreground">Education</p>
+            </div>
+          </div>
+
+          <Separator className="my-4" />
+
+          {/* ---------- NON-EDITABLE INFO ---------- */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
               <Label>Date of Birth</Label>
               <Input
                 type="date"
-                value={formData.dateOfBirth?.slice(0, 10)}
+                value={formData.dateOfBirth?.slice(0, 10) || ""}
                 onChange={(e) =>
                   setFormData({ ...formData, dateOfBirth: e.target.value })
                 }
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Total Experience (Years)</Label>
               <Input
                 type="number"
-                value={formData.totalExperienceDuration}
+                value={formData.totalExperienceDuration || ""}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
@@ -133,26 +245,26 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
           <div className="space-y-3">
             <Label>Add Social Link</Label>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <div className="flex col-span-2 gap-2">
-                <Input
-                  placeholder="Platform (linkedin, github)"
-                  value={newSocial.name}
-                  onChange={(e) =>
-                    setNewSocial({ ...newSocial, name: e.target.value })
-                  }
-                />
+            <div className="flex gap-2">
+              <Input
+                placeholder="Platform (linkedin, github)"
+                value={newSocial.name}
+                onChange={(e) =>
+                  setNewSocial({ ...newSocial, name: e.target.value })
+                }
+                className="flex-1"
+              />
 
-                <Input
-                  placeholder="Profile URL"
-                  value={newSocial.url}
-                  onChange={(e) =>
-                    setNewSocial({ ...newSocial, url: e.target.value })
-                  }
-                />
-              </div>
+              <Input
+                placeholder="Profile URL"
+                value={newSocial.url}
+                onChange={(e) =>
+                  setNewSocial({ ...newSocial, url: e.target.value })
+                }
+                className="flex-[2]"
+              />
 
-              <Button className="col-span-1" type="button" onClick={addSocial}>
+              <Button type="button" size="icon" onClick={addSocial}>
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
@@ -202,7 +314,8 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
 
       {/* ================= ADDRESS ================= */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex items-center gap-2">
+          <Building className="h-5 w-5" />
           <CardTitle>Address</CardTitle>
         </CardHeader>
 
@@ -266,7 +379,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {formData.resume.skills.map((skill) => (
+              {formData.resume?.skills?.map((skill) => (
                 <Badge key={skill} variant="secondary" className="pr-1">
                   {skill}
                   <Button
@@ -287,221 +400,314 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
       {/* ================= EDUCATION ================= */}
       <Card>
         <CardHeader>
-          <CardTitle>Education</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <GraduationCap className="h-5 w-5" />
+            Education
+          </CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {formData.resume.education.map((edu, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4 border p-4 rounded-lg"
+          {/* -------- ADD EDUCATION -------- */}
+          <div className="flex gap-2">
+            <p className="text-sm text-muted-foreground flex-1">
+              Add a new education entry
+            </p>
+
+            <Button
+              type="button"
+              size="icon"
+              onClick={() =>
+                updateResume("education", [
+                  ...formData.resume.education,
+                  {
+                    instituteName: "",
+                    course: "",
+                    score: "",
+                    yearOfComp: "",
+                  },
+                ])
+              }
             >
-              <Input
-                placeholder="Institute Name"
-                value={edu.instituteName}
-                onChange={(e) => {
-                  const updated = [...formData.resume.education];
-                  updated[index].instituteName = e.target.value;
-                  updateResume("education", updated);
-                }}
-              />
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
 
-              <Input
-                placeholder="Course"
-                value={edu.course}
-                onChange={(e) => {
-                  const updated = [...formData.resume.education];
-                  updated[index].course = e.target.value;
-                  updateResume("education", updated);
-                }}
-              />
+          <Separator />
 
-              <Input
-                placeholder="Score"
-                type="number"
-                value={edu.score}
-                onChange={(e) => {
-                  const updated = [...formData.resume.education];
-                  updated[index].score = e.target.value;
-                  updateResume("education", updated);
-                }}
-              />
+          {/* -------- EDUCATION LIST -------- */}
+          <div className="space-y-3">
+            <Label>Saved Education</Label>
 
-              <Input
-                placeholder="Year of Completion"
-                type="number"
-                value={edu.yearOfComp}
-                onChange={(e) => {
-                  const updated = [...formData.resume.education];
-                  updated[index].yearOfComp = e.target.value;
-                  updateResume("education", updated);
-                }}
-              />
+            <div className="space-y-4">
+              {formData.resume.education.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  No education added yet
+                </p>
+              )}
 
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() =>
-                  updateResume(
-                    "education",
-                    formData.resume.education.filter((_, i) => i !== index)
-                  )
-                }
-              >
-                Remove Education
-              </Button>
+              {formData.resume.education.map((edu, index) => (
+                <div
+                  key={index}
+                  className="relative space-y-4 border rounded-md p-4 pt-10"
+                >
+                  {/* ❌ REMOVE BUTTON */}
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="absolute right-2 top-2"
+                    onClick={() =>
+                      updateResume(
+                        "education",
+                        formData.resume.education.filter((_, i) => i !== index)
+                      )
+                    }
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      placeholder="Institute Name"
+                      value={edu.instituteName}
+                      onChange={(e) => {
+                        const updated = [...formData.resume.education];
+                        updated[index].instituteName = e.target.value;
+                        updateResume("education", updated);
+                      }}
+                    />
+
+                    <Input
+                      placeholder="Course"
+                      value={edu.course}
+                      onChange={(e) => {
+                        const updated = [...formData.resume.education];
+                        updated[index].course = e.target.value;
+                        updateResume("education", updated);
+                      }}
+                    />
+
+                    <Input
+                      placeholder="Score"
+                      type="number"
+                      value={edu.score}
+                      onChange={(e) => {
+                        const updated = [...formData.resume.education];
+                        updated[index].score = e.target.value;
+                        updateResume("education", updated);
+                      }}
+                    />
+
+                    <Input
+                      placeholder="Year of Completion"
+                      type="number"
+                      value={edu.yearOfComp}
+                      onChange={(e) => {
+                        const updated = [...formData.resume.education];
+                        updated[index].yearOfComp = e.target.value;
+                        updateResume("education", updated);
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() =>
-              updateResume("education", [
-                ...formData.resume.education,
-                {
-                  instituteName: "",
-                  course: "",
-                  score: "",
-                  yearOfComp: "",
-                },
-              ])
-            }
-          >
-            Add Education
-          </Button>
+          </div>
         </CardContent>
       </Card>
 
       {/* ================= EXPERIENCE ================= */}
       <Card>
         <CardHeader>
-          <CardTitle>Experience</CardTitle>
-          <CardDescription>Work history</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Briefcase className="h-5 w-5" />
+            Experience
+          </CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {formData.resume.experience.map((exp, index) => (
-            <div key={index} className="space-y-3 border rounded-lg p-4">
-              <Input
-                placeholder="Job Title"
-                value={exp.jobTitle}
-                onChange={(e) => {
-                  const updated = [...formData.resume.experience];
-                  updated[index].jobTitle = e.target.value;
-                  updateResume("experience", updated);
-                }}
-              />
+          {/* -------- ADD EXPERIENCE -------- */}
+          <div className="flex gap-2">
+            <p className="text-sm text-muted-foreground flex-1">
+              Add a new work experience
+            </p>
 
-              <Textarea
-                placeholder="Job Description"
-                value={exp.jobDesc}
-                onChange={(e) => {
-                  const updated = [...formData.resume.experience];
-                  updated[index].jobDesc = e.target.value;
-                  updateResume("experience", updated);
-                }}
-              />
+            <Button
+              type="button"
+              size="icon"
+              onClick={() =>
+                updateResume("experience", [
+                  ...formData.resume.experience,
+                  { jobTitle: "", jobDesc: "" },
+                ])
+              }
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
 
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() =>
-                  updateResume(
-                    "experience",
-                    formData.resume.experience.filter((_, i) => i !== index)
-                  )
-                }
-              >
-                Remove Experience
-              </Button>
+          <Separator />
+
+          {/* -------- EXPERIENCE LIST -------- */}
+          <div className="space-y-3">
+            <Label>Saved Experience</Label>
+
+            <div className="space-y-4">
+              {formData.resume.experience.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  No experience added yet
+                </p>
+              )}
+
+              {formData.resume.experience.map((exp, index) => (
+                <div
+                  key={index}
+                  className="relative space-y-4 border rounded-md p-4"
+                >
+                  {/* ❌ REMOVE BUTTON */}
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="absolute right-2 top-2"
+                    onClick={() =>
+                      updateResume(
+                        "experience",
+                        formData.resume.experience.filter((_, i) => i !== index)
+                      )
+                    }
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+
+                  <Input
+                    placeholder="Job Title"
+                    value={exp.jobTitle}
+                    onChange={(e) => {
+                      const updated = [...formData.resume.experience];
+                      updated[index].jobTitle = e.target.value;
+                      updateResume("experience", updated);
+                    }}
+                  />
+
+                  <Textarea
+                    placeholder="Job Description"
+                    value={exp.jobDesc}
+                    onChange={(e) => {
+                      const updated = [...formData.resume.experience];
+                      updated[index].jobDesc = e.target.value;
+                      updateResume("experience", updated);
+                    }}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() =>
-              updateResume("experience", [
-                ...formData.resume.experience,
-                { jobTitle: "", jobDesc: "" },
-              ])
-            }
-          >
-            Add Experience
-          </Button>
+          </div>
         </CardContent>
       </Card>
+
       {/* ================= CERTIFICATIONS ================= */}
       <Card>
         <CardHeader>
-          <CardTitle>Certifications</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Award className="h-5 w-5" />
+            Certifications
+          </CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {formData.resume.certifications.map((cert, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-1 md:grid-cols-3 gap-4 border p-4 rounded-lg"
+          {/* -------- ADD CERTIFICATION -------- */}
+          <div className="flex gap-2">
+            <p className="text-sm text-muted-foreground flex-1">
+              Add a new certification
+            </p>
+
+            <Button
+              type="button"
+              size="icon"
+              onClick={() =>
+                updateResume("certifications", [
+                  ...formData.resume.certifications,
+                  { name: "", provider: "", yearOfComp: "" },
+                ])
+              }
             >
-              <Input
-                placeholder="Certification Name"
-                value={cert.name}
-                onChange={(e) => {
-                  const updated = [...formData.resume.certifications];
-                  updated[index].name = e.target.value;
-                  updateResume("certifications", updated);
-                }}
-              />
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
 
-              <Input
-                placeholder="Provider"
-                value={cert.provider}
-                onChange={(e) => {
-                  const updated = [...formData.resume.certifications];
-                  updated[index].provider = e.target.value;
-                  updateResume("certifications", updated);
-                }}
-              />
+          <Separator />
 
-              <Input
-                placeholder="Year"
-                type="number"
-                value={cert.yearOfComp}
-                onChange={(e) => {
-                  const updated = [...formData.resume.certifications];
-                  updated[index].yearOfComp = e.target.value;
-                  updateResume("certifications", updated);
-                }}
-              />
+          {/* -------- CERTIFICATIONS LIST -------- */}
+          <div className="space-y-3">
+            <Label>Saved Certifications</Label>
 
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() =>
-                  updateResume(
-                    "certifications",
-                    formData.resume.certifications.filter((_, i) => i !== index)
-                  )
-                }
-              >
-                Remove Certification
-              </Button>
+            <div className="space-y-4">
+              {formData.resume.certifications.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  No certifications added yet
+                </p>
+              )}
+
+              {formData.resume.certifications.map((cert, index) => (
+                <div
+                  key={index}
+                  className="relative space-y-4 border rounded-md p-4"
+                >
+                  {/* ❌ REMOVE BUTTON */}
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="absolute right-2 top-2"
+                    onClick={() =>
+                      updateResume(
+                        "certifications",
+                        formData.resume.certifications.filter(
+                          (_, i) => i !== index
+                        )
+                      )
+                    }
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Input
+                      placeholder="Certification Name"
+                      value={cert.name}
+                      onChange={(e) => {
+                        const updated = [...formData.resume.certifications];
+                        updated[index].name = e.target.value;
+                        updateResume("certifications", updated);
+                      }}
+                    />
+
+                    <Input
+                      placeholder="Provider"
+                      value={cert.provider}
+                      onChange={(e) => {
+                        const updated = [...formData.resume.certifications];
+                        updated[index].provider = e.target.value;
+                        updateResume("certifications", updated);
+                      }}
+                    />
+
+                    <Input
+                      placeholder="Year"
+                      type="number"
+                      value={cert.yearOfComp}
+                      onChange={(e) => {
+                        const updated = [...formData.resume.certifications];
+                        updated[index].yearOfComp = e.target.value;
+                        updateResume("certifications", updated);
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() =>
-              updateResume("certifications", [
-                ...formData.resume.certifications,
-                { name: "", provider: "", yearOfComp: "" },
-              ])
-            }
-          >
-            Add Certification
-          </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -512,3 +718,4 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
     </form>
   );
 }
+
