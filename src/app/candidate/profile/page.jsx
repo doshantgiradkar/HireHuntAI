@@ -1,294 +1,450 @@
-"use client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import {
-  Building2,
+  User,
   MapPin,
   Calendar,
-  Globe,
-  Users,
   Briefcase,
-  Mail,
-  Phone,
-  Clock,
+  GraduationCap,
+  Award,
+  Link2,
+  FileText,
   Edit,
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import { useUser } from "@clerk/nextjs";
-import { useHeader } from "@/store/user.store";
+  Loader2,
+  Github,
+  Linkedin,
+  Code,
+  ExternalLink,
+  Mail,
+  Phone
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useAuth, useUser } from '@clerk/nextjs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-
-
-/* ---------------- PAGE ---------------- */
-export default  function CompanyProfilePage() {
-const { user, isLoaded } = useUser();
-  const [companyData, setCompanyData] = useState(null);
+export default function CandidateProfile() {
+  const [candidate, setCandidate] = useState(null);
   const [loading, setLoading] = useState(true);
-  const setTitle = useHeader(state => state.setTitle);
+  const [error, setError] = useState(null);
+  const router = useRouter();
+  const { getToken } = useAuth();
+  const { user, isLoaded: isUserLoaded } = useUser();
 
   useEffect(() => {
-    setTitle("My Profile")
-    if (!isLoaded || !user) return;
+    fetchCandidateData();
+  }, []);
 
+  const fetchCandidateData = async () => {
+    try {
+      const clerkToken = await getToken();
+      const response = await fetch('/api/candidate', {
+        headers: {
+          Authorization: `Bearer ${clerkToken}`
+        }
+      });
+      const data = await response.json();
 
-    const fetchCompany = async () => {
-      try {
-        const res = await fetch(`/api/recruiter/${user.id}`);
-        const data = await res.json();
-        setCompanyData(data.recruiter);
-
-      } catch (err) {
-        console.error("Fetch failed", err);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch candidate data');
       }
+
+      setCandidate(data.candidate);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getSocialIcon = (name) => {
+    const icons = {
+      github: Github,
+      linkedin: Linkedin,
+      leetcode: Code,
+      others: Link2
     };
+    const Icon = icons[name] || Link2;
+    return <Icon className="h-4 w-4" />;
+  };
 
-    fetchCompany();
-  }, [isLoaded, user]);
+  const getEducationLabel = (type) => {
+    const labels = {
+      SSC: 'Secondary School Certificate',
+      HSC: 'Higher Secondary Certificate',
+      UG: 'Undergraduate',
+      PG: 'Postgraduate',
+      Diploma: 'Diploma'
+    };
+    return labels[type] || type;
+  };
 
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
-  if (!isLoaded || loading) {
-    return <div className="p-8 text-center">Loading company profile...</div>;
+  const getInitials = () => {
+    if (!user) return 'U';
+    const first = user.firstName?.[0] || '';
+    const last = user.lastName?.[0] || '';
+    return (first + last).toUpperCase() || 'U';
+  };
+
+  if (loading || !isUserLoaded) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
-  if (!companyData) {
-    return <div className="p-8 text-center">No company profile found.</div>;
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!candidate) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <Alert>
+          <AlertDescription>No candidate profile found.</AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="space-y-6">
-          {/* ================= HEADER ================= */}
+        {/* Header Section with User Info */}
+        <div className="mb-8">
           <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={companyData.logo} alt={companyData.name} />
-                  <AvatarFallback>
-                    <Building2 className="h-12 w-12" />
-                  </AvatarFallback>
-                </Avatar>
-
-                <div className="flex-1 space-y-2">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <CardTitle className="text-3xl">
-                      {companyData.name}
-                    </CardTitle>
-                    <Badge
-                      variant={
-                        companyData.status === "Active"
-                          ? "default"
-                          : "secondary"
-                      }
-                    >
-                      {companyData.status}
-                    </Badge>
-                  </div>
-
-                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Briefcase className="h-4 w-4" />
-                      <span>{companyData.industry}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      <span>{companyData.size}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      <span>{companyData.headquarters}</span>
-                    </div>
+            <CardContent className="pt-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage src={user?.imageUrl} alt={user?.fullName || 'User'} />
+                    <AvatarFallback className="text-lg">{getInitials()}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h1 className="text-3xl font-bold">{user?.fullName || 'Candidate Profile'}</h1>
+                    <p className="text-muted-foreground mt-1">
+                      {user?.primaryEmailAddress?.emailAddress}
+                    </p>
+                    {user?.publicMetadata?.role && (
+                      <Badge variant="secondary" className="mt-2">
+                        {user.publicMetadata.role}
+                      </Badge>
+                    )}
                   </div>
                 </div>
-
-                <Button asChild>
-                  <Link href="/recruiter/edit-recruiter-profile">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Company Profile
-                  </Link>
+                <Button
+                  onClick={() => router.push('/candidate/edit-profile')}
+                  className="flex items-center gap-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit Profile
                 </Button>
               </div>
-            </CardHeader>
+            </CardContent>
           </Card>
+        </div>
 
-          {/* ================= TABS ================= */}
-          <Tabs defaultValue="about" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="about">About Company</TabsTrigger>
-              <TabsTrigger value="contact">Contact Info</TabsTrigger>
-              <TabsTrigger value="admin">Admin Info</TabsTrigger>
-            </TabsList>
-
-            {/* ========== ABOUT TAB ========== */}
-            <TabsContent value="about" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Company Information</CardTitle>
-                  <CardDescription>
-                    Overview and key details about the company
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">
-                      Company Overview
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {companyData.overview}
-                    </p>
-                  </div>
-
-                  <Separator />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <Globe className="h-4 w-4 text-muted-foreground" />
-                        <span>Website</span>
-                      </div>
-                      <a
-                        href={companyData.website}
-                        className="text-sm text-primary hover:underline ml-6"
-                      >
-                        {companyData.website}
-                      </a>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>Headquarters</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground ml-6">
-                        {companyData.headquarters}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Personal Info & Resume */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Contact Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <User className="h-5 w-5" />
+                  Contact Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {user?.primaryEmailAddress && (
+                  <div className="flex items-start gap-3">
+                    <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">Email</p>
+                      <p className="text-sm text-muted-foreground break-all">
+                        {user.primaryEmailAddress.emailAddress}
                       </p>
                     </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>Founded</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground ml-6">
-                        {companyData.founded}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <span>Hiring Model</span>
-                      </div>
-                      <Badge variant="outline" className="ml-6">
-                        {companyData.hiringModel}
-                      </Badge>
-                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                )}
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Company Details</CardTitle>
-                  <CardDescription>
-                    Additional information and hiring preferences
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-1">
-                      <h3 className="text-sm font-medium">Company Type</h3>
+                {user?.primaryPhoneNumber && (
+                  <div className="flex items-start gap-3">
+                    <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">Phone</p>
                       <p className="text-sm text-muted-foreground">
-                        {companyData.companyType}
+                        {user.primaryPhoneNumber.phoneNumber}
                       </p>
                     </div>
+                  </div>
+                )}
 
-                    <div className="space-y-1">
-                      <h3 className="text-sm font-medium">Interview Process</h3>
-                      <Badge variant="secondary">
-                        {companyData.interviewProcess}
-                      </Badge>
+                {candidate.dateOfBirth && (
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">Date of Birth</p>
+                      <p className="text-sm text-muted-foreground">{formatDate(candidate.dateOfBirth)}</p>
                     </div>
                   </div>
+                )}
 
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium">
-                      Primary Hiring Roles
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {companyData.primaryRoles?.map((role, index) => (
-                        <Badge key={index} variant="outline">
-                          {role}
-                        </Badge>
-                      ))}
+                {candidate.totalExperienceDuration !== undefined && (
+                  <div className="flex items-start gap-3">
+                    <Briefcase className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">Total Experience</p>
+                      <p className="text-sm text-muted-foreground">
+                        {candidate.totalExperienceDuration} {candidate.totalExperienceDuration === 1 ? 'year' : 'years'}
+                      </p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                )}
 
-            {/* ========== CONTACT TAB ========== */}
-            <TabsContent value="contact" className="space-y-6">
+                {candidate.address && (
+                  <div className="flex items-start gap-3">
+                    <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">Address</p>
+                      <p className="text-sm text-muted-foreground">
+                        {candidate.address.line}<br />
+                        {candidate.address.city}, {candidate.address.state}<br />
+                        {candidate.address.pinCode}, {candidate.address.country}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Profile Status */}
+            {user?.publicMetadata && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Contact Information</CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <FileText className="h-5 w-5" />
+                    Profile Status
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Mail className="inline h-4 w-4 mr-2" />
-                    {companyData.contactEmail}
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Profile Complete</span>
+                    <Badge variant={user.publicMetadata.isProfileComplete ? 'default' : 'secondary'}>
+                      {user.publicMetadata.isProfileComplete ? 'Yes' : 'No'}
+                    </Badge>
                   </div>
-                  <div>
-                    <Phone className="inline h-4 w-4 mr-2" />
-                    {companyData.contactPhone}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Resume Uploaded</span>
+                    <Badge variant={user.publicMetadata.hasResume ? 'default' : 'secondary'}>
+                      {user.publicMetadata.hasResume ? 'Yes' : 'No'}
+                    </Badge>
                   </div>
+                  {candidate.appliedJobs?.length > 0 && (
+                    <div className="pt-3 border-t">
+                      <p className="text-sm font-medium">Total Applications</p>
+                      <p className="text-2xl font-bold mt-1">{candidate.appliedJobs.length}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            </TabsContent>
+            )}
 
-            {/* ========== ADMIN TAB ========== */}
-            <TabsContent value="admin">
+            {/* Resume & ATS Score */}
+            {candidate.resume && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Administrator</CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <FileText className="h-5 w-5" />
+                    Resume
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <Avatar>
-                      <AvatarImage src={companyData.admin.avatar} />
-                      <AvatarFallback>
-                        {companyData.admin.name
-                          ?.split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{companyData.admin.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {companyData.admin.role}
-                      </p>
+                  {candidate.resume.atsScore !== undefined && (
+                    <div className="text-center p-6 bg-primary/5 rounded-lg border">
+                      <p className="text-sm text-muted-foreground mb-2">ATS Score</p>
+                      <p className="text-4xl font-bold">{candidate.resume.atsScore}%</p>
                     </div>
+                  )}
+
+                  {candidate.resume.resumeUrl && (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => window.open(candidate.resume.resumeUrl, '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View Resume
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Social Links */}
+            {candidate.resume?.socials?.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Link2 className="h-5 w-5" />
+                    Social Links
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+
+                  {candidate.resume.socials.map((social, index) => (
+                    <a
+                      key={index}
+                      href={social.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 rounded-md hover:bg-accent transition-colors border"
+                    >
+                      {getSocialIcon(social.name)}
+                      <span className="text-sm font-medium capitalize">{social.name}</span>
+                      <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
+                    </a>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Right Column - Education, Experience, Skills, Certifications */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Skills */}
+            {candidate.resume?.skills?.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Code className="h-5 w-5" />
+                    Skills
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {candidate.resume.skills.map((skill, index) => (
+                      <Badge key={index} variant="secondary">
+                        {skill}
+                      </Badge>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
+            )}
+
+            {/* Experience */}
+            {candidate.resume?.experience?.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Briefcase className="h-5 w-5" />
+                    Work Experience
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {candidate.resume.experience.map((exp, index) => (
+                    <div key={index} className={index > 0 ? 'pt-4 border-t' : ''}>
+                      <h3 className="font-semibold text-base">{exp.jobTitle}</h3>
+                      {exp.jobDesc && (
+                        <p className="text-sm text-muted-foreground mt-2">{exp.jobDesc}</p>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Education */}
+            {candidate.resume?.education?.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <GraduationCap className="h-5 w-5" />
+                    Education
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {candidate.resume.education.map((edu, index) => (
+                    <div key={index} className={index > 0 ? 'pt-4 border-t' : ''}>
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2">
+                          <h3 className="font-semibold text-base">{edu.course}</h3>
+                          <p className="text-sm text-muted-foreground">{edu.instituteName}</p>
+                          <Badge variant="outline">
+                            {getEducationLabel(edu.eduType)}
+                          </Badge>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium">
+                            {edu.score}{edu.isCGPA ? ' CGPA' : '%'}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">{edu.yearOfComp}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Certifications */}
+            {candidate.resume?.certifications?.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Award className="h-5 w-5" />
+                    Certifications
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {candidate.resume.certifications.map((cert, index) => (
+                    <div key={index} className={index > 0 ? 'pt-4 border-t' : ''}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-base">{cert.name}</h3>
+                          <p className="text-sm text-muted-foreground mt-1">{cert.provider}</p>
+                          {cert.url && (
+                            <a
+                              href={cert.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-primary hover:underline mt-2 inline-flex items-center gap-1"
+                            >
+                              View Certificate
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                        </div>
+                        {cert.yearOfComp && (
+                          <p className="text-sm text-muted-foreground">{cert.yearOfComp}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
     </div>

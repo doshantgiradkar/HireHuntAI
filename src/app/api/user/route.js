@@ -3,24 +3,15 @@ import { connect } from "@/lib/db";
 import userModel from "@/models/userModel";
 import mongoose from "mongoose";
 import { auth } from "@clerk/nextjs/server";
+import { checkAuth } from "@/utils/checkAuth";
 
 export async function GET() {
   try {
     await connect();
 
-    const { userId } = await auth();
+    const { userId } = await checkAuth({ allowedRoles: ["candidate"] });
 
-    let user = null;
-
-    // 1️⃣ If MongoDB ObjectId → fetch by _id
-    if (mongoose.Types.ObjectId.isValid(userId)) {
-      user = await userModel.findById(userId);
-    }
-
-    // 2️⃣ Else → treat as Clerk ID
-    if (!user) {
-      user = await userModel.findOne({ clerkId: userId });
-    }
+    let user = await userModel.findOne({ clerkId: userId });
 
     console.log(user);
     if (!user) {
