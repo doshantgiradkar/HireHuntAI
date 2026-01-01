@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   User,
   MapPin,
@@ -18,14 +18,14 @@ import {
   Code,
   ExternalLink,
   Mail,
-  Phone
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth, useUser } from '@clerk/nextjs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+  Phone,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth, useUser } from "@clerk/nextjs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function CandidateProfile() {
   const [candidate, setCandidate] = useState(null);
@@ -42,15 +42,15 @@ export default function CandidateProfile() {
   const fetchCandidateData = async () => {
     try {
       const clerkToken = await getToken();
-      const response = await fetch('/api/candidate', {
+      const response = await fetch("/api/candidate", {
         headers: {
-          Authorization: `Bearer ${clerkToken}`
-        }
+          Authorization: `Bearer ${clerkToken}`,
+        },
       });
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch candidate data');
+        throw new Error(data.message || "Failed to fetch candidate data");
       }
 
       setCandidate(data.candidate);
@@ -66,7 +66,7 @@ export default function CandidateProfile() {
       github: Github,
       linkedin: Linkedin,
       leetcode: Code,
-      others: Link2
+      others: Link2,
     };
     const Icon = icons[name] || Link2;
     return <Icon className="h-4 w-4" />;
@@ -74,28 +74,28 @@ export default function CandidateProfile() {
 
   const getEducationLabel = (type) => {
     const labels = {
-      SSC: 'Secondary School Certificate',
-      HSC: 'Higher Secondary Certificate',
-      UG: 'Undergraduate',
-      PG: 'Postgraduate',
-      Diploma: 'Diploma'
+      SSC: "Secondary School Certificate",
+      HSC: "Higher Secondary Certificate",
+      UG: "Undergraduate",
+      PG: "Postgraduate",
+      Diploma: "Diploma",
     };
     return labels[type] || type;
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const getInitials = () => {
-    if (!user) return 'U';
-    const first = user.firstName?.[0] || '';
-    const last = user.lastName?.[0] || '';
-    return (first + last).toUpperCase() || 'U';
+    if (!user) return "U";
+    const first = user.firstName?.[0] || "";
+    const last = user.lastName?.[0] || "";
+    return (first + last).toUpperCase() || "U";
   };
 
   if (loading || !isUserLoaded) {
@@ -135,14 +135,22 @@ export default function CandidateProfile() {
         <div className="mb-8">
           <Card>
             <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={user?.imageUrl} alt={user?.fullName || 'User'} />
-                    <AvatarFallback className="text-lg">{getInitials()}</AvatarFallback>
+              <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6 md:gap-4">
+                {/* Avatar + Info */}
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-4 w-full md:w-auto">
+                  <Avatar className="h-20 w-20 flex-shrink-0">
+                    <AvatarImage
+                      src={user?.imageUrl}
+                      alt={user?.fullName || "User"}
+                    />
+                    <AvatarFallback className="text-lg">
+                      {getInitials()}
+                    </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <h1 className="text-3xl font-bold">{user?.fullName || 'Candidate Profile'}</h1>
+                  <div className="text-center md:text-left">
+                    <h1 className="text-3xl font-bold">
+                      {user?.fullName || "Candidate Profile"}
+                    </h1>
                     <p className="text-muted-foreground mt-1">
                       {user?.primaryEmailAddress?.emailAddress}
                     </p>
@@ -153,13 +161,17 @@ export default function CandidateProfile() {
                     )}
                   </div>
                 </div>
-                <Button
-                  onClick={() => router.push('/candidate/edit-profile')}
-                  className="flex items-center gap-2"
-                >
-                  <Edit className="h-4 w-4" />
-                  Edit Profile
-                </Button>
+
+                {/* Edit Button */}
+                <div className="w-full md:w-auto flex justify-center md:justify-end">
+                  <Button
+                    onClick={() => router.push("/candidate/edit-profile")}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit Profile
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -206,7 +218,9 @@ export default function CandidateProfile() {
                     <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
                       <p className="text-sm font-medium">Date of Birth</p>
-                      <p className="text-sm text-muted-foreground">{formatDate(candidate.dateOfBirth)}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatDate(candidate.dateOfBirth)}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -217,7 +231,10 @@ export default function CandidateProfile() {
                     <div>
                       <p className="text-sm font-medium">Total Experience</p>
                       <p className="text-sm text-muted-foreground">
-                        {candidate.totalExperienceDuration} {candidate.totalExperienceDuration === 1 ? 'year' : 'years'}
+                        {candidate.totalExperienceDuration}{" "}
+                        {candidate.totalExperienceDuration === 1
+                          ? "year"
+                          : "years"}
                       </p>
                     </div>
                   </div>
@@ -229,8 +246,10 @@ export default function CandidateProfile() {
                     <div>
                       <p className="text-sm font-medium">Address</p>
                       <p className="text-sm text-muted-foreground">
-                        {candidate.address.line}<br />
-                        {candidate.address.city}, {candidate.address.state}<br />
+                        {candidate.address.line}
+                        <br />
+                        {candidate.address.city}, {candidate.address.state}
+                        <br />
                         {candidate.address.pinCode}, {candidate.address.country}
                       </p>
                     </div>
@@ -250,21 +269,35 @@ export default function CandidateProfile() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Profile Complete</span>
-                    <Badge variant={user.publicMetadata.isProfileComplete ? 'default' : 'secondary'}>
-                      {user.publicMetadata.isProfileComplete ? 'Yes' : 'No'}
+                    <span className="text-sm font-medium">
+                      Profile Complete
+                    </span>
+                    <Badge
+                      variant={
+                        user.publicMetadata.isProfileComplete
+                          ? "default"
+                          : "secondary"
+                      }
+                    >
+                      {user.publicMetadata.isProfileComplete ? "Yes" : "No"}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Resume Uploaded</span>
-                    <Badge variant={user.publicMetadata.hasResume ? 'default' : 'secondary'}>
-                      {user.publicMetadata.hasResume ? 'Yes' : 'No'}
+                    <Badge
+                      variant={
+                        user.publicMetadata.hasResume ? "default" : "secondary"
+                      }
+                    >
+                      {user.publicMetadata.hasResume ? "Yes" : "No"}
                     </Badge>
                   </div>
                   {candidate.appliedJobs?.length > 0 && (
                     <div className="pt-3 border-t">
                       <p className="text-sm font-medium">Total Applications</p>
-                      <p className="text-2xl font-bold mt-1">{candidate.appliedJobs.length}</p>
+                      <p className="text-2xl font-bold mt-1">
+                        {candidate.appliedJobs.length}
+                      </p>
                     </div>
                   )}
                 </CardContent>
@@ -283,8 +316,12 @@ export default function CandidateProfile() {
                 <CardContent className="space-y-4">
                   {candidate.resume.atsScore !== undefined && (
                     <div className="text-center p-6 bg-primary/5 rounded-lg border">
-                      <p className="text-sm text-muted-foreground mb-2">ATS Score</p>
-                      <p className="text-4xl font-bold">{candidate.resume.atsScore}%</p>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        ATS Score
+                      </p>
+                      <p className="text-4xl font-bold">
+                        {candidate.resume.atsScore}%
+                      </p>
                     </div>
                   )}
 
@@ -292,7 +329,9 @@ export default function CandidateProfile() {
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => window.open(candidate.resume.resumeUrl, '_blank')}
+                      onClick={() =>
+                        window.open(candidate.resume.resumeUrl, "_blank")
+                      }
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
                       View Resume
@@ -312,7 +351,6 @@ export default function CandidateProfile() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-
                   {candidate.resume.socials.map((social, index) => (
                     <a
                       key={index}
@@ -322,7 +360,9 @@ export default function CandidateProfile() {
                       className="flex items-center gap-3 p-3 rounded-md hover:bg-accent transition-colors border"
                     >
                       {getSocialIcon(social.name)}
-                      <span className="text-sm font-medium capitalize">{social.name}</span>
+                      <span className="text-sm font-medium capitalize">
+                        {social.name}
+                      </span>
                       <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
                     </a>
                   ))}
@@ -365,10 +405,17 @@ export default function CandidateProfile() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {candidate.resume.experience.map((exp, index) => (
-                    <div key={index} className={index > 0 ? 'pt-4 border-t' : ''}>
-                      <h3 className="font-semibold text-base">{exp.jobTitle}</h3>
+                    <div
+                      key={index}
+                      className={index > 0 ? "pt-4 border-t" : ""}
+                    >
+                      <h3 className="font-semibold text-base">
+                        {exp.jobTitle}
+                      </h3>
                       {exp.jobDesc && (
-                        <p className="text-sm text-muted-foreground mt-2">{exp.jobDesc}</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {exp.jobDesc}
+                        </p>
                       )}
                     </div>
                   ))}
@@ -387,20 +434,30 @@ export default function CandidateProfile() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {candidate.resume.education.map((edu, index) => (
-                    <div key={index} className={index > 0 ? 'pt-4 border-t' : ''}>
+                    <div
+                      key={index}
+                      className={index > 0 ? "pt-4 border-t" : ""}
+                    >
                       <div className="flex items-start justify-between">
                         <div className="space-y-2">
-                          <h3 className="font-semibold text-base">{edu.course}</h3>
-                          <p className="text-sm text-muted-foreground">{edu.instituteName}</p>
+                          <h3 className="font-semibold text-base">
+                            {edu.course}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {edu.instituteName}
+                          </p>
                           <Badge variant="outline">
                             {getEducationLabel(edu.eduType)}
                           </Badge>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium">
-                            {edu.score}{edu.isCGPA ? ' CGPA' : '%'}
+                            {edu.score}
+                            {edu.isCGPA ? " CGPA" : "%"}
                           </p>
-                          <p className="text-sm text-muted-foreground mt-1">{edu.yearOfComp}</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {edu.yearOfComp}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -420,11 +477,18 @@ export default function CandidateProfile() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {candidate.resume.certifications.map((cert, index) => (
-                    <div key={index} className={index > 0 ? 'pt-4 border-t' : ''}>
+                    <div
+                      key={index}
+                      className={index > 0 ? "pt-4 border-t" : ""}
+                    >
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="font-semibold text-base">{cert.name}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">{cert.provider}</p>
+                          <h3 className="font-semibold text-base">
+                            {cert.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {cert.provider}
+                          </p>
                           {cert.url && (
                             <a
                               href={cert.url}
@@ -438,7 +502,9 @@ export default function CandidateProfile() {
                           )}
                         </div>
                         {cert.yearOfComp && (
-                          <p className="text-sm text-muted-foreground">{cert.yearOfComp}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {cert.yearOfComp}
+                          </p>
                         )}
                       </div>
                     </div>

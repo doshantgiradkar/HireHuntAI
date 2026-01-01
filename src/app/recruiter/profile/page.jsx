@@ -1,17 +1,7 @@
 "use client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Building2,
   MapPin,
@@ -21,70 +11,449 @@ import {
   Briefcase,
   Mail,
   Phone,
-  Clock,
   Edit,
+  Loader2,
+  ExternalLink,
+  Award,
+  Clock,
+  CheckCircle2,
+  FileText,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth, useUser } from "@clerk/nextjs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 
-
-
-/* ---------------- PAGE ---------------- */
-export default  function CompanyProfilePage() {
-const { user, isLoaded } = useUser();
+export default function RecruiterProfile() {
   const [companyData, setCompanyData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const setTitle = useHeader(state => state.setTitle)
+  const [error, setError] = useState(null);
+  const router = useRouter();
+  const { getToken } = useAuth();
+  const { user, isLoaded, isSignedIn } = useUser();
 
   useEffect(() => {
-    setTitle("Candidate Profile");
-    if (!isLoaded || !user) return;
+    if (!isLoaded || !isSignedIn || !user?.id) return;
 
-    const fetchCompany = async () => {
-      try {
-        const res = await fetch(`/api/recruiter/${user.id}`);
-        const data = await res.json();
-        setCompanyData(data.recruiter);
+    fetchRecruiterData();
+  }, [isLoaded, isSignedIn, user?.id]);
 
-      } catch (err) {
-        console.error("Fetch failed", err);
-      } finally {
-        setLoading(false);
+  const fetchRecruiterData = async () => {
+    try {
+      const clerkToken = await getToken();
+
+      if (!clerkToken) {
+        throw new Error("Authentication token missing");
       }
-    };
 
-    fetchCompany();
-  }, [isLoaded, user]);
+      console.log("Clerk Token:", clerkToken);
 
+      const response = await fetch(`/api/recruiter/${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${clerkToken}`,
+        },
+      });
 
-  if (!isLoaded || loading) {
-    return <div className="p-8 text-center">Loading company profile...</div>;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch recruiter data");
+      }
+
+      setCompanyData(data.recruiter);
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getInitials = () => {
+    if (!companyData?.name) return "C";
+    return companyData.name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  if (loading || !isLoaded) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   if (!companyData) {
-    return <div className="p-8 text-center">No company profile found.</div>;
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <Alert>
+          <AlertDescription>No company profile found.</AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="space-y-6">
-          {/* ================= HEADER ================= */}
+        {/* Header Section with Company Info */}
+        <div className="mb-8">
           <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={companyData.logo} alt={companyData.name} />
-                  <AvatarFallback>
-                    <Building2 className="h-12 w-12" />
-                  </AvatarFallback>
-                </Avatar>
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6 md:gap-4">
+                {/* Avatar + Info */}
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-4 w-full md:w-auto">
+                  <Avatar className="h-20 w-20 flex-shrink-0">
+                    <AvatarImage
+                      src={companyData.logo}
+                      alt={companyData.name}
+                    />
+                    <AvatarFallback className="text-lg">
+                      <Building2 className="h-10 w-10" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-center md:text-left">
+                    <h1 className="text-3xl font-bold">{companyData.name}</h1>
+                    <p className="text-muted-foreground mt-1">
+                      {companyData.industry}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-2 justify-center md:justify-start">
+                      <Badge
+                        variant={
+                          companyData.status === "Active"
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
+                        {companyData.status}
+                      </Badge>
+                      {companyData.companyType && (
+                        <Badge variant="outline">
+                          {companyData.companyType}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-                <div className="flex-1 space-y-2">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <CardTitle className="text-3xl">
-                      {companyData.name}
-                    </CardTitle>
+                {/* Edit Button */}
+                <div className="w-full md:w-auto flex justify-center md:justify-end">
+                  <Button
+                    onClick={() => router.push("/recruiter/edit-profile")}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit Profile
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Company Info & Contact */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Contact Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Mail className="h-5 w-5" />
+                  Contact Information
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                {/* Email & Phone in same row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {companyData.contactEmail && (
+                    <div className="flex items-start gap-3">
+                      <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Email</p>
+                        <p className="text-sm text-muted-foreground break-all">
+                          {companyData.contactEmail}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {companyData.contactPhone && (
+                    <div className="flex items-start gap-3">
+                      <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Phone</p>
+                        <p className="text-sm text-muted-foreground">
+                          {companyData.contactPhone}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Full-width Address */}
+                {companyData.address?.line && (
+                  <div className="flex items-start gap-3">
+                    <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">Address</p>
+                      <p className="text-sm text-muted-foreground break-all">
+                        {companyData.address.line}, {companyData.address.city},{" "}
+                        {companyData.address.state} -{" "}
+                        {companyData.address.pinCode},{" "}
+                        {companyData.address.country}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* ================= ADMINISTRATOR ================= */}
+            {companyData.admin && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Users className="h-5 w-5" />
+                    Administrator
+                  </CardTitle>
+                </CardHeader>
+
+                <CardContent className="pt-4">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                    {/* Avatar */}
+                    <Avatar className="h-20 w-20 flex-shrink-0">
+                      <AvatarImage src={companyData.admin.avatar} />
+                      <AvatarFallback className="text-lg">
+                        {companyData.admin.name
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    {/* Admin Info */}
+                    <div className="w-full space-y-2 text-center md:text-left">
+                      <h3 className="text-xl font-semibold">
+                        {companyData.admin.name}
+                      </h3>
+
+                      {companyData.admin.role && (
+                        <Badge variant="outline" className="mt-1">
+                          {companyData.admin.role}
+                        </Badge>
+                      )}
+
+                      <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+                        {companyData.admin.email && (
+                          <p>
+                            <span className="font-medium text-foreground">
+                              Email:
+                            </span>{" "}
+                            {companyData.admin.email}
+                          </p>
+                        )}
+
+                        {companyData.admin.phone && (
+                          <p>
+                            <span className="font-medium text-foreground">
+                              Phone:
+                            </span>{" "}
+                            {companyData.admin.phone}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Right Column - Overview & Roles */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Company Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Building2 className="h-5 w-5" />
+                  Company Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Company Size */}
+                <div className="flex items-start gap-3">
+                  <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Company Size</p>
+                    <p className="text-sm text-muted-foreground">
+                      {companyData.size}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Headquarters */}
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Headquarters</p>
+                    <p className="text-sm text-muted-foreground">
+                      {companyData.headquarters}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Founded */}
+                {companyData.founded && (
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">Founded</p>
+                      <p className="text-sm text-muted-foreground">
+                        {companyData.founded}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Website */}
+                {companyData.website && (
+                  <div className="flex items-start gap-3">
+                    <Globe className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">Website</p>
+                      <a
+                        href={companyData.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline break-all inline-flex items-center gap-1"
+                      >
+                        {companyData.website}
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Company Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <FileText className="h-5 w-5" />
+                  Company Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {companyData.overview || "No company overview available."}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Primary Hiring Roles */}
+            {companyData.primaryRoles?.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Award className="h-5 w-5" />
+                    Primary Hiring Roles
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {companyData.primaryRoles.map((role, index) => (
+                      <Badge key={index} variant="secondary">
+                        {role}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Company Culture & Benefits (if available) */}
+            {companyData.benefits?.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Award className="h-5 w-5" />
+                    Benefits & Perks
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {companyData.benefits.map((benefit, index) => (
+                      <div
+                        key={index}
+                        className="flex items-start gap-2 text-sm"
+                      >
+                        <CheckCircle2 className="h-4 w-4 text-primary mt-0.5" />
+                        <span className="text-muted-foreground">{benefit}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Additional Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Building2 className="h-5 w-5" />
+                  Additional Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm font-medium mb-2">Industry</p>
+                    <Badge variant="outline">{companyData.industry}</Badge>
+                  </div>
+
+                  {companyData.companyType && (
+                    <div>
+                      <p className="text-sm font-medium mb-2">Company Type</p>
+                      <p className="text-sm text-muted-foreground">
+                        {companyData.companyType}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm font-medium mb-2">Status</p>
                     <Badge
                       variant={
                         companyData.status === "Active"
@@ -96,197 +465,18 @@ const { user, isLoaded } = useUser();
                     </Badge>
                   </div>
 
-                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Briefcase className="h-4 w-4" />
-                      <span>{companyData.industry}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      <span>{companyData.size}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      <span>{companyData.headquarters}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <Button asChild>
-                  <Link href="/recruiter/edit-recruiter-profile">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Company Profile
-                  </Link>
-                </Button>
-              </div>
-            </CardHeader>
-          </Card>
-
-          {/* ================= TABS ================= */}
-          <Tabs defaultValue="about" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="about">About Company</TabsTrigger>
-              <TabsTrigger value="contact">Contact Info</TabsTrigger>
-              <TabsTrigger value="admin">Admin Info</TabsTrigger>
-            </TabsList>
-
-            {/* ========== ABOUT TAB ========== */}
-            <TabsContent value="about" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Company Information</CardTitle>
-                  <CardDescription>
-                    Overview and key details about the company
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">
-                      Company Overview
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {companyData.overview}
-                    </p>
-                  </div>
-
-                  <Separator />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <Globe className="h-4 w-4 text-muted-foreground" />
-                        <span>Website</span>
-                      </div>
-                      <a
-                        href={companyData.website}
-                        className="text-sm text-primary hover:underline ml-6"
-                      >
-                        {companyData.website}
-                      </a>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>Headquarters</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground ml-6">
-                        {companyData.headquarters}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>Founded</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground ml-6">
-                        {companyData.founded}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <span>Hiring Model</span>
-                      </div>
-                      <Badge variant="outline" className="ml-6">
-                        {companyData.hiringModel}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Company Details</CardTitle>
-                  <CardDescription>
-                    Additional information and hiring preferences
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-1">
-                      <h3 className="text-sm font-medium">Company Type</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {companyData.companyType}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1">
-                      <h3 className="text-sm font-medium">Interview Process</h3>
-                      <Badge variant="secondary">
-                        {companyData.interviewProcess}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium">
-                      Primary Hiring Roles
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {companyData.primaryRoles?.map((role, index) => (
-                        <Badge key={index} variant="outline">
-                          {role}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* ========== CONTACT TAB ========== */}
-            <TabsContent value="contact" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Contact Information</CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Mail className="inline h-4 w-4 mr-2" />
-                    {companyData.contactEmail}
-                  </div>
-                  <div>
-                    <Phone className="inline h-4 w-4 mr-2" />
-                    {companyData.contactPhone}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* ========== ADMIN TAB ========== */}
-            <TabsContent value="admin">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Administrator</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <Avatar>
-                      <AvatarImage src={companyData.admin.avatar} />
-                      <AvatarFallback>
-                        {companyData.admin.name
-                          ?.split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
+                  {companyData.hiringModel && (
                     <div>
-                      <p className="font-medium">{companyData.admin.name}</p>
+                      <p className="text-sm font-medium mb-2">Hiring Model</p>
                       <p className="text-sm text-muted-foreground">
-                        {companyData.admin.role}
+                        {companyData.hiringModel}
                       </p>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

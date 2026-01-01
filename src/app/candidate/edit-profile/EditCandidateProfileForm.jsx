@@ -24,37 +24,37 @@ import {
   Award,
   Building,
   User,
+  Edit,
 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 
 export default function EditCandidateProfileForm({ initialData, onSubmit }) {
   const [formData, setFormData] = useState({
-  firstName: "",
-  lastName: "",
-  email: "",
-  profileImageUrl: "",
-  totalExperienceDuration: 0,
-  dateOfBirth: "",
-  address: {
-    line: "",
-    city: "",
-    state: "",
-    pinCode: "",
-  },
-  resume: {
-    resumeUrl: "",
-    skills: [],
-    socials: [],
-    education: [],
-    experience: [],
-    certifications: [],
-  },
-});
+    firstName: "",
+    lastName: "",
+    email: "",
+    profileImageUrl: "",
+    totalExperienceDuration: 0,
+    dateOfBirth: "",
+    address: {
+      line: "",
+      city: "",
+      state: "",
+      pinCode: "",
+    },
+    resume: {
+      resumeUrl: "",
+      skills: [],
+      socials: [],
+      education: [],
+      experience: [],
+      certifications: [],
+    },
+  });
 
   const [newSkill, setNewSkill] = useState("");
   const [newSocial, setNewSocial] = useState({ name: "", url: "" });
   const { isSignedIn, user } = useUser();
-  
 
   /* ---------------- HANDLERS ---------------- */
   const updateAddress = (field, value) => {
@@ -120,32 +120,32 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
     }
   }, [isSignedIn, user]);
 
- useEffect(() => {
-  if (initialData && Object.keys(initialData).length > 0) {
-    setFormData({
-      firstName: user.firstName || "",
-      lastName: user.lastName || "",
-      email: user.emailAddresses[0]?.emailAddress || "",
-      profileImageUrl: user.imageUrl || "",
-      totalExperienceDuration: initialData.totalExperienceDuration || 0,
-      dateOfBirth: initialData.dateOfBirth || "",
-      address: {
-        line: initialData.address?.line || "",
-        city: initialData.address?.city || "",
-        state: initialData.address?.state || "",
-        pinCode: initialData.address?.pinCode || "",
-      },
-      resume: {
-        resumeUrl: initialData.resume?.resumeUrl || "",
-        skills: initialData.resume?.skills || [],
-        socials: initialData.resume?.socials || [],
-        education: initialData.resume?.education || [],
-        experience: initialData.resume?.experience || [],
-        certifications: initialData.resume?.certifications || [],
-      },
-    });
-  }
-}, [initialData]);
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      setFormData({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.emailAddresses[0]?.emailAddress || "",
+        profileImageUrl: user.imageUrl || "",
+        totalExperienceDuration: initialData.totalExperienceDuration || 0,
+        dateOfBirth: initialData.dateOfBirth || "",
+        address: {
+          line: initialData.address?.line || "",
+          city: initialData.address?.city || "",
+          state: initialData.address?.state || "",
+          pinCode: initialData.address?.pinCode || "",
+        },
+        resume: {
+          resumeUrl: initialData.resume?.resumeUrl || "",
+          skills: initialData.resume?.skills || [],
+          socials: initialData.resume?.socials || [],
+          education: initialData.resume?.education || [],
+          experience: initialData.resume?.experience || [],
+          certifications: initialData.resume?.certifications || [],
+        },
+      });
+    }
+  }, [initialData]);
 
   /* ---------------- UI ---------------- */
   return (
@@ -154,54 +154,40 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
         e.preventDefault();
         onSubmit?.(formData);
       }}
-      className="w-full max-w-5xl mx-auto space-y-6 min-w-0"
+      className="container mx-auto px-4 py-8 max-w-6xl"
     >
       {/* ================= BASIC INFO ================= */}
-      <Card>
-        <CardContent>
-          {/* ---------- PROFILE HEADER ---------- */}
-          <div className="flex items-center gap-6">
-            {/* Avatar */}
-            <img
-              src={formData.profileImageUrl}
-              alt="Profile"
-              className="h-24 w-24 rounded-full border object-cover"
-            />
-
-            {/* Name and Email */}
-            <div className="flex-1 space-y-1">
-              <p className="text-xl font-semibold">{`${formData.firstName} ${formData.lastName}`}</p>
-              <p className="text-sm text-muted-foreground">{formData.email}</p>
+      <Card className="mb-8">
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
+            {/* Avatar + Info */}
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-6 w-full md:w-auto">
+              <img
+                src={formData.profileImageUrl}
+                alt="Profile"
+                className="h-24 w-24 rounded-full border object-cover flex-shrink-0"
+              />
+              <div className="text-center md:text-left flex-1 space-y-1">
+                <p className="text-3xl font-bold">
+                  {`${formData.firstName || "First"} ${
+                    formData.lastName || "Last"
+                  }`}
+                </p>
+                <p className="text-muted-foreground mt-1">
+                  {formData.email || ""}
+                </p>
+                {user?.publicMetadata?.role && (
+                  <Badge variant="secondary" className="mt-2">
+                    {user.publicMetadata.role}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
 
-          <Separator className="my-4" />
+          <Separator className="my-6" />
 
-          {/* ---------- PROFILE STATS (Like IG) ---------- */}
-          <div className="flex justify-around text-center">
-            <div>
-              <p className="font-semibold">
-                {formData.totalExperienceDuration || 0}
-              </p>
-              <p className="text-sm text-muted-foreground">Years Exp</p>
-            </div>
-
-            <div>
-              <p className="font-semibold">{formData.resume.skills.length}</p>
-              <p className="text-sm text-muted-foreground">Skills</p>
-            </div>
-
-            <div>
-              <p className="font-semibold">
-                {formData.resume.education.length}
-              </p>
-              <p className="text-sm text-muted-foreground">Education</p>
-            </div>
-          </div>
-
-          <Separator className="my-4" />
-
-          {/* ---------- NON-EDITABLE INFO ---------- */}
+          {/* Editable Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label>Date of Birth</Label>
@@ -232,7 +218,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
       </Card>
 
       {/* ================= SOCIAL LINKS ================= */}
-      <Card>
+      <Card className="mt-8">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Link2 className="h-5 w-5" />
@@ -313,7 +299,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
       </Card>
 
       {/* ================= ADDRESS ================= */}
-      <Card>
+      <Card className="mt-8">
         <CardHeader className="flex items-center gap-2">
           <Building className="h-5 w-5" />
           <CardTitle>Address</CardTitle>
@@ -344,7 +330,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
       </Card>
 
       {/* ================= RESUME ================= */}
-      <Card>
+      <Card className="mt-8">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
@@ -398,7 +384,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
         </CardContent>
       </Card>
       {/* ================= EDUCATION ================= */}
-      <Card>
+      <Card className="mt-8">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <GraduationCap className="h-5 w-5" />
@@ -517,7 +503,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
       </Card>
 
       {/* ================= EXPERIENCE ================= */}
-      <Card>
+      <Card className="mt-8">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Briefcase className="h-5 w-5" />
@@ -607,7 +593,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
       </Card>
 
       {/* ================= CERTIFICATIONS ================= */}
-      <Card>
+      <Card className="mt-8">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Award className="h-5 w-5" />
@@ -650,29 +636,27 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
               )}
 
               {formData.resume.certifications.map((cert, index) => (
-                <div
-                  key={index}
-                  className="relative space-y-4 border rounded-md p-4"
-                >
-                  {/* ❌ REMOVE BUTTON */}
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="absolute right-2 top-2"
-                    onClick={() =>
-                      updateResume(
-                        "certifications",
-                        formData.resume.certifications.filter(
-                          (_, i) => i !== index
+                <div key={index} className="relative border rounded-md p-4">
+                  {/* REMOVE BUTTON */}
+                  <div className="absolute top-2 right-2">
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() =>
+                        updateResume(
+                          "certifications",
+                          formData.resume.certifications.filter(
+                            (_, i) => i !== index
+                          )
                         )
-                      )
-                    }
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                      }
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                     <Input
                       placeholder="Certification Name"
                       value={cert.name}
@@ -712,10 +696,9 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
       </Card>
 
       {/* ================= ACTIONS ================= */}
-      <div className="flex justify-end gap-3">
+      <div className="flex justify-end gap-3 mt-8 ">
         <Button type="submit">Save Changes</Button>
       </div>
     </form>
   );
 }
-

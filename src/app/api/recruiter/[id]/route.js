@@ -6,7 +6,7 @@ import { checkAuth } from "@/utils/checkAuth"
 
 
 export async function GET(req, { params }) {
-  const authResult = checkAuth({
+  const authResult =await  checkAuth({
     allowedRoles: ["recruiter","candidate"],
   })
 
@@ -20,8 +20,8 @@ export async function GET(req, { params }) {
   try {
     await connect()
 
-   const { id } = await params
-
+    const { id } = await params
+    console.log(id)
     let recruiter = null
     if (mongoose.Types.ObjectId.isValid(id)) {
       recruiter = await recruiterModel.findById(id)
@@ -50,7 +50,7 @@ export async function GET(req, { params }) {
 }
 
 export async function PUT(req, { params }) {
-  const authResult = checkAuth({
+  const authResult =await  checkAuth({
     allowedRoles: ["recruiter"],
   })
 
