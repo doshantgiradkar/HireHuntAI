@@ -2,7 +2,6 @@ import { connect } from "@/lib/db";
 import jobModel from "@/models/jobModel";
 import recruiterModel from "@/models/recruiterModel";
 import { checkAuth } from "@/utils/checkAuth";
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
@@ -22,7 +21,6 @@ export async function POST(req) {
 
     const body = await req.json();
     const {
-      recruiterClerkId,
       title,
       description,
       location,
@@ -31,7 +29,6 @@ export async function POST(req) {
     } = body;
 
     if (
-      !recruiterClerkId ||
       !title ||
       !description ||
       !location ||
@@ -44,7 +41,7 @@ export async function POST(req) {
       );
     }
     const recruiter = await recruiterModel.findOne({
-      clerkId: recruiterClerkId,
+      clerkId: authResult.userId,
     });
 
     if (!recruiter) {
@@ -77,11 +74,11 @@ export async function POST(req) {
   }
 }
 
-export async function GET() {
+// /api/job/route.js
+export async function GET(req) {
   const authResult = await checkAuth({
     allowedRoles: ["recruiter", "candidate"],
   });
-
   if (!authResult.authenticated) {
     return NextResponse.json(
       { message: authResult.error },
@@ -92,12 +89,37 @@ export async function GET() {
   try {
     await connect();
 
+    const { searchParams } = new URL(req.url);
+    const page_no = parseInt(searchParams.get('page_no')) || 1;
+    const page_size = parseInt(searchParams.get('page_size')) || 9;
+    const search = searchParams.get('search') || '';
+
+    // Build search query
+    let query = {};
+    if (search) {
+      query = {
+        $or: [
+          { title: { $regex: search, $options: 'i' } },
+          { companyName: { $regex: search, $options: 'i' } },
+          { location: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+          { skills: { $in: [new RegExp(search, 'i')] } }
+        ]
+      };
+    }
+
+    // Get total count for pagination
+    const totalCount = await jobModel.countDocuments(query);
+
+    // Get paginated jobs
     const jobs = await jobModel
-      .find({})
-      .sort({ createdAt: -1 }); 
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip((page_no - 1) * page_size)
+      .limit(page_size);
 
     return NextResponse.json(
-      { jobs, count: jobs.length },
+      { jobs, count: totalCount },
       { status: 200 }
     );
   } catch (error) {
