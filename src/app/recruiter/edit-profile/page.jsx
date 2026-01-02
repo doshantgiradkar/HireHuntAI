@@ -14,7 +14,7 @@ export default function Page() {
 
   useEffect(() => {
     setTitle("Edit Company Profile");
-    if (!isLoaded) return; // wait for Clerk
+    if (!isLoaded) return; 
 
     const fetchRecruiter = async () => {
       if (!user?.id) {
@@ -63,12 +63,11 @@ export default function Page() {
     return <div className="p-6 text-destructive">Failed to load recruiter profile.</div>;
   }
 
-  const apiUrl = process.env.BASE_URL ;
+
 
   return (
     <div className="p-6">
-      <CompanyProfileForm apiUrl={apiUrl} initialData={initialData} mode={mode} onSuccess={(res) => {
-        // after success, refresh initialData and mode
+      <CompanyProfileForm initialData={initialData} mode={mode} onSuccess={(res) => {
         if (res?.recruiter) {
           setInitialData(res.recruiter);
           setMode("edit");

@@ -5,7 +5,9 @@ import { NextResponse } from "next/server";
 import { connect } from "@/lib/db";
 import User from "@/models/userModel";
 import { strict } from "assert";
-
+import recruiterModel from "@/models/recruiterModel";
+import Candidate from "@/models/candidateModel";
+import { deleteLogo, deleteResume } from "@/utils/claudinary";
 
 export async function POST(req) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -60,13 +62,30 @@ export async function POST(req) {
           imageUrl: data.image_url,
           role: data.public_metadata?.role || "candidate",
         },
-        { upsert: true, new: true,strict:false }
+        { upsert: true, new: true, strict: false }
       );
 
-      if(data.public_metadata?.role == "recruiter"){
+      if (data.public_metadata?.role == "recruiter") {
       }
 
       console.log(`User synced: ${data.id}`);
+    }
+
+    /* ---------- DELETE ---------- */
+    if (eventType === "user.deleted") {
+      await User.findOneAndDelete({ clerkId: data.id });
+      const recruiter = await recruiterModel.findOne({ clerkId: data.id });
+      if (recruiter && recruiter.logo) {
+        deleteLogo(recruiter.logo);
+      }
+      await recruiterModel.deleteOne({ clerkId: data.id });
+      const candidate = await Candidate.findOne({ clerkId: data.id });
+      if (candidate && candidate.avatar) {
+        deleteResume(candidate.resumeUrl);
+      }
+      await Candidate.deleteOne({ clerkId: data.id });
+      
+      console.log(`All user data deleted for clerkId: ${data.id}`);
     }
 
     return new Response("", { status: 200 });

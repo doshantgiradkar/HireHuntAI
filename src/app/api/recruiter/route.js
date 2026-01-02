@@ -1,4 +1,5 @@
 export const runtime = "nodejs";
+
 import fs from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
@@ -6,6 +7,9 @@ import { connect } from "@/lib/db";
 import recruiterModel from "@/models/recruiterModel";
 import { uploadLogo } from "@/utils/claudinary";
 import { checkAuth } from "@/utils/checkAuth";
+import { clerkClient } from "@clerk/nextjs/server";
+
+/* ================= POST ================= */
 
 export async function POST(req) {
   let filePath = "";
@@ -26,33 +30,25 @@ export async function POST(req) {
     await connect();
 
     const formData = await req.formData();
-
     const recruiterData = {};
-    const admin = {};
 
     for (const [key, value] of formData.entries()) {
       if (key === "logo") continue;
 
-      if (key.startsWith("admin.")) {
-        admin[key.replace("admin.", "")] = value;
-      } else if (key === "primaryRoles") {
-        recruiterData.primaryRoles = value.split(",").map((r) => r.trim());
+      if (key === "primaryRoles") {
+        recruiterData.primaryRoles = JSON.parse(value);
+      } else if (key === "admin") {
+        recruiterData.admin = JSON.parse(value);
+      } else if (key === "address") {
+        recruiterData.address = JSON.parse(value);
       } else {
         recruiterData[key] = value;
       }
     }
 
-    if (Object.keys(admin).length) {
-      recruiterData.admin = admin;
-    }
+    recruiterData.clerkId = clerkId;
 
-    if (!clerkId) {
-      return NextResponse.json(
-        { message: "clerkId is required" },
-        { status: 400 }
-      );
-    }
-
+    /* ---------- LOGO UPLOAD ---------- */
     const logo = formData.get("logo");
 
     if (logo && typeof logo === "object") {
@@ -60,7 +56,6 @@ export async function POST(req) {
       const buffer = Buffer.from(bytes);
 
       const uploadDir = path.join(process.cwd(), "public/tmp");
-
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
       }
@@ -75,11 +70,9 @@ export async function POST(req) {
 
       const fileName = `${Date.now()}.${ext}`;
       filePath = path.join(uploadDir, fileName);
-
       fs.writeFileSync(filePath, buffer);
 
       const uploadResult = await uploadLogo(filePath);
-
       recruiterData.logo = uploadResult.secure_url;
 
       fs.unlinkSync(filePath);
@@ -95,6 +88,13 @@ export async function POST(req) {
         setDefaultsOnInsert: true,
       }
     );
+    const client = await clerkClient();
+    client.users.updateUserMetadata(clerkId, {
+      publicMetadata: {
+        hasResume: true,
+        isProfileComplete: true,
+      },
+    });
 
     return NextResponse.json(
       { message: "Recruiter saved", recruiter },
@@ -114,8 +114,13 @@ export async function POST(req) {
   }
 }
 
+/* ================= GET ================= */
+
 export async function GET() {
-  const authResult = await checkAuth({ allowedRoles: ["recruiter", "candidate"] });
+  const authResult = await checkAuth({
+    allowedRoles: ["recruiter", "candidate"],
+  });
+
   if (!authResult.authenticated) {
     return NextResponse.json(
       { message: authResult.error },
@@ -125,9 +130,7 @@ export async function GET() {
 
   try {
     await connect();
-
     const recruiters = await recruiterModel.find({});
-
     return NextResponse.json(
       { recruiters, count: recruiters.length },
       { status: 200 }

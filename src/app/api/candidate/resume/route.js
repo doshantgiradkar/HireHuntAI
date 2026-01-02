@@ -16,12 +16,15 @@ export const config = {
 
 export async function POST(req) {
   connect();
-  const authResult = await checkAuth({allowedRoles:["candidate"]});
+  const authResult = await checkAuth({ allowedRoles: ["candidate"] });
 
   if (!authResult.authenticated) {
-    return NextResponse.json({
-      messgae: authResult.error
-    }, {status: authResult.error === "Forbidden"? 403 : 401})
+    return NextResponse.json(
+      {
+        message: authResult.error,
+      },
+      { status: authResult.error === "Forbidden" ? 403 : 401 }
+    );
   }
 
   const userId = authResult.userId;
@@ -54,7 +57,7 @@ export async function POST(req) {
         success: false,
         message: "File Upload Unsuccessful",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -65,7 +68,7 @@ export async function POST(req) {
     fs.rmSync(resumePath);
     return NextResponse.json(
       { success: false, message: "Failed to Upload to Cloudinary" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -78,7 +81,7 @@ export async function POST(req) {
     console.error(err);
     return NextResponse.json(
       { success: false, message: "Failed Parsing Resume" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -101,7 +104,7 @@ export async function POST(req) {
       fs.rmSync(resumePath);
       return NextResponse.json(
         { success: false, message: "File Upload Unsuccessful" },
-        { status: 500 },
+        { status: 500 }
       );
     }
   } else {
@@ -114,11 +117,14 @@ export async function POST(req) {
         resumeUrl: (await result).secure_url,
       };
       await existing.save();
-
       const client = await clerkClient();
-      await client.users.updateUser(userId, {
-        hasResume: true
+      client.users.updateUserMetadata(userId, {
+        publicMetadata: {
+          hasResume: true,
+          isProfileComplete: true,
+        },
       });
+
 
       return NextResponse.json({
         success: true,

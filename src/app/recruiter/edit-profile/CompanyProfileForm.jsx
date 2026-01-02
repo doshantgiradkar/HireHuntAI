@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, X, Building2, User, Building } from "lucide-react";
+import axios from "axios";
 
 /* ---------------- CONSTANTS ---------------- */
 
@@ -42,7 +43,6 @@ const COMPANY_TYPES = [
 export default function CompanyProfileForm({
   initialData = null,
   mode = "create",
-  apiUrl,
   onSuccess,
   onCancel,
 }) {
@@ -82,14 +82,31 @@ export default function CompanyProfileForm({
     contactEmail: "",
     contactPhone: "",
     admin: {
-      avatar: "",
-      name: "",
-      email: "",
       role: "Admin",
       phone: "",
-      clerkId: null,
     },
   });
+
+  const adminFromClerk = clerkUser
+    ? {
+        clerkId: clerkUser.id,
+        name: clerkUser.fullName || "",
+        email: clerkUser.primaryEmailAddress?.emailAddress || "",
+        avatar: clerkUser.imageUrl || "",
+      }
+    : null;
+
+  const normalizeArray = (value) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string") {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
 
   /* ---------------- EFFECTS ---------------- */
 
@@ -119,45 +136,29 @@ export default function CompanyProfileForm({
         country: initialData.address?.country || "India",
       },
       companyType: initialData.companyType || "",
-      primaryRoles: initialData.primaryRoles || [],
+      primaryRoles: normalizeArray(initialData.primaryRoles) || [],
       contactEmail: initialData.contactEmail || "",
       contactPhone: initialData.contactPhone || "",
       admin: {
-        avatar: initialData.admin?.avatar || "",
-        name: initialData.admin?.name || "",
-        email: initialData.admin?.email || "",
         role: initialData.admin?.role || "Admin",
         phone: initialData.admin?.phone || "",
-        clerkId: initialData.admin?.clerkId || null,
       },
     });
 
     setLogoPreview(initialData.logo || "");
   }, [initialData, mode]);
 
-  // Prefill admin from Clerk (create mode only)
-  useEffect(() => {
-    if (!isLoaded || !clerkUser) return;
-
-    setFormData((prev) => {
-      if (prev.admin?.clerkId) return prev;
-
-      return {
-        ...prev,
-        clerkId: clerkUser.id,
-        admin: {
-          avatar: clerkUser.imageUrl || "",
-          name: clerkUser.fullName || "",
-          email: clerkUser.primaryEmailAddress?.emailAddress || "",
-          role: "Admin",
-          phone: "",
-          clerkId: clerkUser.id,
-        },
-      };
-    });
-  }, [isLoaded, clerkUser]);
-
   /* ---------------- HANDLERS ---------------- */
+
+  const updateAddress = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        [field]: value,
+      },
+    }));
+  };
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -197,7 +198,6 @@ export default function CompanyProfileForm({
   };
 
   /* ---------------- SUBMIT ---------------- */
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isLoaded || !clerkUser) return;
@@ -207,36 +207,58 @@ export default function CompanyProfileForm({
     try {
       const endpoint =
         currentMode === "create"
-          ? `${apiUrl}/api/recruiter`
-          : `${apiUrl}/api/recruiter/${recruiterId || clerkUser.id}`;
+          ? "/api/recruiter"
+          : `/api/recruiter/${recruiterId || clerkUser.id}`;
 
-      const payload = {
-        ...formData,
-        logo: logoPreview,
-        clerkId: clerkUser.id,
-        admin: {
-          ...formData.admin,
-          clerkId: clerkUser.id,
-        },
-      };
+      const fd = new FormData();
 
-      const res = await fetch(endpoint, {
-        method: currentMode === "create" ? "POST" : "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      /* -------- BASIC FIELDS -------- */
+      fd.append("clerkId", clerkUser.id);
+      fd.append("name", formData.name);
+      fd.append("industry", formData.industry);
+      fd.append("size", formData.size);
+      fd.append("status", formData.status);
+      fd.append("overview", formData.overview);
+      fd.append("website", formData.website);
+      fd.append("headquarters", formData.headquarters);
+      fd.append("founded", formData.founded);
+      fd.append("companyType", formData.companyType);
+      fd.append("contactEmail", formData.contactEmail);
+      fd.append("contactPhone", formData.contactPhone);
+
+      fd.append("address", JSON.stringify(formData.address));
+      fd.append("primaryRoles", JSON.stringify(formData.primaryRoles));
+
+      /* -------- ADMIN (MERGED, SAFE) -------- */
+      fd.append(
+        "admin",
+        JSON.stringify({
+          ...adminFromClerk, // 🔒 Clerk-owned
+          role: formData.admin.role,
+          phone: formData.admin.phone,
+        })
+      );
+
+      /* -------- LOGO -------- */
+      if (logoFile) {
+        fd.append("logo", logoFile);
+      }
+
+      const res = await axios({
+        method: currentMode === "create" ? "post" : "put",
+        url: endpoint,
+        data: fd,
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-
-      if (currentMode === "create" && data?.recruiter?._id) {
-        setRecruiterId(data.recruiter._id);
+      if (currentMode === "create" && res.data?.recruiter?._id) {
+        setRecruiterId(res.data.recruiter._id);
         setCurrentMode("edit");
       }
 
-      onSuccess?.(data);
+      onSuccess?.(res.data);
     } catch (err) {
-      alert(err.message || "Failed to save company profile");
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to save company profile");
     } finally {
       setIsSubmitting(false);
     }
@@ -293,7 +315,7 @@ export default function CompanyProfileForm({
             {/* Avatar + Admin Info */}
             <div className="flex flex-col md:flex-row items-center md:items-start gap-4 w-full md:w-auto">
               <Avatar className="h-20 w-20 flex-shrink-0">
-                <AvatarImage src={formData.admin.avatar} />
+                <AvatarImage src={adminFromClerk?.avatar} />
                 <AvatarFallback className="text-lg">
                   <User className="h-10 w-10" />
                 </AvatarFallback>
@@ -301,10 +323,10 @@ export default function CompanyProfileForm({
 
               <div className="text-center md:text-left space-y-1">
                 <h2 className="text-2xl font-semibold">
-                  {formData.admin.name || "Administrator"}
+                  {adminFromClerk?.name || "Administrator"}
                 </h2>
 
-                <p className="text-muted-foreground">{formData.admin.email}</p>
+                <p className="text-muted-foreground">{adminFromClerk?.email}</p>
 
                 <div className="flex flex-wrap gap-2 mt-2 justify-center md:justify-start">
                   {formData.admin.role && (
@@ -319,13 +341,23 @@ export default function CompanyProfileForm({
               <Input
                 placeholder="Admin Role"
                 value={formData.admin.role}
-                onChange={(e) => handleAdminChange("role", e.target.value)}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    admin: { ...prev.admin, role: e.target.value },
+                  }))
+                }
               />
 
               <Input
                 placeholder="Admin Phone"
                 value={formData.admin.phone}
-                onChange={(e) => handleAdminChange("phone", e.target.value)}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    admin: { ...prev.admin, phone: e.target.value },
+                  }))
+                }
               />
             </div>
           </div>

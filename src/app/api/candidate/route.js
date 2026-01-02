@@ -3,13 +3,24 @@ import { connect } from "@/lib/db";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import Candidate from "@/models/candidateModel";
 import { checkAuth } from "@/utils/checkAuth";
+import { Preahvihear } from "next/font/google";
 
 export async function PUT(req) {
   try {
     await connect();
-
-    const { userId } = await auth();
     const body = await req.json();
+
+    const authResult = await checkAuth({
+      allowedRoles: ["candidate"],
+    });
+
+    if (!authResult.authenticated) {
+      return NextResponse.json(
+        { message: authResult.error },
+        { status: authResult.error === "Forbidden" ? 403 : 401 }
+      );
+    }
+    const userId = authResult.userId;
 
     // Find existing candidate by _id or clerkId
     let existing = await Candidate.findOne({ clerkId: userId });
@@ -17,7 +28,7 @@ export async function PUT(req) {
     if (!existing) {
       return NextResponse.json(
         { message: "Candidate not found" },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -57,7 +68,7 @@ export async function PUT(req) {
     const updatedCandidate = await Candidate.findOneAndUpdate(
       { _id: existing._id },
       { $set: updates },
-      { new: true, runValidators: true },
+      { new: true, runValidators: true }
     );
 
     if (
@@ -72,23 +83,28 @@ export async function PUT(req) {
     ) {
       await Candidate.findOneAndUpdate(
         { _id: existing._id },
-        { $set: { isProfileComplete: true } },
+        { $set: { isProfileComplete: true } }
       );
+
+      console.log(authResult);
       const client = await clerkClient();
-      await client.users.updateUser(userId, {
-        isProfileComplete: true,
+      client.users.updateUserMetadata(userId, {
+        publicMetadata: {
+          hasResume: true,
+          isProfileComplete: true,
+        },
       });
     }
 
     return NextResponse.json(
       { message: "Candidate updated", candidate: updatedCandidate },
-      { status: 200 },
+      { status: 200 }
     );
   } catch (error) {
     console.error("UPDATE_CANDIDATE_ERROR:", error);
     return NextResponse.json(
       { message: "Failed to update candidate" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -97,7 +113,9 @@ export async function GET() {
   try {
     await connect();
 
-    const { userId, error, authenticated, status } = await checkAuth({ allowedRoles: ["candidate"] });
+    const { userId, error, authenticated, status } = await checkAuth({
+      allowedRoles: ["candidate"],
+    });
 
     if (!authenticated) {
       return NextResponse.json({ message: error }, { status });
@@ -108,7 +126,7 @@ export async function GET() {
     if (!candidate) {
       return NextResponse.json(
         { message: "Candidate not found" },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -117,7 +135,7 @@ export async function GET() {
     console.error("CANDIDATE_GET_ERROR:", error);
     return NextResponse.json(
       { message: "Failed to fetch candidate" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -125,18 +143,17 @@ export async function GET() {
 export async function POST(req) {
   try {
     const { candidate } = await req.json();
-    const { userId } = await auth();
+    const authResult = await checkAuth({
+      allowedRoles: ["candidate"],
+    });
 
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!candidate) {
+    if (!authResult.authenticated) {
       return NextResponse.json(
-        { error: "Candidate data with resume is required" },
-        { status: 400 },
+        { message: authResult.error },
+        { status: authResult.error === "Forbidden" ? 403 : 401 }
       );
     }
+    const userId = authResult.userId;
 
     await connect();
 
@@ -150,7 +167,7 @@ export async function POST(req) {
           message: "Candidate already exists",
           candidate: existingCandidate,
         },
-        { status: 409 },
+        { status: 409 }
       );
     }
 
@@ -183,11 +200,14 @@ export async function POST(req) {
     ) {
       await Candidate.findOneAndUpdate(
         { _id: existing._id },
-        { $set: { isProfileComplete: true } },
+        { $set: { isProfileComplete: true } }
       );
       const client = await clerkClient();
-      await client.users.updateUser(userId, {
-        isProfileComplete: true,
+      client.users.updateUserMetadata(userId, {
+        publicMetadata: {
+          hasResume: true,
+          isProfileComplete: true,
+        },
       });
     }
 
@@ -197,13 +217,13 @@ export async function POST(req) {
         message: "Candidate created successfully",
         candidate: newCandidate,
       },
-      { status: 200 },
+      { status: 200 }
     );
   } catch (error) {
     console.error("CREATE_CANDIDATE_ERROR:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
