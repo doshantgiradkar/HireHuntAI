@@ -6,7 +6,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,10 +22,10 @@ import {
   Briefcase,
   Award,
   Building,
-  User,
-  Edit,
 } from "lucide-react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
+import axios from "axios";
+import { redirect } from "next/navigation";
 
 export default function EditCandidateProfileForm({ initialData, onSubmit }) {
   const [formData, setFormData] = useState({
@@ -55,6 +54,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
   const [newSkill, setNewSkill] = useState("");
   const [newSocial, setNewSocial] = useState({ name: "", url: "" });
   const { isSignedIn, user } = useUser();
+  const { getToken } = useAuth();
 
   /* ---------------- HANDLERS ---------------- */
   const updateAddress = (field, value) => {
@@ -150,9 +150,16 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
   /* ---------------- UI ---------------- */
   return (
     <form
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
-        onSubmit?.(formData);
+        const res = await axios.put('/api/candidate', formData, {
+          headers: {
+            Authorization: `Bearer ${await getToken()}`
+          }
+        });
+        if (res.status == 200) {
+          redirect('/candidate/profile')
+        }
       }}
       className="container mx-auto px-4 py-8 max-w-6xl"
     >
@@ -343,7 +350,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
             <Label>Resume URL</Label>
             <Input
               value={formData.resume.resumeUrl}
-              onChange={(e) => updateResume("resumeUrl", e.target.value)}
+              disabled
             />
           </div>
 
