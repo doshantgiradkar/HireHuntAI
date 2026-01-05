@@ -26,44 +26,48 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { redirect, useSearchParams } from "next/navigation";
+import axios from "axios";
+import { useHeader } from "@/store/user.store";
 
-export default function JobSearchPage() {
+export default function JobSearchPage({params}) {
   const [jobs, setJobs] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeSearchQuery, setActiveSearchQuery] = useState("");
   const getParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState(getParams.get("page_no") || 1);
   const pageSize = getParams.get("size") < 10 ? 10 : getParams.get("size");
+  const search = getParams.get("search") || "";
+  const setTitle = useHeader(state => state.setTitle);
 
   // Fetch jobs when active search or page changes
   useEffect(() => {
-    fetchJobs();
-  }, [currentPage, activeSearchQuery]);
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `/api/job?page_no=${currentPage}&page_size=${pageSize}&search=${encodeURIComponent(search)}`,
+        );
 
-  const fetchJobs = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `/api/job?page_no=${currentPage}&page_size=${pageSize}&search=${encodeURIComponent(activeSearchQuery)}`,
-      );
+        if (response.status != 200) {
+          throw new Error("Failed to fetch jobs");
+        }
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch jobs");
+        const data = await response.data;
+        setJobs(data.jobs || []);
+        setTotalCount(data.count || 0);
+        setError(null);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const data = await response.json();
-      setJobs(data.jobs || []);
-      setTotalCount(data.count || 0);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchJobs();
+    setTitle("Job Search")
+  }, [currentPage,search]);
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
@@ -71,8 +75,7 @@ export default function JobSearchPage() {
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      setActiveSearchQuery(searchQuery);
-      setCurrentPage(1);
+      redirect(`/candidate/jobs?search=${encodeURIComponent(searchQuery)}`)
     }
   };
 
@@ -180,11 +183,11 @@ export default function JobSearchPage() {
       </div>
 
       {/* Results Info */}
-      {activeSearchQuery && (
+      {search && (
         <div className="mb-4 sm:mb-6">
           <p className="text-sm sm:text-base text-muted-foreground">
             Found {totalCount.toLocaleString()}{" "}
-            {totalCount === 1 ? "job" : "jobs"} matching "{activeSearchQuery}"
+            {totalCount === 1 ? "job" : "jobs"} matching "{search}"
           </p>
         </div>
       )}

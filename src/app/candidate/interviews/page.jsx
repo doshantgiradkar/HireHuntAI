@@ -1,11 +1,17 @@
-'use client';
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
+"use client";
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import {
   Clock,
   Video,
@@ -16,23 +22,25 @@ import {
   Calendar,
   Briefcase,
   FileText,
-  Monitor
-} from 'lucide-react';
-import { useHeader } from '@/store/user.store';
+  Monitor,
+} from "lucide-react";
+import { useHeader } from "@/store/user.store";
+import { redirect } from "next/navigation";
+import { Target } from "lucide-react";
 
 const InterviewLobbyPage = () => {
   const [timeUntilStart, setTimeUntilStart] = useState(300);
   const [systemChecks, setSystemChecks] = useState({
-    internet: 'checking',
-    camera: 'checking',
-    microphone: 'checking'
+    internet: "checking",
+    camera: "checking",
+    microphone: "checking",
   });
   const [progress, setProgress] = useState(0);
 
   const candidate = {
     name: "Alex Morgan",
     role: "Full Stack Developer",
-    avatar: ""
+    avatar: "",
   };
 
   const interviewDetails = {
@@ -42,7 +50,7 @@ const InterviewLobbyPage = () => {
     interviewerRole: "Senior Engineering Manager",
     scheduledTime: "2:30 PM IST",
     duration: "60 minutes",
-    date: "December 2, 2024"
+    date: "December 2, 2024",
   };
 
   const guidelines = [
@@ -50,14 +58,14 @@ const InterviewLobbyPage = () => {
     "Keep your camera on throughout the interview",
     "You'll have access to a code editor during the technical assessment",
     "Feel free to think aloud and explain your approach",
-    "Ask clarifying questions if needed"
+    "Ask clarifying questions if needed",
   ];
 
   const setTitle = useHeader((state) => state.setTitle);
   useEffect(() => {
     setTitle("Interviews");
     const timer = setInterval(() => {
-      setTimeUntilStart(prev => {
+      setTimeUntilStart((prev) => {
         if (prev <= 0) {
           clearInterval(timer);
           return 0;
@@ -71,17 +79,17 @@ const InterviewLobbyPage = () => {
   useEffect(() => {
     const checkSequence = async () => {
       setTimeout(() => {
-        setSystemChecks(prev => ({ ...prev, internet: 'success' }));
+        setSystemChecks((prev) => ({ ...prev, internet: "success" }));
         setProgress(33);
       }, 1000);
 
       setTimeout(() => {
-        setSystemChecks(prev => ({ ...prev, camera: 'success' }));
+        setSystemChecks((prev) => ({ ...prev, camera: "success" }));
         setProgress(66);
       }, 2000);
 
       setTimeout(() => {
-        setSystemChecks(prev => ({ ...prev, microphone: 'success' }));
+        setSystemChecks((prev) => ({ ...prev, microphone: "success" }));
         setProgress(100);
       }, 3000);
     };
@@ -92,19 +100,23 @@ const InterviewLobbyPage = () => {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   const getStatusIcon = (status) => {
-    if (status === 'success') return <CheckCircle2 className="w-5 h-5 text-green-600" />;
-    if (status === 'error') return <AlertCircle className="w-5 h-5 text-destructive" />;
-    return <div className="w-5 h-5 border-2 border-muted border-t-primary rounded-full animate-spin" />;
+    if (status === "success")
+      return <CheckCircle2 className="w-5 h-5 text-green-600" />;
+    if (status === "error")
+      return <AlertCircle className="w-5 h-5 text-destructive" />;
+    return (
+      <div className="w-5 h-5 border-2 border-muted border-t-primary rounded-full animate-spin" />
+    );
   };
 
   const getStatusColor = (status) => {
-    if (status === 'success') return 'text-green-600';
-    if (status === 'error') return 'text-destructive';
-    return 'text-muted-foreground';
+    if (status === "success") return "text-green-600";
+    if (status === "error") return "text-destructive";
+    return "text-muted-foreground";
   };
 
   return (
@@ -116,7 +128,10 @@ const InterviewLobbyPage = () => {
             <Avatar className="w-20 h-20 sm:w-24 sm:h-24 border-4 border-background shadow-lg">
               <AvatarImage src={candidate.avatar} alt={candidate.name} />
               <AvatarFallback className="text-2xl sm:text-3xl">
-                {candidate.name.split(' ').map(n => n[0]).join('')}
+                {candidate.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
               </AvatarFallback>
             </Avatar>
           </div>
@@ -139,7 +154,9 @@ const InterviewLobbyPage = () => {
             <Card>
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl sm:text-2xl">Interview Starting In</CardTitle>
+                  <CardTitle className="text-xl sm:text-2xl">
+                    Interview Starting In
+                  </CardTitle>
                   <Clock className="w-6 h-6 text-muted-foreground" />
                 </div>
               </CardHeader>
@@ -150,9 +167,14 @@ const InterviewLobbyPage = () => {
                   </div>
                   <div className="flex items-center justify-center space-x-2 mb-4">
                     <div className="w-3 h-3 bg-primary rounded-full animate-pulse" />
-                    <p className="text-sm sm:text-base text-muted-foreground">Waiting for interviewer</p>
+                    <p className="text-sm sm:text-base text-muted-foreground">
+                      Waiting for interviewer
+                    </p>
                   </div>
-                  <Progress value={(300 - timeUntilStart) / 3} className="h-2" />
+                  <Progress
+                    value={(300 - timeUntilStart) / 3}
+                    className="h-2"
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -170,29 +192,39 @@ const InterviewLobbyPage = () => {
                   <div className="flex items-start space-x-3">
                     <FileText className="w-5 h-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Interview Type</p>
+                      <p className="text-sm text-muted-foreground">
+                        Interview Type
+                      </p>
                       <p className="font-semibold">{interviewDetails.type}</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Scheduled Time</p>
-                      <p className="font-semibold">{interviewDetails.scheduledTime}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Scheduled Time
+                      </p>
+                      <p className="font-semibold">
+                        {interviewDetails.scheduledTime}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Monitor className="w-5 h-5 text-muted-foreground mt-0.5" />
                     <div>
                       <p className="text-sm text-muted-foreground">Company</p>
-                      <p className="font-semibold">{interviewDetails.company}</p>
+                      <p className="font-semibold">
+                        {interviewDetails.company}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Clock className="w-5 h-5 text-muted-foreground mt-0.5" />
                     <div>
                       <p className="text-sm text-muted-foreground">Duration</p>
-                      <p className="font-semibold">{interviewDetails.duration}</p>
+                      <p className="font-semibold">
+                        {interviewDetails.duration}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -203,12 +235,19 @@ const InterviewLobbyPage = () => {
                   <div className="flex items-center space-x-3">
                     <Avatar className="w-12 h-12">
                       <AvatarFallback>
-                        {interviewDetails.interviewer.split(' ').map(n => n[0]).join('')}
+                        {interviewDetails.interviewer
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-semibold">{interviewDetails.interviewer}</p>
-                      <p className="text-sm text-muted-foreground">{interviewDetails.interviewerRole}</p>
+                      <p className="font-semibold">
+                        {interviewDetails.interviewer}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {interviewDetails.interviewerRole}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -218,8 +257,12 @@ const InterviewLobbyPage = () => {
             {/* Guidelines Card */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">Interview Guidelines</CardTitle>
-                <CardDescription>Please review these important points before starting</CardDescription>
+                <CardTitle className="text-lg sm:text-xl">
+                  Interview Guidelines
+                </CardTitle>
+                <CardDescription>
+                  Please review these important points before starting
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
@@ -237,9 +280,11 @@ const InterviewLobbyPage = () => {
           {/* Right Column - System Checks */}
           <div className="space-y-6">
             {/* System Checks Card */}
-            <Card className="sticky top-4">
+            <Card className="top-4">
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">System Checks</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">
+                  System Checks
+                </CardTitle>
                 <CardDescription>Verifying your setup</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -247,7 +292,9 @@ const InterviewLobbyPage = () => {
                   <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex items-center space-x-3">
                       <Wifi className="w-5 h-5 text-muted-foreground" />
-                      <span className={`font-medium ${getStatusColor(systemChecks.internet)}`}>
+                      <span
+                        className={`font-medium ${getStatusColor(systemChecks.internet)}`}
+                      >
                         Internet Connection
                       </span>
                     </div>
@@ -257,7 +304,9 @@ const InterviewLobbyPage = () => {
                   <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex items-center space-x-3">
                       <Video className="w-5 h-5 text-muted-foreground" />
-                      <span className={`font-medium ${getStatusColor(systemChecks.camera)}`}>
+                      <span
+                        className={`font-medium ${getStatusColor(systemChecks.camera)}`}
+                      >
                         Camera
                       </span>
                     </div>
@@ -267,7 +316,9 @@ const InterviewLobbyPage = () => {
                   <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex items-center space-x-3">
                       <Mic className="w-5 h-5 text-muted-foreground" />
-                      <span className={`font-medium ${getStatusColor(systemChecks.microphone)}`}>
+                      <span
+                        className={`font-medium ${getStatusColor(systemChecks.microphone)}`}
+                      >
                         Microphone
                       </span>
                     </div>
@@ -277,7 +328,14 @@ const InterviewLobbyPage = () => {
 
                 <Separator />
 
-                <Button className="w-full" variant="outline" size="lg">
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    window.open("https://webcammictest.com/", "_blank");
+                  }}
+                >
                   <Video className="w-4 h-4 mr-2" />
                   Test Camera & Microphone
                 </Button>
@@ -298,7 +356,9 @@ const InterviewLobbyPage = () => {
             {/* Quick Tips Card */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base sm:text-lg">Quick Tips</CardTitle>
+                <CardTitle className="text-base sm:text-lg">
+                  Quick Tips
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <p className="text-sm">💡 Keep water nearby</p>
@@ -316,11 +376,18 @@ const InterviewLobbyPage = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-3 text-center">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                <div
+                  className="w-2 h-2 bg-primary rounded-full animate-pulse"
+                  style={{ animationDelay: "0.2s" }}
+                />
+                <div
+                  className="w-2 h-2 bg-primary rounded-full animate-pulse"
+                  style={{ animationDelay: "0.4s" }}
+                />
               </div>
               <p className="text-sm sm:text-base text-muted-foreground font-medium">
-                Please wait while the interviewer joins. You'll be notified when the interview begins.
+                Please wait while the interviewer joins. You'll be notified when
+                the interview begins.
               </p>
             </div>
           </CardContent>
@@ -330,7 +397,9 @@ const InterviewLobbyPage = () => {
         <div className="text-center mt-6">
           <p className="text-sm text-muted-foreground">
             Having technical issues?
-            <Button variant="link" className="px-2">Contact Support</Button>
+            <Button variant="link" className="px-2">
+              Contact Support
+            </Button>
           </p>
         </div>
       </div>
