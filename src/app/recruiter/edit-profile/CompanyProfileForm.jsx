@@ -348,7 +348,7 @@ export default function CompanyProfileForm({
           <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6 md:gap-4">
             {/* Avatar + Admin Info */}
             <div className="flex flex-col md:flex-row items-center md:items-start gap-4 w-full md:w-auto">
-              <Avatar className="h-20 w-20 flex-shrink-0">
+              <Avatar className="h-20 w-20 shrink-0">
                 <AvatarImage src={adminFromClerk?.avatar} />
                 <AvatarFallback className="text-lg">
                   <User className="h-10 w-10" />
@@ -371,7 +371,7 @@ export default function CompanyProfileForm({
             </div>
 
             {/* Editable Fields */}
-            <div className="w-full md:w-[280px] space-y-3">
+            <div className="w-full md:w-70 space-y-3">
               <Input
                 placeholder="Admin Role"
                 value={formData.admin.role}
