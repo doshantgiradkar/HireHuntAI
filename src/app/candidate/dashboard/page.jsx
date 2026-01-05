@@ -1,18 +1,34 @@
-"use client"
+"use client";
 
-import { useHeader } from '@/store/user.store';
-import React, { useEffect, useState } from 'react';
-import { redirect, useRouter } from 'next/navigation';
-import { Search, Briefcase, Calendar, CheckCircle, Clock, TrendingUp, MapPin, DollarSign, Building2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useHeader } from "@/store/user.store";
+import React, { useEffect, useState } from "react";
+import { redirect, useRouter } from "next/navigation";
+import {
+  Search,
+  Briefcase,
+  Calendar,
+  CheckCircle,
+  Clock,
+  TrendingUp,
+  MapPin,
+  DollarSign,
+  Building2,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const Page = () => {
   const setTitle = useHeader((state) => state.setTitle);
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     setTitle("Candidate Dashboard");
@@ -20,7 +36,7 @@ const Page = () => {
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      redirect(`/candidate/jobs?search=${encodeURIComponent(searchQuery)}`)
+      redirect(`/candidate/jobs?search=${encodeURIComponent(searchQuery)}`);
     }
   };
 
@@ -36,29 +52,29 @@ const Page = () => {
       value: "24",
       change: "+3 this week",
       icon: Briefcase,
-      color: "text-blue-600"
+      color: "text-blue-600",
     },
     {
       title: "Interviews Scheduled",
       value: "5",
       change: "2 upcoming",
       icon: Calendar,
-      color: "text-green-600"
+      color: "text-green-600",
     },
     {
       title: "Profile Views",
       value: "127",
       change: "+12 this week",
       icon: TrendingUp,
-      color: "text-purple-600"
+      color: "text-purple-600",
     },
     {
       title: "Offers Received",
       value: "2",
       change: "Pending review",
       icon: CheckCircle,
-      color: "text-orange-600"
-    }
+      color: "text-orange-600",
+    },
   ];
 
   const topJobs = [
@@ -71,7 +87,7 @@ const Page = () => {
       salary: "$120k - $160k",
       match: 95,
       postedAt: "2 days ago",
-      skills: ["React", "TypeScript", "Next.js"]
+      skills: ["React", "TypeScript", "Next.js"],
     },
     {
       id: 2,
@@ -82,7 +98,7 @@ const Page = () => {
       salary: "$100k - $140k",
       match: 92,
       postedAt: "1 week ago",
-      skills: ["React", "JavaScript", "Node.js"]
+      skills: ["React", "JavaScript", "Node.js"],
     },
     {
       id: 3,
@@ -93,8 +109,8 @@ const Page = () => {
       salary: "$110k - $150k",
       match: 88,
       postedAt: "3 days ago",
-      skills: ["React", "Python", "AWS"]
-    }
+      skills: ["React", "Python", "AWS"],
+    },
   ];
 
   return (
@@ -144,12 +160,16 @@ const Page = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-semibold tracking-tight">Top Jobs For You</h2>
-            <p className="text-sm text-muted-foreground">Based on your profile and preferences</p>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              Top Jobs For You
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Based on your profile and preferences
+            </p>
           </div>
           <Button
             variant="outline"
-            onClick={() => router.push('/candidate/jobs')}
+            onClick={() => router.push("/candidate/jobs")}
           >
             View All Jobs
           </Button>
@@ -157,13 +177,18 @@ const Page = () => {
 
         <div className="grid gap-4">
           {topJobs.map((job) => (
-            <Card key={job.id} className="hover:shadow-md transition-shadow cursor-pointer">
+            <Card
+              key={job.id}
+              className="hover:shadow-md transition-shadow cursor-pointer"
+            >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-3">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="text-xl font-semibold mb-1">{job.title}</h3>
+                        <h3 className="text-xl font-semibold mb-1">
+                          {job.title}
+                        </h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Building2 className="h-4 w-4" />
