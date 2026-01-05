@@ -31,7 +31,6 @@ export default function Page({ params }) {
   const [error, setError] = useState(null);
   const [user, setUser] = useState({});
   const [eligibile, setEligibility] = useState({});
-  const [showMobileApply, setShowMobileApply] = useState(false);
   const { userId } = useAuth();
   const jobId = React.use(params).id;
   const setTitle = useHeader((state) => state.setTitle);

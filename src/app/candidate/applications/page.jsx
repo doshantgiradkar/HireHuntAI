@@ -369,7 +369,7 @@ const ApplicationsDashboard = () => {
     setTitle("My Applications");
     const fetchApplications = async () => {
       try {
-        const response = await axios.get("/api/applications");
+        const response = await axios.get("/api/application");
         if (Array.isArray(response.data)) {
           setApplications(response.data);
         }
