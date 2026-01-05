@@ -1,350 +1,407 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { Search, MapPin, Briefcase, DollarSign, Clock, Building2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { useHeader } from '@/store/user.store';
-
-
-// Mock job data
-const mockJobs = [
-  {
-    id: 1,
-    title: "Senior Frontend Developer",
-    company: "TechCorp Inc.",
-    location: "San Francisco, CA",
-    type: "Full-time",
-    salary: "$120k - $160k",
-    description: "We're looking for an experienced frontend developer to join our dynamic team. You'll work on cutting-edge web applications using React and TypeScript.",
-    remote: true
-  },
-  {
-    id: 2,
-    title: "UX/UI Designer",
-    company: "Design Studios",
-    location: "New York, NY",
-    type: "Full-time",
-    salary: "$90k - $120k",
-    description: "Join our creative team to design beautiful and intuitive user experiences for our clients across various industries.",
-    remote: false
-  },
-  {
-    id: 3,
-    title: "Backend Engineer",
-    company: "CloudTech Solutions",
-    location: "Remote",
-    type: "Full-time",
-    salary: "$130k - $170k",
-    description: "Build scalable backend systems using Node.js and AWS. Work with a distributed team on exciting cloud infrastructure projects.",
-    remote: true
-  },
-  {
-    id: 4,
-    title: "Marketing Coordinator",
-    company: "Growth Marketing Co.",
-    location: "Austin, TX",
-    type: "Part-time",
-    salary: "$45k - $60k",
-    description: "Support our marketing team with campaign execution, content creation, and social media management.",
-    remote: false
-  },
-  {
-    id: 5,
-    title: "Data Scientist",
-    company: "Analytics Plus",
-    location: "Boston, MA",
-    type: "Full-time",
-    salary: "$110k - $150k",
-    description: "Apply machine learning and statistical analysis to solve complex business problems. Work with large datasets and cutting-edge tools.",
-    remote: true
-  },
-  {
-    id: 6,
-    title: "Product Manager",
-    company: "Innovate Labs",
-    location: "Seattle, WA",
-    type: "Full-time",
-    salary: "$140k - $180k",
-    description: "Lead product strategy and execution for our flagship SaaS platform. Collaborate with engineering, design, and stakeholders.",
-    remote: false
-  }
-];
+import { useState, useEffect } from "react";
+import {
+  Search,
+  MapPin,
+  Briefcase,
+  Building2,
+  DollarSign,
+  Users,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { redirect, useSearchParams } from "next/navigation";
 
 export default function JobSearchPage() {
-  const [searchTitle, setSearchTitle] = useState("");
-  const [searchLocation, setSearchLocation] = useState("");
-  const [selectedJobType, setSelectedJobType] = useState("all");
-  const [remoteOnly, setRemoteOnly] = useState(false);
-  const [visibleJobs, setVisibleJobs] = useState(4);
-
-
-  // Filter jobs based on search criteria
-  const filteredJobs = mockJobs.filter(job => {
-    const titleMatch = searchTitle === "" || job.title.toLowerCase().includes(searchTitle.toLowerCase());
-    const locationMatch = searchLocation === "" || job.location.toLowerCase().includes(searchLocation.toLowerCase());
-    const typeMatch = selectedJobType === "all" || job.type.toLowerCase() === selectedJobType.toLowerCase();
-    const remoteMatch = !remoteOnly || job.remote;
-
-    return titleMatch && locationMatch && typeMatch && remoteMatch;
-  });
-
-  const displayedJobs = filteredJobs.slice(0, visibleJobs);
-  const hasMoreJobs = visibleJobs < filteredJobs.length;
-
-  const handleSearch = () => {
-    // Search is handled by filtered state
-    setVisibleJobs(4); // Reset visible jobs when searching
-  };
-
-  const loadMoreJobs = () => {
-    setVisibleJobs(prev => Math.min(prev + 4, filteredJobs.length));
-  };
-
-  const [users, setUsers] = useState([]);
+  const [jobs, setJobs] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeSearchQuery, setActiveSearchQuery] = useState("");
+  const getParams = useSearchParams();
+  const [currentPage, setCurrentPage] = useState(getParams.get("page_no") || 1);
+  const pageSize = getParams.get("size") < 10 ? 10 : getParams.get("size");
 
-  const setTitle = useHeader(state => state.setTitle);
+  // Fetch jobs when active search or page changes
   useEffect(() => {
-  setTitle('Job Search')
-  async function fetchUsers() {
+    fetchJobs();
+  }, [currentPage, activeSearchQuery]);
+
+  const fetchJobs = async () => {
     try {
-      const res = await fetch("/api/users");
+      setLoading(true);
+      const response = await fetch(
+        `/api/job?page_no=${currentPage}&page_size=${pageSize}&search=${encodeURIComponent(activeSearchQuery)}`,
+      );
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch users");
+      if (!response.ok) {
+        throw new Error("Failed to fetch jobs");
       }
-      console.log(res)
-      const data = await res.json();
-      console.log("Fetched users:", data);
 
-      setUsers(data);
-    } catch (error) {
-      console.error(error);
+      const data = await response.json();
+      setJobs(data.jobs || []);
+      setTotalCount(data.count || 0);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  fetchUsers();
-}, []);
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+  };
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header Section */}
-     <header className="border-b bg-card rounded-lg mx-4 my-4">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-2 mb-6">
-            <Briefcase className="h-8 w-8" />
-            <h1 className="text-2xl font-bold">HireHunt AI</h1>
-          </div>
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      setActiveSearchQuery(searchQuery);
+      setCurrentPage(1);
+    }
+  };
 
-          {/* Search Bar */}
-          <div className="flex flex-col gap-3 md:flex-row md:gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Job title, keywords, or company"
-                value={searchTitle}
-                onChange={(e) => setSearchTitle(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="pl-10"
-                aria-label="Search by job title, keywords, or company"
-              />
-            </div>
-            <div className="flex-1 relative">
-              <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="City, state, or zip code"
-                value={searchLocation}
-                onChange={(e) => setSearchLocation(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="pl-10"
-                aria-label="Search by location"
-              />
-            </div>
-            <Button onClick={handleSearch} size="lg" className="md:w-auto">
-              <Search className="mr-2 h-4 w-4" />
-              Search Jobs
-            </Button>
-          </div>
-        </div>
-      </header>
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Filters Sidebar */}
-          <aside className="lg:w-64 space-y-4">
-            <Card>
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const getWorkModeColor = (mode) => {
+    const colors = {
+      Remote:
+        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+      Onsite: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+      Hybrid:
+        "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+    };
+    return colors[mode] || "bg-gray-100 text-gray-800";
+  };
+
+  const getEmploymentTypeColor = (type) => {
+    const colors = {
+      "Full-time":
+        "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300",
+      "Part-time":
+        "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300",
+      Contract:
+        "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+      Internship:
+        "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300",
+    };
+    return colors[type] || "bg-gray-100 text-gray-800";
+  };
+
+  const formatSalary = (salaryRange) => {
+    if (!salaryRange?.min || !salaryRange?.max) return "Not specified";
+    return `${salaryRange.currency} ${(salaryRange.min / 100000).toFixed(1)}L - ${(salaryRange.max / 100000).toFixed(1)}L`;
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "Not specified";
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <Skeleton className="h-10 sm:h-12 w-48 sm:w-64 mb-6 sm:mb-8" />
+        <Skeleton className="h-10 sm:h-12 w-full mb-6 sm:mb-8" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i}>
               <CardHeader>
-                <CardTitle className="text-lg">Filters</CardTitle>
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2" />
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Job Type Filter */}
-                <div className="space-y-2">
-                  <Label htmlFor="job-type">Job Type</Label>
-                  <Select value={selectedJobType} onValueChange={setSelectedJobType}>
-                    <SelectTrigger id="job-type" aria-label="Select job type">
-                      <SelectValue placeholder="All types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All types</SelectItem>
-                      <SelectItem value="full-time">Full-time</SelectItem>
-                      <SelectItem value="part-time">Part-time</SelectItem>
-                      <SelectItem value="contract">Contract</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Separator />
-
-                {/* Remote Only Filter */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remote"
-                    checked={remoteOnly}
-                    onCheckedChange={setRemoteOnly}
-                    aria-label="Show remote jobs only"
-                  />
-                  <Label
-                    htmlFor="remote"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                  >
-                    Remote only
-                  </Label>
-                </div>
-
-                <Separator />
-
-                {/* Salary Range */}
-                <div className="space-y-2">
-                  <Label htmlFor="salary">Salary Range</Label>
-                  <Select defaultValue="all">
-                    <SelectTrigger id="salary" aria-label="Select salary range">
-                      <SelectValue placeholder="Any salary" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Any salary</SelectItem>
-                      <SelectItem value="40-60">$40k - $60k</SelectItem>
-                      <SelectItem value="60-90">$60k - $90k</SelectItem>
-                      <SelectItem value="90-120">$90k - $120k</SelectItem>
-                      <SelectItem value="120+">$120k+</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Separator />
-
-                {/* Experience Level */}
-                <div className="space-y-2">
-                  <Label htmlFor="experience">Experience Level</Label>
-                  <Select defaultValue="all">
-                    <SelectTrigger id="experience" aria-label="Select experience level">
-                      <SelectValue placeholder="Any level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Any level</SelectItem>
-                      <SelectItem value="entry">Entry level</SelectItem>
-                      <SelectItem value="mid">Mid level</SelectItem>
-                      <SelectItem value="senior">Senior level</SelectItem>
-                      <SelectItem value="lead">Lead/Principal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <CardContent>
+                <Skeleton className="h-20 w-full" />
               </CardContent>
             </Card>
-          </aside>
-
-          {/* Job Listings */}
-          <main className="flex-1">
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold">
-                {filteredJobs.length} {filteredJobs.length === 1 ? 'Job' : 'Jobs'} Found
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                Showing {displayedJobs.length} of {filteredJobs.length} results
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {displayedJobs.length === 0 ? (
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="text-lg font-semibold mb-2">No jobs found</h3>
-                    <p className="text-muted-foreground">
-                      Try adjusting your filters or search terms
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                displayedJobs.map((job) => (
-                  <Card key={job.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                        <div className="space-y-1">
-                          <CardTitle className="text-xl">{job.title}</CardTitle>
-                          <CardDescription className="flex items-center gap-1">
-                            <Building2 className="h-4 w-4" />
-                            {job.company}
-                          </CardDescription>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="secondary">{job.type}</Badge>
-                          {job.remote && <Badge variant="outline">Remote</Badge>}
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
-                          {job.location}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="h-4 w-4" />
-                          {job.salary}
-                        </div>
-                      </div>
-                      <p className="text-sm">{job.description}</p>
-                    </CardContent>
-                    <CardFooter className="flex gap-2">
-                      <Button className="flex-1 sm:flex-none" aria-label={`Apply for ${job.title} at ${job.company}`}>
-                        Apply Now
-                      </Button>
-                      <Button variant="outline" aria-label={`Save ${job.title} job`}>
-                        Save
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))
-              )}
-            </div>
-
-            {/* Load More Button */}
-            {hasMoreJobs && (
-              <div className="mt-8 text-center">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={loadMoreJobs}
-                  aria-label="Load more job listings"
-                >
-                  Load More Jobs
-                </Button>
-              </div>
-            )}
-          </main>
+          ))}
         </div>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-center min-h-[50vh]">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      {/* Header */}
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
+          Find Your Dream Job
+        </h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
+          Discover {totalCount.toLocaleString()} opportunities waiting for you
+        </p>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6 sm:mb-8 w-full">
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4 sm:h-5 sm:w-5" />
+          <Input
+            type="text"
+            placeholder="Search by title, company, location, or skills..."
+            value={searchQuery}
+            onChange={handleSearch}
+            onKeyPress={handleKeyPress}
+            className="pl-9 sm:pl-10 h-10 sm:h-12 text-sm sm:text-base lg:text-lg w-full"
+          />
+        </div>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+          Press Enter to search
+        </p>
+      </div>
+
+      {/* Results Info */}
+      {activeSearchQuery && (
+        <div className="mb-4 sm:mb-6">
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Found {totalCount.toLocaleString()}{" "}
+            {totalCount === 1 ? "job" : "jobs"} matching "{activeSearchQuery}"
+          </p>
+        </div>
+      )}
+
+      {/* Job Grid */}
+      {jobs.length === 0 ? (
+        <Card className="text-center py-8 sm:py-12">
+          <CardContent>
+            <Briefcase className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg sm:text-xl font-semibold mb-2">
+              No jobs found
+            </h3>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Try adjusting your search criteria
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            {jobs.map((job) => (
+              <Card
+                key={job._id}
+                className="hover:shadow-lg transition-shadow duration-300 flex flex-col"
+              >
+                <CardHeader className="p-4 sm:p-6">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                      {job.companyLogo ? (
+                        <img
+                          src={job.companyLogo}
+                          alt={job.companyName}
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-base sm:text-lg line-clamp-1">
+                          {job.title}
+                        </CardTitle>
+                        <CardDescription className="text-xs sm:text-sm line-clamp-1">
+                          {job.companyName}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3">
+                    <Badge
+                      className={`${getWorkModeColor(job.workMode)} text-xs`}
+                    >
+                      {job.workMode}
+                    </Badge>
+                    <Badge
+                      className={`${getEmploymentTypeColor(job.employmentType)} text-xs`}
+                    >
+                      {job.employmentType}
+                    </Badge>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="flex-grow space-y-3 p-4 sm:p-6 pt-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
+                    {job.description}
+                  </p>
+
+                  <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <span className="truncate">{job.location}</span>
+                    </div>
+
+                    {job.experienceLevel && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <span className="truncate">
+                          {job.experienceLevel} Level
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <span className="truncate">
+                        {formatSalary(job.salaryRange)}
+                      </span>
+                    </div>
+
+                    {job.openings > 1 && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <span>{job.openings} openings</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <span className="truncate">
+                        Posted {formatDate(job.postedAt)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {job.skills && job.skills.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-3">
+                      {job.skills.slice(0, 3).map((skill, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {skill}
+                        </Badge>
+                      ))}
+                      {job.skills.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{job.skills.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+
+                <CardFooter className="flex flex-col xl:flex-row gap-2 p-4 sm:p-6 pt-0">
+                  <Button
+                    className="flex-1 w-full xl:w-auto text-sm"
+                    onClick={() =>
+                      (window.location.href = `/candidate/jobs/${job._id}`)
+                    }
+                  >
+                    View Details
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="flex-1 w-full xl:w-auto text-sm"
+                    onClick={() =>
+                      (window.location.href = `/candidate/jobs/${job._id}/apply`)
+                    }
+                  >
+                    Apply Now
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-center">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 sm:h-10 sm:w-10"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+
+                <div className="flex items-center gap-1">
+                  {[...Array(totalPages)].map((_, idx) => {
+                    const page = idx + 1;
+                    if (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="icon"
+                          className="h-8 w-8 sm:h-10 sm:w-10 text-xs sm:text-sm"
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </Button>
+                      );
+                    } else if (
+                      page === currentPage - 2 ||
+                      page === currentPage + 2
+                    ) {
+                      return (
+                        <span
+                          key={page}
+                          className="px-1 sm:px-2 text-xs sm:text-sm"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 sm:h-10 sm:w-10"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+              </div>
+
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </p>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

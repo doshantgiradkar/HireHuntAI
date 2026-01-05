@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useHeader } from "@/store/user.store";
 
 export default function CandidateProfile() {
   const [candidate, setCandidate] = useState(null);
@@ -34,9 +35,11 @@ export default function CandidateProfile() {
   const router = useRouter();
   const { getToken } = useAuth();
   const { user, isLoaded: isUserLoaded } = useUser();
+  const setTitle = useHeader(state => state.setTitle)
 
   useEffect(() => {
     fetchCandidateData();
+    setTitle("Candidate Profile");
   }, []);
 
   const fetchCandidateData = async () => {
