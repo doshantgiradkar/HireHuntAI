@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import {
@@ -132,9 +132,9 @@ export default function Page({ params }) {
             <div className="flex items-start gap-4">
               {details.companyLogo && (
                 <img
-                  src={details.companyLogo}
-                  alt={details.companyName}
-                  className="w-16 h-16 rounded-lg object-cover"
+                src={details.companyLogo}
+                alt={details.companyName}
+                className="w-16 h-16 rounded-lg object-cover"
                 />
               )}
               <div className="flex-1">
@@ -263,19 +263,19 @@ export default function Page({ params }) {
               {details.experienceRange &&
                 (details.experienceRange.min ||
                   details.experienceRange.max) && (
-                  <div className="flex items-start gap-3">
-                    <Briefcase className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Experience</p>
-                      <p className="text-sm text-muted-foreground">
-                        {details.experienceRange.min &&
-                        details.experienceRange.max
-                          ? `${details.experienceRange.min} - ${details.experienceRange.max} years`
-                          : `${details.experienceRange.min || details.experienceRange.max} years`}
-                      </p>
+                    <div className="flex items-start gap-3">
+                      <Briefcase className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Experience</p>
+                        <p className="text-sm text-muted-foreground">
+                          {details.experienceRange.min &&
+                            details.experienceRange.max
+                            ? `${details.experienceRange.min} - ${details.experienceRange.max} years`
+                            : `${details.experienceRange.min || details.experienceRange.max} years`}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
               <div className="flex items-start gap-3">
                 <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -422,24 +422,24 @@ export default function Page({ params }) {
               {details.experienceRange &&
                 (details.experienceRange.min ||
                   details.experienceRange.max) && (
-                  <div className="flex items-start gap-3">
-                    {details.experienceRange.min <
-                    user.totalExperienceDuration ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-red-600 mt-0.5" />
-                    )}
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Years of Experience</p>
-                      <p className="text-sm text-muted-foreground">
-                        {details.experienceRange.min &&
-                        details.experienceRange.max
-                          ? `${details.experienceRange.min} - ${details.experienceRange.max} years`
-                          : `${details.experienceRange.min || details.experienceRange.max} years`}
-                      </p>
+                    <div className="flex items-start gap-3">
+                      {details.experienceRange.min <
+                        user.totalExperienceDuration ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                        )}
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Years of Experience</p>
+                        <p className="text-sm text-muted-foreground">
+                          {details.experienceRange.min &&
+                            details.experienceRange.max
+                            ? `${details.experienceRange.min} - ${details.experienceRange.max} years`
+                            : `${details.experienceRange.min || details.experienceRange.max} years`}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
             </CardContent>
           </Card>
 
