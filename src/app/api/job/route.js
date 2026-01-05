@@ -6,9 +6,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
-  const authResult = await checkAuth({
-    allowedRoles: ["recruiter"],
-  });
+  const authResult = await checkAuth({ allowedRoles: ["recruiter"] });
 
   if (!authResult.authenticated) {
     return NextResponse.json(
@@ -17,34 +15,15 @@ export async function POST(req) {
     );
   }
 
+  const userId = authResult.userId;
+
   try {
     await connect();
 
     const body = await req.json();
-    const {
-      recruiterClerkId,
-      title,
-      description,
-      location,
-      workMode,
-      employmentType,
-    } = body;
 
-    if (
-      !recruiterClerkId ||
-      !title ||
-      !description ||
-      !location ||
-      !workMode ||
-      !employmentType
-    ) {
-      return NextResponse.json(
-        { message: "Missing required fields" },
-        { status: 400 }
-      );
-    }
     const recruiter = await recruiterModel.findOne({
-      clerkId: recruiterClerkId,
+      clerkId: userId,
     });
 
     if (!recruiter) {
@@ -60,7 +39,6 @@ export async function POST(req) {
       recruiterClerkId: recruiter.clerkId,
       companyName: recruiter.name,
       companyLogo: recruiter.logo,
-      status: body.status || "Draft",
       postedAt: body.status === "Open" ? new Date() : null,
     });
 
@@ -71,11 +49,12 @@ export async function POST(req) {
   } catch (error) {
     console.error("JOB_POST_ERROR:", error);
     return NextResponse.json(
-      { message: "Failed to create job" },
+      { message: error.message || "Failed to create job" },
       { status: 500 }
     );
   }
 }
+
 
 export async function GET() {
   const authResult = await checkAuth({

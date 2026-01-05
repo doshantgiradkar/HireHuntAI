@@ -78,6 +78,12 @@ export async function POST(req) {
       fs.unlinkSync(filePath);
     }
 
+    Object.keys(recruiterData).forEach((key) => {
+      if (recruiterData[key] === "") {
+        delete recruiterData[key];
+      }
+    });
+
     const recruiter = await recruiterModel.findOneAndUpdate(
       { clerkId },
       { $set: recruiterData },
@@ -89,7 +95,7 @@ export async function POST(req) {
       }
     );
     const client = await clerkClient();
-    client.users.updateUserMetadata(clerkId, {
+    await client.users.updateUserMetadata(clerkId, {
       publicMetadata: {
         hasResume: true,
         isProfileComplete: true,

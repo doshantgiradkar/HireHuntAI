@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, X, Building2, User, Building } from "lucide-react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 /* ---------------- CONSTANTS ---------------- */
 
@@ -57,6 +58,7 @@ export default function CompanyProfileForm({
   /* ---------- LOGO UPLOAD STATE ---------- */
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(initialData?.logo || "");
+  const router = useRouter();
 
   /* ---------- FORM STATE ---------- */
   const [formData, setFormData] = useState({
@@ -212,37 +214,66 @@ export default function CompanyProfileForm({
 
       const fd = new FormData();
 
-      /* -------- BASIC FIELDS -------- */
-      fd.append("clerkId", clerkUser.id);
-      fd.append("name", formData.name);
-      fd.append("industry", formData.industry);
-      fd.append("size", formData.size);
-      fd.append("status", formData.status);
-      fd.append("overview", formData.overview);
-      fd.append("website", formData.website);
-      fd.append("headquarters", formData.headquarters);
-      fd.append("founded", formData.founded);
-      fd.append("companyType", formData.companyType);
-      fd.append("contactEmail", formData.contactEmail);
-      fd.append("contactPhone", formData.contactPhone);
+      /* -------- BASIC FIELDS (SAFE) -------- */
 
-      fd.append("address", JSON.stringify(formData.address));
-      fd.append("primaryRoles", JSON.stringify(formData.primaryRoles));
+      const safeAppend = (key, value) => {
+        if (value !== undefined && value !== null && value !== "") {
+          fd.append(key, value);
+        }
+      };
 
-      /* -------- ADMIN (MERGED, SAFE) -------- */
-      fd.append(
-        "admin",
-        JSON.stringify({
-          ...adminFromClerk, // 🔒 Clerk-owned
-          role: formData.admin.role,
-          phone: formData.admin.phone,
-        })
-      );
+      safeAppend("clerkId", clerkUser.id);
+      safeAppend("name", formData.name);
+      safeAppend("industry", formData.industry);
+      safeAppend("size", formData.size);
+      safeAppend("status", formData.status); // enum safe
+      safeAppend("overview", formData.overview);
+      safeAppend("website", formData.website);
+      safeAppend("headquarters", formData.headquarters);
+      safeAppend("founded", formData.founded);
+      safeAppend("companyType", formData.companyType); // enum safe
+      safeAppend("contactEmail", formData.contactEmail);
+      safeAppend("contactPhone", formData.contactPhone);
+
+      /* -------- OBJECT / ARRAY FIELDS -------- */
+
+      if (formData.address && Object.values(formData.address).some(Boolean)) {
+        fd.append("address", JSON.stringify(formData.address));
+      }
+
+      if (
+        Array.isArray(formData.primaryRoles) &&
+        formData.primaryRoles.length
+      ) {
+        fd.append("primaryRoles", JSON.stringify(formData.primaryRoles));
+      }
+
+      /* -------- ADMIN (MERGED & CLEAN) -------- */
+
+      const adminPayload = {
+        ...adminFromClerk, // Clerk-owned fields
+        role: formData.admin?.role,
+        phone: formData.admin?.phone,
+      };
+
+      // remove empty admin fields
+      Object.keys(adminPayload).forEach((key) => {
+        if (adminPayload[key] === "" || adminPayload[key] == null) {
+          delete adminPayload[key];
+        }
+      });
+
+      if (Object.keys(adminPayload).length) {
+        fd.append("admin", JSON.stringify(adminPayload));
+      }
 
       /* -------- LOGO -------- */
+
       if (logoFile) {
         fd.append("logo", logoFile);
       }
+
+      /* -------- REQUEST -------- */
 
       const res = await axios({
         method: currentMode === "create" ? "post" : "put",
@@ -255,10 +286,13 @@ export default function CompanyProfileForm({
         setCurrentMode("edit");
       }
 
+      if (res.status === 200) {
+        router.push("/recruiter/profile");
+      }
+      console.log(res)
       onSuccess?.(res.data);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Failed to save company profile");
     } finally {
       setIsSubmitting(false);
     }

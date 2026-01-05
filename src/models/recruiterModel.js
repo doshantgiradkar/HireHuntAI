@@ -5,7 +5,7 @@ const addressSchema = new mongoose.Schema({
   city: { type: String, required: true },
   state: { type: String, required: true },
   pinCode: { type: String, required: true },
-  country: { type: String, require: true, default: "India" }
+  country: { type: String, required: true, default: "India" }
 })
 
 const recruiterSchema = new mongoose.Schema(
@@ -25,7 +25,7 @@ const recruiterSchema = new mongoose.Schema(
     overview: { type: String  },
     website: { type: String  },
     headquarters: { type: String  },
-    address: { type: addressSchema },
+    address: { type: addressSchema, required: false },
     founded: { type: String  },
      companyType: {
       type: String,

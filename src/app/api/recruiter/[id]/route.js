@@ -66,6 +66,7 @@ export async function GET(req, { params }) {
 }
 
 export async function PUT(req, { params }) {
+  /* ---------- AUTH ---------- */
   const authResult = await checkAuth({
     allowedRoles: ["recruiter"],
   });
@@ -76,7 +77,9 @@ export async function PUT(req, { params }) {
       { status: authResult.error === "Forbidden" ? 403 : 401 }
     );
   }
+
   const clerkId = authResult.userId;
+
   try {
     await connect();
 
@@ -101,7 +104,7 @@ export async function PUT(req, { params }) {
       );
     }
 
-    /* ---------- PARSE BODY (JSON OR FORM DATA) ---------- */
+    /* ---------- PARSE BODY ---------- */
 
     let body = {};
     let logoFile = null;
@@ -122,16 +125,16 @@ export async function PUT(req, { params }) {
       body = await req.json();
     }
 
-    /* ---------- SECURITY: PREVENT OWNER CHANGE ---------- */
+    /* ---------- SECURITY ---------- */
 
     if (body.clerkId && body.clerkId !== existing.clerkId) {
       return NextResponse.json(
-        { message: "Cannot change recruiter owner (clerkId)" },
+        { message: "Cannot change recruiter owner" },
         { status: 403 }
       );
     }
 
-    /* ---------- HANDLE LOGO UPLOAD ---------- */
+    /* ---------- HANDLE LOGO ---------- */
 
     let logoUrl = existing.logo;
 
@@ -182,12 +185,16 @@ export async function PUT(req, { params }) {
     ];
 
     allowedFields.forEach((field) => {
-      if (body[field] !== undefined) {
-        if (field === "primaryRoles") {
-          updates.primaryRoles = parseJSON(body.primaryRoles);
-        } else {
-          updates[field] = body[field];
-        }
+      const value = body[field];
+
+      // ⛔ skip empty / invalid values
+      if (value === undefined || value === null || value === "") return;
+
+      if (field === "primaryRoles") {
+        updates.primaryRoles =
+          typeof value === "string" ? JSON.parse(value) : value;
+      } else {
+        updates[field] = value;
       }
     });
 
@@ -195,16 +202,23 @@ export async function PUT(req, { params }) {
       updates.logo = logoUrl;
     }
 
+    /* ---------- ADMIN ---------- */
+
     if (body.admin) {
       const parsedAdmin =
         typeof body.admin === "string" ? JSON.parse(body.admin) : body.admin;
 
+      const cleanAdmin = {};
+
+      Object.entries(parsedAdmin).forEach(([key, value]) => {
+        if (value !== "" && value !== undefined && value !== null) {
+          cleanAdmin[key] = value;
+        }
+      });
+
       updates.admin = {
-        avatar: parsedAdmin.avatar ?? existing.admin.avatar,
-        name: parsedAdmin.name ?? existing.admin.name,
-        role: parsedAdmin.role ?? existing.admin.role,
-        email: parsedAdmin.email ?? existing.admin.email,
-        phone: parsedAdmin.phone ?? existing.admin.phone,
+        ...existing.admin,
+        ...cleanAdmin,
       };
     }
 
@@ -215,9 +229,11 @@ export async function PUT(req, { params }) {
       { $set: updates },
       { new: true, runValidators: true }
     );
-  
+
+    /* ---------- CLERK METADATA ---------- */
+
     const client = await clerkClient();
-    client.users.updateUserMetadata(clerkId, {
+    await client.users.updateUserMetadata(clerkId, {
       publicMetadata: {
         isProfileComplete: true,
       },
