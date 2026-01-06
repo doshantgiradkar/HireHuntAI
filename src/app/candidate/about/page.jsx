@@ -51,7 +51,7 @@ const Page = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+    <div className="min-h-screen bg-linear-to-b from-background to-muted/20">
       {/* Hero Section */}
       <div className="container mx-auto px-6 py-16 max-w-6xl">
         <div className="text-center space-y-4 mb-16">
@@ -132,7 +132,7 @@ const Page = () => {
               <div className="grid md:grid-cols-2 gap-4">
                 {values.map((value) => (
                   <div key={value} className="flex items-start gap-3">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 shrink-0" />
                     <span className="text-muted-foreground">{value}</span>
                   </div>
                 ))}

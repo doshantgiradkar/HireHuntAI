@@ -109,7 +109,7 @@ const Page = () => {
                   <CardTitle className="text-xl font-medium truncate pr-2">
                     {stat.title}
                   </CardTitle>
-                  <Icon className={`h-4 w-4 flex-shrink-0 ${stat.color}`} />
+                  <Icon className={`h-4 w-4 shrink-0 ${stat.color}`} />
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 pt-0">
                   <div className="text-5xl  font-bold">{stat.value}</div>
@@ -197,16 +197,16 @@ const Page = () => {
                         {/* Job Header */}
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-lg sm:text-xl font-semibold mb-2 break-words">
+                            <h3 className="text-lg sm:text-xl font-semibold mb-2 wrap-break-words">
                               {job.title}
                             </h3>
                             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
-                                <Building2 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                                <Building2 className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
                                 <span className="truncate">{job.company}</span>
                               </span>
                               <span className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                                <MapPin className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
                                 <span className="truncate">{job.location}</span>
                               </span>
                             </div>
@@ -222,7 +222,7 @@ const Page = () => {
                         {/* Job Details */}
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                           <span className="flex items-center gap-1 text-muted-foreground">
-                            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
                             <span className="truncate">
                               {job.salaryRange.currency} {job.salaryRange.min} - {job.salaryRange.max}
                             </span>
@@ -233,11 +233,11 @@ const Page = () => {
                         {/* Dates */}
                         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3 flex-shrink-0" />
+                            <Clock className="h-3 w-3 shrink-0" />
                             Posted: {formatDate(job.postedAt)}
                           </span>
                           <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3 flex-shrink-0" />
+                            <Clock className="h-3 w-3 shrink-0" />
                             Deadline: {formatDate(job.applicationDeadline)}
                           </span>
                         </div>
@@ -279,7 +279,7 @@ const Page = () => {
                       </div>
 
                       {/* Right Action Buttons - Desktop Only */}
-                      <div className="hidden lg:flex lg:flex-col lg:items-end lg:justify-between lg:min-w-[180px]">
+                      <div className="hidden lg:flex lg:flex-col lg:items-end lg:justify-between lg:min-w-45">
                         <Badge
                           variant="secondary"
                           className="bg-green-50 text-green-700 hover:bg-green-100 whitespace-nowrap"
