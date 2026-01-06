@@ -14,6 +14,7 @@ import TestimonialCarousel from "@/components/testimonial-carousel";
 import PricingSection from "@/components/pricing-section";
 import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/footer";
+import { X } from "lucide-react";
 
 
 const Home = () => {

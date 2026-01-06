@@ -1,3 +1,4 @@
+"use client"
 import { useEffect } from "react";
 import Home from "./home/page";
 import { useUserStore } from "@/store/user.store";

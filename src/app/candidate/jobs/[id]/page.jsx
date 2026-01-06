@@ -211,7 +211,7 @@ export default function Page({ params }) {
         </TabsList>
 
         {/* Job Description Tab */}
-        <TabsContent value="description" className="space-y-6 mt-6">
+        <TabsContent value="description" className="space-y-6 mt-6 mb-16">
           <Card>
             <CardHeader>
               <CardTitle>Job Description</CardTitle>
@@ -316,7 +316,7 @@ export default function Page({ params }) {
 
         {/* Hiring Timeline Tab */}
         {/* TODO: Improve timeline */}
-        <TabsContent value="timeline" className="space-y-6 mt-6">
+        <TabsContent value="timeline" className="space-y-6 mt-6 mb-16">
           <Card>
             <CardHeader>
               <CardTitle>Interview Process</CardTitle>
@@ -413,7 +413,7 @@ export default function Page({ params }) {
         </TabsContent>
 
         {/* Eligibility Tab */}
-        <TabsContent value="eligibility" className="space-y-6 mt-6">
+        <TabsContent value="eligibility" className="space-y-6 mt-6 mb-16">
           <Card>
             <CardHeader>
               <CardTitle>Experience Requirements</CardTitle>
