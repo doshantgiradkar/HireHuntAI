@@ -29,7 +29,7 @@ export default function UserLoader({ children }) {
 
   useEffect(() => {
     fetchUser(user, isLoaded, isUserLoaded);
-  }, []);
+  }, [fetchUser, user, isLoaded, isUserLoaded]);
 
   return children;
 }

@@ -29,7 +29,7 @@ import { redirect, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { useHeader } from "@/store/user.store";
 
-export default function JobSearchPage({params}) {
+export default function JobSearchPage() {
   const [jobs, setJobs] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ export default function JobSearchPage({params}) {
   const [currentPage, setCurrentPage] = useState(getParams.get("page_no") || 1);
   const pageSize = getParams.get("size") < 10 ? 10 : getParams.get("size");
   const search = getParams.get("search") || "";
-  const setTitle = useHeader(state => state.setTitle);
+  const setTitle = useHeader((state) => state.setTitle);
 
   // Fetch jobs when active search or page changes
   useEffect(() => {
@@ -66,8 +66,8 @@ export default function JobSearchPage({params}) {
     };
 
     fetchJobs();
-    setTitle("Job Search")
-  }, [currentPage,search]);
+    setTitle("Job Search");
+  }, [currentPage, search]);
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
@@ -75,7 +75,7 @@ export default function JobSearchPage({params}) {
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      redirect(`/candidate/jobs?search=${encodeURIComponent(searchQuery)}`)
+      redirect(`/candidate/jobs?search=${encodeURIComponent(searchQuery)}`);
     }
   };
 
