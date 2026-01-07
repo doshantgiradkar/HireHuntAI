@@ -91,6 +91,7 @@ export async function GET(req) {
 
   try {
     await connect();
+
     // Get paginated jobs
     const { searchParams } = new URL(req.url);
     const page_no = parseInt(searchParams.get('page_no')) || 1;
@@ -115,7 +116,6 @@ export async function GET(req) {
     const totalCount = await jobModel.countDocuments(query);
 
     // Get paginated jobs
-
     const jobs = await jobModel
       .find(query)
       .sort({ createdAt: -1 })
