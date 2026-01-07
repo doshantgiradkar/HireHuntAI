@@ -30,6 +30,7 @@ import axios from "axios";
 import { useHeader } from "@/store/user.store";
 
 export default function JobSearchPage() {
+  const { userId } = useUser();
   const [jobs, setJobs] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -108,7 +109,9 @@ export default function JobSearchPage() {
 
   const formatSalary = (salaryRange) => {
     if (!salaryRange?.min || !salaryRange?.max) return "Not specified";
-    return `${salaryRange.currency} ${(salaryRange.min / 100000).toFixed(1)}L - ${(salaryRange.max / 100000).toFixed(1)}L`;
+    return `${salaryRange.currency} ${(salaryRange.min / 100000).toFixed(
+      1
+    )}L - ${(salaryRange.max / 100000).toFixed(1)}L`;
   };
 
   const formatDate = (date) => {
@@ -244,7 +247,9 @@ export default function JobSearchPage() {
                       {job.workMode}
                     </Badge>
                     <Badge
-                      className={`${getEmploymentTypeColor(job.employmentType)} text-xs`}
+                      className={`${getEmploymentTypeColor(
+                        job.employmentType
+                      )} text-xs`}
                     >
                       {job.employmentType}
                     </Badge>
