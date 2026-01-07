@@ -26,6 +26,7 @@ import {
 import { useAuth, useUser } from "@clerk/nextjs";
 import axios from "axios";
 import { redirect } from "next/navigation";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function EditCandidateProfileForm({ initialData, onSubmit }) {
   const [formData, setFormData] = useState({
@@ -172,7 +173,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
               <img
                 src={formData.profileImageUrl}
                 alt="Profile"
-                className="h-24 w-24 rounded-full border object-cover flex-shrink-0"
+                className="h-24 w-24 rounded-full border object-cover shrink-0"
               />
               <div className="text-center md:text-left flex-1 space-y-1">
                 <p className="text-3xl font-bold">
@@ -239,14 +240,24 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
             <Label>Add Social Link</Label>
 
             <div className="flex gap-2">
-              <Input
-                placeholder="Platform (linkedin, github)"
-                value={newSocial.name}
-                onChange={(e) =>
-                  setNewSocial({ ...newSocial, name: e.target.value })
-                }
-                className="flex-1"
-              />
+              <div className="flex gap-2">
+                <Select
+                  value={newSocial.name}
+                  onValueChange={(value) =>
+                    setNewSocial({ ...newSocial, name: value })
+                  }
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select platform" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="github">GitHub</SelectItem>
+                    <SelectItem value="linkedin">LinkedIn</SelectItem>
+                    <SelectItem value="leetcode">LeetCode</SelectItem>
+                    <SelectItem value="others">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
               <Input
                 placeholder="Profile URL"
@@ -254,7 +265,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
                 onChange={(e) =>
                   setNewSocial({ ...newSocial, url: e.target.value })
                 }
-                className="flex-[2]"
+                className="flex-2"
               />
 
               <Button type="button" size="icon" onClick={addSocial}>
@@ -350,7 +361,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
             <Label>Resume URL</Label>
             <Input
               value={formData.resume.resumeUrl}
-              disabled
+              disabled={true}
             />
           </div>
 

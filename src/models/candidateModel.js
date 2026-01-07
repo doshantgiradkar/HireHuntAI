@@ -24,7 +24,7 @@ const socialSchema = new mongoose.Schema({
     enum: ["leetcode", "linkedin", "github", "others"],
     required: true,
   },
-  url: { type: String, required: false },
+  url: { type: String, required: true },
 });
 
 const certificateSchema = new mongoose.Schema({

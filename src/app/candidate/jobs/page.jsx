@@ -30,7 +30,6 @@ import axios from "axios";
 import { useHeader } from "@/store/user.store";
 
 export default function JobSearchPage() {
-  const { userId } = useUser();
   const [jobs, setJobs] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
