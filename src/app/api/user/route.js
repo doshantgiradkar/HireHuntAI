@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { connect } from "@/lib/db";
 import userModel from "@/models/userModel";
-import mongoose from "mongoose";
-import { auth } from "@clerk/nextjs/server";
 import { checkAuth } from "@/utils/checkAuth";
 
 export async function GET() {

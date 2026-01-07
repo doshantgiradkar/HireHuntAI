@@ -1,5 +1,6 @@
 import "./globals.css";
 import { ThemeProviderWrapper } from "@/components/theme-provider-wrapper";
+import UserLoader from "@/store/user.store";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 
@@ -24,7 +25,9 @@ export default function RootLayout({ children }) {
       <html lang="en" suppressHydrationWarning>
         <body className={`${geistSans.variable} ${geistMono.variable}`}>
           <ThemeProviderWrapper>
-            {children}
+            <UserLoader>
+              {children}
+            </UserLoader>
           </ThemeProviderWrapper>
         </body>
       </html>

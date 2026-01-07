@@ -26,7 +26,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { redirect, useSearchParams } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import axios from "axios";
+import { useHeader } from "@/store/user.store";
 
 export default function JobSearchPage() {
   const { userId } = useUser();
@@ -35,49 +36,39 @@ export default function JobSearchPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeSearchQuery, setActiveSearchQuery] = useState("");
   const getParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState(getParams.get("page_no") || 1);
   const pageSize = getParams.get("size") < 10 ? 10 : getParams.get("size");
+  const search = getParams.get("search") || "";
+  const setTitle = useHeader((state) => state.setTitle);
 
   // Fetch jobs when active search or page changes
   useEffect(() => {
-    if (!userId) return;
-    fetchJobs(userId, currentPage, pageSize, activeSearchQuery);
-  }, [userId, currentPage, activeSearchQuery]);
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `/api/job?page_no=${currentPage}&page_size=${pageSize}&search=${encodeURIComponent(search)}`,
+        );
 
-  const fetchJobs = async (
-    userId,
-    page_no = 1,
-    page_size = 10,
-    search = ""
-  ) => {
-    try {
-      setLoading(true);
-
-      const response = await axios.get(
-        `/api/job/user/${userId}?page_no=${page_no}&page_size=${page_size}&search=${encodeURIComponent(
-          search
-        )}`,
-        {
-          withCredentials: true, // send cookies or credentials
+        if (response.status != 200) {
+          throw new Error("Failed to fetch jobs");
         }
-      );
 
-      const data = response.data;
+        const data = await response.data;
+        setJobs(data.jobs || []);
+        setTotalCount(data.count || 0);
+        setError(null);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setJobs(data.jobs || []);
-      setTotalCount(data.pagination?.totalCount || 0);
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching jobs:", err);
-      setError(
-        err.response?.data?.message || err.message || "Failed to fetch jobs"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchJobs();
+    setTitle("Job Search");
+  }, [currentPage, search]);
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
@@ -85,8 +76,7 @@ export default function JobSearchPage() {
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      setActiveSearchQuery(searchQuery);
-      setCurrentPage(1);
+      redirect(`/candidate/jobs?search=${encodeURIComponent(searchQuery)}`);
     }
   };
 
@@ -196,11 +186,11 @@ export default function JobSearchPage() {
       </div>
 
       {/* Results Info */}
-      {activeSearchQuery && (
+      {search && (
         <div className="mb-4 sm:mb-6">
           <p className="text-sm sm:text-base text-muted-foreground">
             Found {totalCount.toLocaleString()}{" "}
-            {totalCount === 1 ? "job" : "jobs"} matching "{activeSearchQuery}"
+            {totalCount === 1 ? "job" : "jobs"} matching "{search}"
           </p>
         </div>
       )}
@@ -233,10 +223,10 @@ export default function JobSearchPage() {
                         <img
                           src={job.companyLogo}
                           alt={job.companyName}
-                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover flex-shrink-0"
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover shrink-0"
                         />
                       ) : (
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                           <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                         </div>
                       )}
@@ -266,20 +256,20 @@ export default function JobSearchPage() {
                   </div>
                 </CardHeader>
 
-                <CardContent className="flex-grow space-y-3 p-4 sm:p-6 pt-0">
+                <CardContent className="grow space-y-3 p-4 sm:p-6 pt-0">
                   <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
                     {job.description}
                   </p>
 
                   <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                       <span className="truncate">{job.location}</span>
                     </div>
 
                     {job.experienceLevel && (
                       <div className="flex items-center gap-2 text-muted-foreground">
-                        <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                         <span className="truncate">
                           {job.experienceLevel} Level
                         </span>
@@ -287,7 +277,7 @@ export default function JobSearchPage() {
                     )}
 
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                       <span className="truncate">
                         {formatSalary(job.salaryRange)}
                       </span>
@@ -295,13 +285,13 @@ export default function JobSearchPage() {
 
                     {job.openings > 1 && (
                       <div className="flex items-center gap-2 text-muted-foreground">
-                        <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                         <span>{job.openings} openings</span>
                       </div>
                     )}
 
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                       <span className="truncate">
                         Posted {formatDate(job.postedAt)}
                       </span>

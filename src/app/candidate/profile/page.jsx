@@ -141,7 +141,7 @@ export default function CandidateProfile() {
               <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6 md:gap-4">
                 {/* Avatar + Info */}
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-4 w-full md:w-auto">
-                  <Avatar className="h-20 w-20 flex-shrink-0">
+                  <Avatar className="h-20 w-20 shrink-0">
                     <AvatarImage
                       src={user?.imageUrl}
                       alt={user?.fullName || "User"}
