@@ -94,7 +94,9 @@ export class Resume {
 
       name ∈ leetcode | linkedin | github | others
 
-      If platform present but URL missing → url: ""
+      If platform present but URL missing → don't add that social media to the array
+
+      If the url contains scheme of the protocol (eg. 'http://', 'https://') remove that from the actual url string
 
       Education
 
@@ -120,19 +122,37 @@ export class Resume {
 
       📊 ATS Score (0–100)
 
-      Store result in resume.atsScore.
+      Evaluate the resume and compute an ATS score from 0–100, storing the result in resume.atsScore.
 
-      Weights:
+      Use these weights and calibration:
 
-      Skills: 40
+      Skills & Keyword Match — 30
+        - Match of technical, role, and tool keywords vs job requirements.
 
-      Education: 30
+      Relevant Experience & Projects — 25
+        - Include internships, academic projects, and personal projects as valid experience, especially for entry-level roles.
 
-      Experience: 15
+      Role Fit & Impact — 15
+        - Quality of projects, responsibilities, outcomes, and problem-solving.
 
-      Resume completeness: 10
+      Resume Completeness & Structure — 15
+        - Presence of summary, skills, projects/experience, education, contact info, clean formatting.
 
-      Certifications: 5
+      Education — 10
+        - Degree relevance, academic performance, institution credibility.
+
+      Certifications — 5
+        - Relevance and quality.
+
+      Scoring calibration:
+
+      Strong entry-level resumes should score 75–85
+
+      Excellent profiles should reach 85–95
+
+      Avoid compressing most candidates into 50–65
+
+      Final ATS Score = sum of all sections (0–100).
 
       Rules:
 
