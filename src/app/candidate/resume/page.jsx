@@ -13,9 +13,11 @@ import {
 import { useHeader } from "@/store/user.store";
 import { Upload, FileText, X } from "lucide-react";
 import axios from "axios";
+import { Loader2 } from "lucide-react";
 
 const ResumeViewerPage = () => {
   const [resumeFile, setResumeFile] = useState(null);
+  const [isLoading, setLoading] = useState(false);
   const setTitle = useHeader((state) => state.setTitle);
   const fileInputRef = useRef(null);
 
@@ -25,10 +27,11 @@ const ResumeViewerPage = () => {
     formData.append("resume", resumeFile);
     const clerkToken = await window.Clerk.session.getToken();
 
+    setLoading(true);
     const resp = await axios.post("/api/candidate/resume", formData, {
+      withCredentials: true,
       headers: {
         "Content-Type": "multipart/form-data",
-        "Authorization": `Bearer ${clerkToken}`,
       },
     });
 
@@ -58,7 +61,7 @@ const ResumeViewerPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-linear-to-br from-background via-background to-muted/20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Upload Section */}
         <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
@@ -97,22 +100,33 @@ const ResumeViewerPage = () => {
                     />
                   </label>
 
-                  <Button
-                    onClick={handleUpload}
-                    disabled={!resumeFile}
-                    size="lg"
-                    className="h-11 sm:h-12 whitespace-nowrap"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Resume
-                  </Button>
+                  {isLoading ? (
+                    <Button
+                      onClick={handleUpload}
+                      disabled={true}
+                      size="lg"
+                      className="h-11 sm:h-12 whitespace-nowrap"
+                    >
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleUpload}
+                      disabled={!resumeFile}
+                      size="lg"
+                      className="h-11 sm:h-12 whitespace-nowrap"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Resume
+                    </Button>
+                  )}
                 </div>
 
                 {resumeFile && (
                   <div className="mt-2 p-3 sm:p-4 bg-muted rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs sm:text-sm font-medium flex items-center gap-2 break-all">
-                        <FileText className="w-4 h-4 flex-shrink-0" />
+                        <FileText className="w-4 h-4 shrink-0" />
                         <span className="truncate">{resumeFile.name}</span>
                       </p>
 
