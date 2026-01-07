@@ -292,7 +292,7 @@ export default function CandidateProfile() {
                         user.publicMetadata.hasResume ? "default" : "secondary"
                       }
                     >
-                      {user.publicMetadata.hasResume ? "Yes" : "No"}
+                      { user.publicMetadata.hasResume ? "Yes" : "No" }
                     </Badge>
                   </div>
                   {candidate.appliedJobs?.length > 0 && (
@@ -357,7 +357,7 @@ export default function CandidateProfile() {
                   {candidate.resume.socials.map((social, index) => (
                     <a
                       key={index}
-                      href={social.url}
+                      href={`https://${social.url}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 p-3 rounded-md hover:bg-accent transition-colors border"
@@ -388,10 +388,7 @@ export default function CandidateProfile() {
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {candidate.resume.skills.map((skill, index) => (
-                      <Badge key={index} variant="secondary">
-                        {skill}
-                      </Badge>
-                    ))}
+                      <Badge key={index} variant="secondary"> {skill} </Badge> ))}
                   </div>
                 </CardContent>
               </Card>
