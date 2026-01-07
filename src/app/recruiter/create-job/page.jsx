@@ -101,12 +101,12 @@ export default function CreateJobPost() {
         applicationDeadline: date ? date.toISOString() : null,
         status: "Open",
       };
-
+      console.log(payload)
       const res = await axios.post("/api/job", payload, {
         withCredentials: true,
       });
 
-      console.log("Job created:", res.data);
+      window.location.href = '/recruiter/jobs'
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("Publish error:", {
