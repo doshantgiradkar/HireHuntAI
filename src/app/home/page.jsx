@@ -14,6 +14,7 @@ import TestimonialCarousel from "@/components/testimonial-carousel";
 import PricingSection from "@/components/pricing-section";
 import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/footer";
+import { X } from "lucide-react";
 
 
 const Home = () => {
@@ -60,7 +61,7 @@ const Home = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+            <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
                     <div className="text-center space-y-8">
                         <Skeleton className="h-12 w-3/4 mx-auto" />
@@ -78,13 +79,13 @@ const Home = () => {
 
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 scroll-smooth">
+        <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 scroll-smooth">
             {/* Navigation */}
             <nav className="relative z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center py-4">
                         <div className="flex items-center space-x-2">
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-linear-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
                                 <SparklesIcon className="h-6 w-6 text-white" />
                             </div>
                             <span className="text-xl font-bold text-slate-900 dark:text-white">
@@ -146,15 +147,15 @@ const Home = () => {
             <div className="relative overflow-hidden">
                 {/* Animated background elements */}
                 <div className="absolute inset-0 overflow-hidden">
-                    <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-blue-400/30 to-purple-400/30 rounded-full blur-3xl animate-pulse"></div>
-                    <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-pink-400/30 to-orange-400/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-cyan-400/20 to-blue-400/20 rounded-full blur-3xl animate-pulse delay-500"></div>
+                    <div className="absolute -top-40 -right-40 w-80 h-80 bg-linear-to-r from-blue-400/30 to-purple-400/30 rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-linear-to-r from-pink-400/30 to-orange-400/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-linear-to-r from-cyan-400/20 to-blue-400/20 rounded-full blur-3xl animate-pulse delay-500"></div>
                 </div>
 
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 lg:py-32">
                     <div className="text-center">
                         {/* Badge */}
-                        <Badge variant="secondary" className="inline-flex items-center rounded-full bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 px-6 py-3 text-sm font-medium text-blue-700 dark:text-blue-300 mb-8 border border-blue-200/50 dark:border-blue-700/50">
+                        <Badge variant="secondary" className="inline-flex items-center rounded-full bg-linear-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 px-6 py-3 text-sm font-medium text-blue-700 dark:text-blue-300 mb-8 border border-blue-200/50 dark:border-blue-700/50">
                             <Zap className="h-4 w-4 mr-2" />
                             <span>Streamline Your Hiring</span>
                         </Badge>
@@ -162,7 +163,7 @@ const Home = () => {
                         {/* Main Heading */}
                         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 dark:text-white mb-8 animate-in fade-in slide-in-from-bottom duration-1000">
                             Transform Your{' '}
-                            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
+                            <span className="bg-linear-to-r from-blue-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
                                 Interview Process
                             </span>{' '}
                             with AI
@@ -178,7 +179,7 @@ const Home = () => {
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-in fade-in slide-in-from-bottom duration-1000 delay-300">
                             <Button
                                 size="lg"
-                                className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+                                className="group bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
                                 onClick={() => router.push('/register')}
                             >
                                 Start Free Trial

@@ -220,10 +220,10 @@ export default function JobSearchPage() {
                         <img
                           src={job.companyLogo}
                           alt={job.companyName}
-                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover flex-shrink-0"
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover shrink-0"
                         />
                       ) : (
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                           <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                         </div>
                       )}
@@ -251,20 +251,20 @@ export default function JobSearchPage() {
                   </div>
                 </CardHeader>
 
-                <CardContent className="flex-grow space-y-3 p-4 sm:p-6 pt-0">
+                <CardContent className="grow space-y-3 p-4 sm:p-6 pt-0">
                   <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
                     {job.description}
                   </p>
 
                   <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                       <span className="truncate">{job.location}</span>
                     </div>
 
                     {job.experienceLevel && (
                       <div className="flex items-center gap-2 text-muted-foreground">
-                        <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                         <span className="truncate">
                           {job.experienceLevel} Level
                         </span>
@@ -272,7 +272,7 @@ export default function JobSearchPage() {
                     )}
 
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                       <span className="truncate">
                         {formatSalary(job.salaryRange)}
                       </span>
@@ -280,13 +280,13 @@ export default function JobSearchPage() {
 
                     {job.openings > 1 && (
                       <div className="flex items-center gap-2 text-muted-foreground">
-                        <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                         <span>{job.openings} openings</span>
                       </div>
                     )}
 
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                       <span className="truncate">
                         Posted {formatDate(job.postedAt)}
                       </span>
