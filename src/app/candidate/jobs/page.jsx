@@ -26,8 +26,10 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { redirect, useSearchParams } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 export default function JobSearchPage() {
+  const { userId } = useUser();
   const [jobs, setJobs] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -40,26 +42,38 @@ export default function JobSearchPage() {
 
   // Fetch jobs when active search or page changes
   useEffect(() => {
-    fetchJobs();
-  }, [currentPage, activeSearchQuery]);
+    if (!userId) return;
+    fetchJobs(userId, currentPage, pageSize, activeSearchQuery);
+  }, [userId, currentPage, activeSearchQuery]);
 
-  const fetchJobs = async () => {
+  const fetchJobs = async (
+    userId,
+    page_no = 1,
+    page_size = 10,
+    search = ""
+  ) => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `/api/job?page_no=${currentPage}&page_size=${pageSize}&search=${encodeURIComponent(activeSearchQuery)}`,
+
+      const response = await axios.get(
+        `/api/job/user/${userId}?page_no=${page_no}&page_size=${page_size}&search=${encodeURIComponent(
+          search
+        )}`,
+        {
+          withCredentials: true, // send cookies or credentials
+        }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch jobs");
-      }
+      const data = response.data;
 
-      const data = await response.json();
       setJobs(data.jobs || []);
-      setTotalCount(data.count || 0);
+      setTotalCount(data.pagination?.totalCount || 0);
       setError(null);
     } catch (err) {
-      setError(err.message);
+      console.error("Error fetching jobs:", err);
+      setError(
+        err.response?.data?.message || err.message || "Failed to fetch jobs"
+      );
     } finally {
       setLoading(false);
     }
@@ -105,7 +119,9 @@ export default function JobSearchPage() {
 
   const formatSalary = (salaryRange) => {
     if (!salaryRange?.min || !salaryRange?.max) return "Not specified";
-    return `${salaryRange.currency} ${(salaryRange.min / 100000).toFixed(1)}L - ${(salaryRange.max / 100000).toFixed(1)}L`;
+    return `${salaryRange.currency} ${(salaryRange.min / 100000).toFixed(
+      1
+    )}L - ${(salaryRange.max / 100000).toFixed(1)}L`;
   };
 
   const formatDate = (date) => {
@@ -241,7 +257,9 @@ export default function JobSearchPage() {
                       {job.workMode}
                     </Badge>
                     <Badge
-                      className={`${getEmploymentTypeColor(job.employmentType)} text-xs`}
+                      className={`${getEmploymentTypeColor(
+                        job.employmentType
+                      )} text-xs`}
                     >
                       {job.employmentType}
                     </Badge>

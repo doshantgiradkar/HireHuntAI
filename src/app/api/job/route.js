@@ -81,6 +81,7 @@ export async function GET(req) {
   const authResult = await checkAuth({
     allowedRoles: ["recruiter", "candidate"],
   });
+
   if (!authResult.authenticated) {
     return NextResponse.json(
       { message: authResult.error },
@@ -92,64 +93,44 @@ export async function GET(req) {
     await connect();
 
     const { searchParams } = new URL(req.url);
-    const page_no = parseInt(searchParams.get('page_no')) || 1;
-    const page_size = parseInt(searchParams.get('page_size')) || 9;
-    const search = searchParams.get('search') || '';
+
+    const page_no = Number(searchParams.get("page_no")) || 1;
+    const page_size = Number(searchParams.get("page_size")) || 9;
+    const search = searchParams.get("search")?.trim() || "";
 
     // Build search query
     let query = {};
+
     if (search) {
       query = {
         $or: [
-          { title: { $regex: search, $options: 'i' } },
-          { companyName: { $regex: search, $options: 'i' } },
-          { location: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { skills: { $in: [new RegExp(search, 'i')] } }
-        ]
+          { title: { $regex: search, $options: "i" } },
+          { companyName: { $regex: search, $options: "i" } },
+          { location: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+          { skills: { $in: [new RegExp(search, "i")] } },
+        ],
       };
     }
 
-    // Get total count for pagination
     const totalCount = await jobModel.countDocuments(query);
 
-    // Get paginated jobs
-    const { searchParams } = new URL(req.url);
-    const page_no = parseInt(searchParams.get('page_no')) || 1;
-    const page_size = parseInt(searchParams.get('page_size')) || 9;
-    const search = searchParams.get('search') || '';
-
-    // Build search query
-    let query = {};
-    if (search) {
-      query = {
-        $or: [
-          { title: { $regex: search, $options: 'i' } },
-          { companyName: { $regex: search, $options: 'i' } },
-          { location: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { skills: { $in: [new RegExp(search, 'i')] } }
-        ]
-      };
-    }
-
-    // Get total count for pagination
-    const totalCount = await jobModel.countDocuments(query);
-
-    // Get paginated jobs
     const jobs = await jobModel
-      .find(query)
-      .sort({ createdAt: -1 })
-      .skip((page_no - 1) * page_size)
-      .limit(page_size);
       .find(query)
       .sort({ createdAt: -1 })
       .skip((page_no - 1) * page_size)
       .limit(page_size);
 
     return NextResponse.json(
-      { jobs, count: totalCount },
-      { jobs, count: totalCount },
+      {
+        jobs,
+        pagination: {
+          total: totalCount,
+          page: page_no,
+          pageSize: page_size,
+          totalPages: Math.ceil(totalCount / page_size),
+        },
+      },
       { status: 200 }
     );
   } catch (error) {
@@ -160,4 +141,3 @@ export async function GET(req) {
     );
   }
 }
-
