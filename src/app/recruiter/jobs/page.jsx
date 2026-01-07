@@ -335,20 +335,10 @@ export default function JobSearchPage() {
                   <Button
                     className="flex-1 w-full xl:w-auto text-sm"
                     onClick={() =>
-                      (window.location.href = `/candidate/jobs/${job._id}`)
+                      (window.location.href = `/recruiter/jobs/${job._id}`)
                     }
                   >
                     View Details
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="flex-1 w-full xl:w-auto text-sm"
-                    onClick={() =>
-                      (window.location.href = `/candidate/jobs/${job._id}/apply`)
-                    }
-                  >
-                    Apply Now
                   </Button>
                 </CardFooter>
               </Card>
