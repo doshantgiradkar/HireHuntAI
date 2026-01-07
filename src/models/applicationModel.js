@@ -1,5 +1,11 @@
 import mongoose from "mongoose";
 
+const eligibility = new mongoose.Schema({
+  matchScore: { type: Number },
+  isEligible: { type: Boolean },
+  reason: { type: String }
+});
+
 const applicationSchema = new mongoose.Schema(
   {
     jobId: {
@@ -49,6 +55,10 @@ const applicationSchema = new mongoose.Schema(
     coverLetter: {
       type: String,
       required: true,
+    },
+    eligibility: {
+      type: eligibility,
+      required: true
     },
     skills: {
       type: [String],
