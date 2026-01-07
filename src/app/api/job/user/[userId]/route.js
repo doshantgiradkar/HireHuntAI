@@ -5,7 +5,7 @@ import recruiterModel from "@/models/recruiterModel";
 import { checkAuth } from "@/utils/checkAuth";
 
 export async function GET(req) {
-  const authResult = await checkAuth({ allowedRoles: ["recruiter"] });
+  const authResult = await checkAuth({ allowedRoles: ["recruiter","candidate"] });
 
   if (!authResult.authenticated) {
     return NextResponse.json(
@@ -20,28 +20,45 @@ export async function GET(req) {
 
     const { searchParams } = new URL(req.url);
     const page_no = Math.max(Number(searchParams.get("page_no")) || 1, 1);
-    const page_size = Math.min(Math.max(Number(searchParams.get("page_size")) || 10, 1), 50);
+    const page_size = Math.min(
+      Math.max(Number(searchParams.get("page_size")) || 10, 1),
+      50
+    );
     const search = searchParams.get("search")?.trim() || "";
 
     const recruiter = await recruiterModel.findOne({ clerkId });
     if (!recruiter) {
-      return NextResponse.json({ message: "Recruiter not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Recruiter not found" },
+        { status: 404 }
+      );
     }
 
     // Query: by recruiterId or recruiterClerkId
     const query = {
-      $or: [
-        { recruiterId: recruiter._id },
-        { recruiterClerkId: clerkId }
+      $and: [
+        {
+          $or: [{ recruiterId: recruiter._id }, { recruiterClerkId: clerkId }],
+        },
+        ...(search
+          ? [
+              {
+                $or: [
+                  { title: { $regex: search, $options: "i" } },
+                  { companyName: { $regex: search, $options: "i" } },
+                  { location: { $regex: search, $options: "i" } },
+                  {
+                    skills: {
+                      $in: search
+                        .split(",")
+                        .map((s) => new RegExp(`^${s.trim()}$`, "i")),
+                    },
+                  },
+                ],
+              },
+            ]
+          : []),
       ],
-      ...(search && {
-        $or: [
-          { title: { $regex: search, $options: "i" } },
-          { companyName: { $regex: search, $options: "i" } },
-          { location: { $regex: search, $options: "i" } },
-          { skills: { $in: search.split(",").map(s => s.trim()) } }
-        ]
-      })
     };
 
     const totalCount = await jobModel.countDocuments(query);
@@ -57,11 +74,14 @@ export async function GET(req) {
         page: page_no,
         pageSize: page_size,
         totalCount,
-        totalPages: Math.ceil(totalCount / page_size)
-      }
+        totalPages: Math.ceil(totalCount / page_size),
+      },
     });
   } catch (error) {
     console.error("JOB_MY_GET_ERROR:", error);
-    return NextResponse.json({ message: "Failed to fetch recruiter jobs" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Failed to fetch recruiter jobs" },
+      { status: 500 }
+    );
   }
 }

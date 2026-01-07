@@ -32,7 +32,7 @@ import { useHeader } from "@/store/user.store";
 
 export default function JobSearchPage() {
   const setTitle = useHeader((state) => state.setTitle);
-  const { userId } = useUser();
+  const { userId , isLoaded} = useUser();
   const [jobs, setJobs] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -51,9 +51,10 @@ export default function JobSearchPage() {
 
   // Fetch jobs when active search or page changes
   useEffect(() => {
-    if (!userId) return;
+    console.log(userId)
+    if (!isLoaded) return;
     fetchJobs(userId, currentPage, pageSize, activeSearchQuery);
-  }, [userId, currentPage, activeSearchQuery]);
+  }, [userId, currentPage, activeSearchQuery,isLoaded]);
 
   const fetchJobs = async (
     userId,
@@ -176,7 +177,7 @@ export default function JobSearchPage() {
       {/* Header */}
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-          Find Your Dream Job
+          Jobs you have posted
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground">
           Discover {totalCount.toLocaleString()} opportunities waiting for you
@@ -334,20 +335,10 @@ export default function JobSearchPage() {
                   <Button
                     className="flex-1 w-full xl:w-auto text-sm"
                     onClick={() =>
-                      (window.location.href = `/candidate/jobs/${job._id}`)
+                      (window.location.href = `/recruiter/jobs/${job._id}`)
                     }
                   >
                     View Details
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="flex-1 w-full xl:w-auto text-sm"
-                    onClick={() =>
-                      (window.location.href = `/candidate/jobs/${job._id}/apply`)
-                    }
-                  >
-                    Apply Now
                   </Button>
                 </CardFooter>
               </Card>

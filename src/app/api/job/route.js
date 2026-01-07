@@ -91,28 +91,30 @@ export async function GET(req) {
 
   try {
     await connect();
+    // Get paginated jobs
     const { searchParams } = new URL(req.url);
-
-    const page_no = Number(searchParams.get("page_no")) || 1;
-    const page_size = Number(searchParams.get("page_size")) || 9;
-    const search = searchParams.get("search")?.trim() || "";
+    const page_no = parseInt(searchParams.get('page_no')) || 1;
+    const page_size = parseInt(searchParams.get('page_size')) || 9;
+    const search = searchParams.get('search') || '';
 
     // Build search query
     let query = {};
-
     if (search) {
       query = {
         $or: [
-          { title: { $regex: search, $options: "i" } },
-          { companyName: { $regex: search, $options: "i" } },
-          { location: { $regex: search, $options: "i" } },
-          { description: { $regex: search, $options: "i" } },
-          { skills: { $in: [new RegExp(search, "i")] } },
-        ],
+          { title: { $regex: search, $options: 'i' } },
+          { companyName: { $regex: search, $options: 'i' } },
+          { location: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+          { skills: { $in: [new RegExp(search, 'i')] } }
+        ]
       };
     }
 
+    // Get total count for pagination
     const totalCount = await jobModel.countDocuments(query);
+
+    // Get paginated jobs
 
     const jobs = await jobModel
       .find(query)
