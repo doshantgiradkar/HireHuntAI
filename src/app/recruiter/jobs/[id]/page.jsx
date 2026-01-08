@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
@@ -15,19 +15,30 @@ import {
   CheckCircle2,
   FileText,
   Timer,
+  ExternalLink,
+  Mail,
+  Award,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useHeader } from "@/store/user.store";
 
 export default function Page({ params }) {
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState(null);
   const [error, setError] = useState(null);
+  const [applications, setApplications] = useState([]);
+  const [candidatesLoading, setCandidatesLoading] = useState(false);
+  const [candidatesError, setCandidatesError] = useState(null);
+  const [activeTab, setActiveTab] = useState("description");
 
+  const router = useRouter();
   const jobId = params.id;
   const setTitle = useHeader((state) => state.setTitle);
 
@@ -50,6 +61,25 @@ export default function Page({ params }) {
     fetchJobDetails();
   }, [jobId]);
 
+  useEffect(() => {
+    if (activeTab === "candidates" && applications.length === 0) {
+      fetchCandidates();
+    }
+  }, [activeTab]);
+
+  const fetchCandidates = async () => {
+    setCandidatesLoading(true);
+    setCandidatesError(null);
+    try {
+      const res = await axios.get(`/api/application/candidates/${jobId}`);
+      setApplications(res.data.applications || []);
+    } catch (err) {
+      setCandidatesError("Failed to load candidates");
+    } finally {
+      setCandidatesLoading(false);
+    }
+  };
+
   const formatSalary = (min, max, currency = "INR") => {
     if (!min && !max) return "Not disclosed";
     const formatter = new Intl.NumberFormat("en-IN", {
@@ -57,9 +87,28 @@ export default function Page({ params }) {
       currency,
       maximumFractionDigits: 0,
     });
-    if (min && max) return `${formatter.format(min)} - ${formatter.format(max)}`;
+    if (min && max)
+      return `${formatter.format(min)} - ${formatter.format(max)}`;
     return formatter.format(min || max);
   };
+
+  const getCandidateName = (app) =>
+    app.user
+      ? `${app.user.firstName || ""} ${app.user.lastName || ""}`.trim()
+      : "Unknown";
+
+  const getInitials = (name) =>
+    name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "?";
+
+  const getCandidateSkills = (app) => app.candidate?.resume?.skills || [];
+
+  const getCandidateExperience = (app) =>
+    app.candidate?.resume?.experience || [];
 
   const formatDate = (date) =>
     date
@@ -69,6 +118,24 @@ export default function Page({ params }) {
           day: "numeric",
         })
       : null;
+
+  const getStatusColor = (status) => {
+    const colors = {
+      applied: "bg-gray-100 text-gray-800 border-gray-200",
+      shortlisted: "bg-blue-100 text-blue-800 border-blue-200",
+      interview_scheduled: "bg-yellow-100 text-yellow-800 border-yellow-200",
+      hired: "bg-green-100 text-green-800 border-green-200",
+      rejected: "bg-red-100 text-red-800 border-red-200",
+    };
+    return colors[status] || colors.applied;
+  };
+
+  const formatStatusLabel = (status) => {
+    return status
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
 
   if (loading) {
     return (
@@ -134,16 +201,18 @@ export default function Page({ params }) {
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="description">
-        <TabsList className="grid grid-cols-2 w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid grid-cols-3 w-full">
           <TabsTrigger value="description">
             <FileText className="h-4 w-4 mr-2" /> Description
           </TabsTrigger>
           <TabsTrigger value="timeline">
             <Timer className="h-4 w-4 mr-2" /> Stats & Timeline
           </TabsTrigger>
+          <TabsTrigger value="candidates">
+            <Users className="h-4 w-4 mr-2" /> Candidates
+          </TabsTrigger>
         </TabsList>
-
         {/* Description */}
         <TabsContent value="description" className="mt-6 space-y-6">
           <Card>
@@ -173,7 +242,6 @@ export default function Page({ params }) {
             </Card>
           )}
         </TabsContent>
-
         {/* Timeline & Stats */}
         <TabsContent value="timeline" className="mt-6 space-y-6">
           <Card>
@@ -181,19 +249,139 @@ export default function Page({ params }) {
               <CardTitle>Job Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p><strong>Salary:</strong> {formatSalary(details.salaryRange?.min, details.salaryRange?.max)}</p>
-              <p><strong>Openings:</strong> {details.openings}</p>
-              <p><strong>Posted On:</strong> {formatDate(details.postedAt)}</p>
+              <p>
+                <strong>Salary:</strong>{" "}
+                {formatSalary(
+                  details.salaryRange?.min,
+                  details.salaryRange?.max
+                )}
+              </p>
+              <p>
+                <strong>Openings:</strong> {details.openings}
+              </p>
+              <p>
+                <strong>Posted On:</strong> {formatDate(details.postedAt)}
+              </p>
               {details.viewsCount > 0 && (
                 <p className="flex items-center gap-2">
                   <Eye className="h-4 w-4" /> {details.viewsCount} views
                 </p>
               )}
               {details.applicationsCount > 0 && (
-                <p><strong>Total Applications:</strong> {details.applicationsCount}</p>
+                <p>
+                  <strong>Total Applications:</strong>{" "}
+                  {details.applicationsCount}
+                </p>
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+        {/* ---------------- CANDIDATES TAB ---------------- */}
+        <TabsContent value="candidates" className="mt-6">
+          {candidatesLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : candidatesError ? (
+            <Alert variant="destructive">
+              <AlertDescription>{candidatesError}</AlertDescription>
+            </Alert>
+          ) : applications.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                No candidates have applied yet
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {applications.map((app) => (
+                <Card key={app._id} className="hover:shadow-lg transition">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={app.user?.imageUrl} />
+                        <AvatarFallback>
+                          {getInitials(getCandidateName(app))}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="flex-1">
+                        <h3 className="font-semibold truncate">
+                          {getCandidateName(app)}
+                        </h3>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Mail className="h-3 w-3" />
+                          {app.user?.email}
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-3">
+                    {getCandidateExperience(app).length > 0 && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Award className="h-4 w-4" />
+                        {getCandidateExperience(app).length} experience entries
+                      </div>
+                    )}
+
+                    {getCandidateSkills(app).length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {getCandidateSkills(app)
+                          .slice(0, 3)
+                          .map((skill, i) => (
+                            <Badge
+                              key={i}
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              {skill}
+                            </Badge>
+                          ))}
+                        {getCandidateSkills(app).length > 3 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{getCandidateSkills(app).length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <Badge className={getStatusColor(app.status)}>
+                        {formatStatusLabel(app.status)}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(app.createdAt)}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() =>
+                          router.push(`/recruiter/applications/${app._id}`)
+                        }
+                      >
+                        See Details
+                      </Button>
+
+                      {app.resumeUrl && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(app.resumeUrl, "_blank")}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
