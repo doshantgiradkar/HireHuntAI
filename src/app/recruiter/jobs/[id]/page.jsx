@@ -361,7 +361,7 @@ export default function Page({ params }) {
                         size="sm"
                         className="flex-1"
                         onClick={() =>
-                          router.push(`/recruiter/applications/${app._id}`)
+                          router.push(`/recruiter/applications/${app.candidateId}`)
                         }
                       >
                         See Details

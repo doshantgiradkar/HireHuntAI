@@ -8,24 +8,57 @@ export async function GET(req, { params }) {
   try {
     await connect();
 
-    const id = params.id;
+    const { id } =  await params; // no await here
 
     let candidate = null;
+
     // 1️⃣ If MongoDB ObjectId → fetch by _id
     if (mongoose.Types.ObjectId.isValid(id)) {
-      candidate = await candidateModel.findById(id);
+      candidate = await Candidate.aggregate([
+        { $match: { _id: new mongoose.Types.ObjectId(id) } },
+        {
+          $lookup: {
+            from: "users",           // users collection
+            localField: "clerkId",
+            foreignField: "clerkId",
+            as: "user",
+          },
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+      ]);
+      candidate = candidate[0];
     }
 
     // 2️⃣ Else → treat as Clerk ID
     if (!candidate) {
-      candidate = await candidateModel.findOne({ clerkId: id });
+      candidate = await Candidate.aggregate([
+        { $match: { clerkId: id } },
+        {
+          $lookup: {
+            from: "users",
+            localField: "clerkId",
+            foreignField: "clerkId",
+            as: "user",
+          },
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+      ]);
+      candidate = candidate[0];
     }
 
     if (!candidate) {
       return NextResponse.json(
         { message: "Candidate not found" },
-        { status: 404 },
+        { status: 404 }
       );
+    }
+
+    // Optional: merge user fields into candidate for easier frontend usage
+    if (candidate.user) {
+      candidate.fullName = candidate.user.firstName + " " + candidate.user.lastName;
+      candidate.email = candidate.user.email;
+      candidate.imageUrl = candidate.user.imageUrl;
+      delete candidate.user; // remove user object if you just want merged fields
     }
 
     return NextResponse.json({ candidate }, { status: 200 });
@@ -34,11 +67,10 @@ export async function GET(req, { params }) {
 
     return NextResponse.json(
       { message: "Failed to fetch candidate" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
-
 export async function PUT(req, { params }) {
   try {
     await connect();

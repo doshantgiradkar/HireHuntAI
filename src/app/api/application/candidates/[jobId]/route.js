@@ -44,6 +44,7 @@ export async function GET(req, { params }) {
         $project: {
           status: 1,
           resumeUrl: 1,
+          candidateId:1,
           createdAt: 1,
 
           // Candidate model fields
