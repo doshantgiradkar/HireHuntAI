@@ -39,7 +39,7 @@ const Page = () => {
 
   useEffect(() => {
     axios.get("/api/job/top", { withCredentials: true }).then((res) => {
-      setTopJobs(res.data.jobs);
+      setTopJobs(res.data.jobsWithScore);
       setIsLoading(false);
     });
   }, [setTopJobs]);
@@ -211,12 +211,21 @@ const Page = () => {
                               </span>
                             </div>
                           </div>
-                          <Badge
-                            variant="secondary"
-                            className="bg-green-50 text-green-700 hover:bg-green-100 whitespace-nowrap self-start lg:hidden"
-                          >
-                            {job.match}% Match
-                          </Badge>
+                          {job.matchScore.isEligible ?
+                            (<Badge
+                              variant="secondary"
+                              className="bg-green-50 text-green-700 hover:bg-green-100 whitespace-nowrap self-start lg:hidden w-full"
+                            >
+                              {job.matchScore.matchScore}% Match
+                            </Badge>) : (
+
+                              <Badge
+                                variant="secondary"
+                                className="bg-red-50 text-red-700 hover:bg-red-100 whitespace-nowrap self-start lg:hidden w-full"
+                              >
+                                {job.matchScore.matchScore}% Match
+                              </Badge>
+                            )}
                         </div>
 
                         {/* Job Details */}
@@ -280,13 +289,22 @@ const Page = () => {
 
                       {/* Right Action Buttons - Desktop Only */}
                       <div className="hidden lg:flex lg:flex-col lg:items-end lg:justify-between lg:min-w-45">
-                        <Badge
-                          variant="secondary"
-                          className="bg-green-50 text-green-700 hover:bg-green-100 whitespace-nowrap"
-                        >
-                          {job.match}% Match
-                        </Badge>
-                        <div className="flex flex-col gap-2 w-full">
+                        <div className="flex flex-col gap-2 w-full justify-end">
+                          {job.matchScore.isEligible ? (
+                            <Badge
+                              variant="secondary"
+                              className="bg-green-50 text-green-700 hover:bg-green-100 whitespace-nowrap w-full"
+                            >
+                              {job.matchScore.matchScore}% Match
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="secondary"
+                              className="bg-red-50 text-red-700 hover:bg-red-100 whitespace-nowrap w-full"
+                            >
+                              {job.matchScore.matchScore}% Match
+                            </Badge>
+                          )}
                           <Button
                             onClick={() => {
                               router.push(`/candidate/jobs/${job._id}/apply`);

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import {
@@ -42,10 +42,6 @@ export default function Page({ params }) {
   useEffect(() => {
     axios.get("/api/candidate").then((resp) => {
       setUser(resp.data.candidate);
-    });
-
-    axios.get(`/api/candidate/${userId}/eligibility?jobId=${jobId}`).then((resp) => {
-      setEligibility(resp.data);
     });
   }, [setUser, setEligibility]);
 
@@ -132,9 +128,9 @@ export default function Page({ params }) {
             <div className="flex items-start gap-4">
               {details.companyLogo && (
                 <img
-                src={details.companyLogo}
-                alt={details.companyName}
-                className="w-16 h-16 rounded-lg object-cover"
+                  src={details.companyLogo}
+                  alt={details.companyName}
+                  className="w-16 h-16 rounded-lg object-cover"
                 />
               )}
               <div className="flex-1">
@@ -177,7 +173,9 @@ export default function Page({ params }) {
               onClick={handleApply}
               className="w-full"
               size="lg"
-              disabled={details.status !== "Open" || !eligibile.isEligible}
+              disabled={
+                details.status !== "Open" || !details.matchScore.isEligible
+              }
             >
               {details.status === "Open" ? "Apply Now" : "Applications Closed"}
             </Button>
@@ -185,7 +183,9 @@ export default function Page({ params }) {
               <p className="text-sm text-muted-foreground text-center mt-3">
                 Apply before {formatDate(details.applicationDeadline)}
                 <span className="text-red-600 block mt-1">
-                  {!eligibile.isEligible ? 'Not Eligible': ''}
+                  {!details.matchScore.isEligible
+                    ? `Not Eligible: ${details.matchScore.reason}`
+                    : ""}
                 </span>
               </p>
             )}
@@ -263,19 +263,19 @@ export default function Page({ params }) {
               {details.experienceRange &&
                 (details.experienceRange.min ||
                   details.experienceRange.max) && (
-                    <div className="flex items-start gap-3">
-                      <Briefcase className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Experience</p>
-                        <p className="text-sm text-muted-foreground">
-                          {details.experienceRange.min &&
-                            details.experienceRange.max
-                            ? `${details.experienceRange.min} - ${details.experienceRange.max} years`
-                            : `${details.experienceRange.min || details.experienceRange.max} years`}
-                        </p>
-                      </div>
+                  <div className="flex items-start gap-3">
+                    <Briefcase className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Experience</p>
+                      <p className="text-sm text-muted-foreground">
+                        {details.experienceRange.min &&
+                        details.experienceRange.max
+                          ? `${details.experienceRange.min} - ${details.experienceRange.max} years`
+                          : `${details.experienceRange.min || details.experienceRange.max} years`}
+                      </p>
                     </div>
-                  )}
+                  </div>
+                )}
 
               <div className="flex items-start gap-3">
                 <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -422,24 +422,24 @@ export default function Page({ params }) {
               {details.experienceRange &&
                 (details.experienceRange.min ||
                   details.experienceRange.max) && (
-                    <div className="flex items-start gap-3">
-                      {details.experienceRange.min <
-                        user.totalExperienceDuration ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-red-600 mt-0.5" />
-                        )}
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Years of Experience</p>
-                        <p className="text-sm text-muted-foreground">
-                          {details.experienceRange.min &&
-                            details.experienceRange.max
-                            ? `${details.experienceRange.min} - ${details.experienceRange.max} years`
-                            : `${details.experienceRange.min || details.experienceRange.max} years`}
-                        </p>
-                      </div>
+                  <div className="flex items-start gap-3">
+                    {details.experienceRange.min <
+                    user.totalExperienceDuration ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                    )}
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Years of Experience</p>
+                      <p className="text-sm text-muted-foreground">
+                        {details.experienceRange.min &&
+                        details.experienceRange.max
+                          ? `${details.experienceRange.min} - ${details.experienceRange.max} years`
+                          : `${details.experienceRange.min || details.experienceRange.max} years`}
+                      </p>
                     </div>
-                  )}
+                  </div>
+                )}
             </CardContent>
           </Card>
 
@@ -488,7 +488,7 @@ export default function Page({ params }) {
           <p className="text-xs text-muted-foreground text-center mt-2">
             Apply before {formatDate(details.applicationDeadline)}
             <span className="text-red-600 block mt-1">
-              {!eligibile.isEligible ? 'Not Eligible': ''}
+              {!eligibile.isEligible ? "Not Eligible" : ""}
             </span>
           </p>
         )}
