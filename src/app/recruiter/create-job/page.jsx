@@ -51,6 +51,7 @@ export default function CreateJobPost() {
     workMode: "",
     location: "",
     experienceLevel: "",
+    experienceYear: "",
     salaryMin: "",
     salaryMax: "",
     description: "",
@@ -82,44 +83,42 @@ export default function CreateJobPost() {
     }
   };
 
-const handlePublish = async () => {
-  try {
-    const payload = {
-      title: formData.jobTitle,
-      description: formData.description,
-      location: formData.location,
-      workMode: formData.workMode,
-      employmentType: formData.jobType,
-      experienceLevel: formData.experienceLevel,
+  const handlePublish = async () => {
+    try {
+      const payload = {
+        title: formData.jobTitle,
+        description: formData.description,
+        location: formData.location,
+        workMode: formData.workMode,
+        employmentType: formData.jobType,
+        experienceLevel: formData.experienceLevel,
+        experienceYear: Number(formData.experienceYear), // ✅ ADD THIS
+        salaryRange: {
+          min: Number(formData.salaryMin),
+          max: Number(formData.salaryMax),
+        },
+        skills: selectedSkills,
+        applicationDeadline: date ? date.toISOString() : null,
+        status: "Open",
+      };
 
-      salaryRange: {
-        min: Number(formData.salaryMin),
-        max: Number(formData.salaryMax),
-      },
-
-      skills: selectedSkills,
-      applicationDeadline: date ? date.toISOString() : null,
-      status: "Open",
-    };
-
-    const res = await axios.post("/api/job", payload, {
-      withCredentials: true, 
-    });
-
-    console.log("Job created:", res.data);
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error("Publish error:", {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
+      const res = await axios.post("/api/job", payload, {
+        withCredentials: true,
       });
-    } else {
-      console.error("Unknown error:", error);
-    }
-  }
-};
 
+      console.log("Job created:", res.data);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("Publish error:", {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message,
+        });
+      } else {
+        console.error("Unknown error:", error);
+      }
+    }
+  };
 
   const handleSaveDraft = () => {
     console.log("Saving as draft:", {
@@ -253,6 +252,23 @@ const handlePublish = async () => {
                       <SelectItem value="Lead">Lead</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="experienceYear">
+                    Experience (Years){" "}
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="experienceYear"
+                    type="number"
+                    min={0}
+                    placeholder="e.g. 3"
+                    value={formData.experienceYear}
+                    onChange={(e) =>
+                      handleInputChange("experienceYear", e.target.value)
+                    }
+                  />
                 </div>
               </div>
             </CardContent>
