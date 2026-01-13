@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import { ThemeProviderWrapper } from "@/components/theme-provider-wrapper";
 import UserLoader from "@/store/user.store";
@@ -17,6 +18,11 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "HireHunt.Ai",
   description: "A smart interview management system powerd by AI",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  },
 };
 
 export default function RootLayout({ children }) {
@@ -27,6 +33,7 @@ export default function RootLayout({ children }) {
           <ThemeProviderWrapper>
             <UserLoader>
               {children}
+              <Toaster />
             </UserLoader>
           </ThemeProviderWrapper>
         </body>

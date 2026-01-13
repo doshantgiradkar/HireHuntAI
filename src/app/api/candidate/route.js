@@ -39,6 +39,7 @@ export async function PUT(req) {
     const rootFields = [
       "dateOfBirth",
       "appliedJobs",
+      "address",
       "totalExperienceDuration",
     ];
 
@@ -63,8 +64,6 @@ export async function PUT(req) {
     }
 
     // Execute update
-    console.log(existing._id);
-    console.log(updates);
     const updatedCandidate = await Candidate.findOneAndUpdate(
       { _id: existing._id },
       { $set: updates },
@@ -86,7 +85,6 @@ export async function PUT(req) {
         { $set: { isProfileComplete: true } }
       );
 
-      console.log(authResult);
       const client = await clerkClient();
       client.users.updateUserMetadata(userId, {
         publicMetadata: {

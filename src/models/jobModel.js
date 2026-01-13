@@ -55,9 +55,10 @@ const jobSchema = new mongoose.Schema(
       enum: ["Fresher", "Mid", "Senior", "Lead"],
     },
 
-    experienceRange: {
-      min: Number,
-      max: Number,
+    experienceYear: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
 
     salaryRange: {

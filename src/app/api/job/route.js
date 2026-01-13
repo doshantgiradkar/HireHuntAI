@@ -1,4 +1,5 @@
 import { connect } from "@/lib/db";
+import calculateMatchScore from "@/lib/matchJobs";
 import jobModel from "@/models/jobModel";
 import recruiterModel from "@/models/recruiterModel";
 import { checkAuth } from "@/utils/checkAuth";
@@ -89,8 +90,11 @@ export async function GET(req) {
     );
   }
 
+  const userId = authResult.userId;
+
   try {
     await connect();
+
     // Get paginated jobs
     const { searchParams } = new URL(req.url);
     const page_no = parseInt(searchParams.get('page_no')) || 1;
@@ -115,16 +119,25 @@ export async function GET(req) {
     const totalCount = await jobModel.countDocuments(query);
 
     // Get paginated jobs
-
     const jobs = await jobModel
       .find(query)
       .sort({ createdAt: -1 })
       .skip((page_no - 1) * page_size)
       .limit(page_size);
 
+    const jobsWithScore = await Promise.all(
+      jobs.map(async (job) => {
+        const matchScore = await calculateMatchScore(userId, job._id);
+        return {
+          ...job.toObject(),
+          matchScore,
+        };
+      })
+    );
+
     return NextResponse.json(
       {
-        jobs,
+        jobs: jobsWithScore,
         pagination: {
           total: totalCount,
           page: page_no,
