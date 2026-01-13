@@ -76,7 +76,7 @@ export async function PUT(req, { params }) {
     await connect();
 
     const { userId } = await auth();
-    const id = params.id;
+    const { id } =  await params;
     const body = await req.json();
 
     // Find existing candidate by _id or clerkId

@@ -38,8 +38,10 @@ import {
 } from "lucide-react";
 import { useHeader } from "@/store/user.store";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 export default function CreateJobPost() {
+  const router = useRouter();
   const { id: jobId } = useParams();
   const setTitle = useHeader((s) => s.setTitle);
   const [selectedSkills, setSelectedSkills] = useState([]);
@@ -145,6 +147,7 @@ export default function CreateJobPost() {
       });
 
       console.log("Job updated:", res.data);
+      router.replace('/jobs');
     } catch (error) {
       console.error("Update error:", error);
     }

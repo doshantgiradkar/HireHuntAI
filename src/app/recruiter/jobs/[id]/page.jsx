@@ -28,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useHeader } from "@/store/user.store";
+import { use } from "react";
 
 export default function Page({ params }) {
   const [loading, setLoading] = useState(true);
@@ -39,7 +40,7 @@ export default function Page({ params }) {
   const [activeTab, setActiveTab] = useState("description");
 
   const router = useRouter();
-  const jobId = params.id;
+  const jobId =  use(params).id;
   const setTitle = useHeader((state) => state.setTitle);
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export default function Page({ params }) {
     try {
       const res = await axios.get(`/api/application/candidates/${jobId}`);
       setApplications(res.data.applications || []);
+      console.log(res.data);
     } catch (err) {
       setCandidatesError("Failed to load candidates");
     } finally {
@@ -294,93 +296,147 @@ export default function Page({ params }) {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {applications.map((app) => (
-                <Card key={app._id} className="hover:shadow-lg transition">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start gap-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={app.user?.imageUrl} />
-                        <AvatarFallback>
-                          {getInitials(getCandidateName(app))}
-                        </AvatarFallback>
-                      </Avatar>
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="border-b bg-muted/50">
+                      <tr>
+                        <th className="text-left p-4 text-sm font-medium">
+                          Candidate
+                        </th>
+                        <th className="text-left p-4 text-sm font-medium">
+                          Email
+                        </th>
+                        <th className="text-left p-4 text-sm font-medium">
+                          Match Score
+                        </th>
+                        <th className="text-left p-4 text-sm font-medium">
+                          Experience
+                        </th>
+                        <th className="text-left p-4 text-sm font-medium">
+                          Status
+                        </th>
+                        <th className="text-left p-4 text-sm font-medium">
+                          Applied
+                        </th>
+                        <th className="text-left p-4 text-sm font-medium">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
 
-                      <div className="flex-1">
-                        <h3 className="font-semibold truncate">
-                          {getCandidateName(app)}
-                        </h3>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Mail className="h-3 w-3" />
-                          {app.user?.email}
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-3">
-                    {getCandidateExperience(app).length > 0 && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Award className="h-4 w-4" />
-                        {getCandidateExperience(app).length} experience entries
-                      </div>
-                    )}
-
-                    {getCandidateSkills(app).length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {getCandidateSkills(app)
-                          .slice(0, 3)
-                          .map((skill, i) => (
-                            <Badge
-                              key={i}
-                              variant="secondary"
-                              className="text-xs"
-                            >
-                              {skill}
-                            </Badge>
-                          ))}
-                        {getCandidateSkills(app).length > 3 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{getCandidateSkills(app).length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between pt-2 border-t">
-                      <Badge className={getStatusColor(app.status)}>
-                        {formatStatusLabel(app.status)}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {formatDate(app.createdAt)}
-                      </span>
-                    </div>
-
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        size="sm"
-                        className="flex-1"
-                        onClick={() =>
-                          router.push(`/recruiter/applications/${app.candidateId}`)
-                        }
-                      >
-                        See Details
-                      </Button>
-
-                      {app.resumeUrl && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => window.open(app.resumeUrl, "_blank")}
+                    <tbody>
+                      {applications.map((app) => (
+                        <tr
+                          key={app._id}
+                          className="border-b hover:bg-muted/50 transition-colors"
                         >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                          {/* Candidate */}
+                          <td
+                            className="p-4"
+                            onClick={() =>
+                              router.push(
+                                `/recruiter/candidate/${app.candidateId}`
+                              )
+                            }
+                          >
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-10 w-10 cursor-pointer">
+                                <AvatarImage src={app.user?.imageUrl} />
+                                <AvatarFallback>
+                                  {getInitials(getCandidateName(app))}
+                                </AvatarFallback>
+                              </Avatar>
+
+                              <div>
+                                <p className="font-medium leading-none">
+                                  {getCandidateName(app)}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Email */}
+                          <td className="p-4">
+                            <div className="flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {app.user?.email}
+                            </div>
+                          </td>
+
+                          {/* Match Score */}
+                          <td className="p-4">
+                            {app.eligibility?.matchScore ? (<div className="flex items-center gap-1">
+                              
+                              {app.eligibility?.matchScore}%
+                            </div>) : (
+                              <span className="text-xs text-muted-foreground">
+                                —
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Experience */}
+                          <td className="p-4 text-sm">
+                            {getCandidateExperience(app).length > 0 ? (
+                              <div className="flex items-center gap-1">
+                                <Award className="h-4 w-4" />
+                                {getCandidateExperience(app).length} entries
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                —
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Status */}
+                          <td className="p-4">
+                            <Badge className={getStatusColor(app.status)}>
+                              {formatStatusLabel(app.status)}
+                            </Badge>
+                          </td>
+
+                          {/* Applied Date */}
+                          <td className="p-4 text-xs text-muted-foreground">
+                            {formatDate(app.createdAt)}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="p-4">
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  router.push(
+                                    `/recruiter/applications/${app._id}`
+                                  )
+                                }
+                              >
+                                See Details
+                              </Button>
+
+                              {app.resumeUrl && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    window.open(app.resumeUrl, "_blank")
+                                  }
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
       </Tabs>

@@ -24,41 +24,69 @@ export async function GET(req, { params }) {
       },
       {
         $lookup: {
-          from: "candidates",          // collection name
+          from: "candidates",
           localField: "candidateClerkId",
-          foreignField: "clerkId",  
+          foreignField: "clerkId",
           as: "candidate",
         },
       },
       {
         $lookup: {
-          from: "users",               // collection name
+          from: "users",
           localField: "candidateClerkId",
-          foreignField: "clerkId",     // MUST match User schema field
+          foreignField: "clerkId",
           as: "user",
         },
       },
-      { $unwind: "$candidate" },
-      { $unwind: "$user" },
+      {
+        $unwind: {
+          path: "$candidate",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $unwind: {
+          path: "$user",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
       {
         $project: {
-          status: 1,
+          // ✅ KEEP ALL APPLICATION FIELDS
+          _id: 1,
+          jobId: 1,
+          candidateId: 1,
+          candidateClerkId: 1,
+          recruiterId: 1,
+          recruiterClerkId: 1,
           resumeUrl: 1,
-          candidateId:1,
+          fullName: 1,
+          email: 1,
+          phone: 1,
+          coverLetter: 1,
+          eligibility: 1,
+          skills: 1,
+          experienceSummary: 1,
+          whyInterested: 1,
+          availabilityDate: 1,
+          status: 1,
           createdAt: 1,
+          updatedAt: 1,
 
-          // Candidate model fields
+          // ✅ Candidate fields
           "candidate.resume.experience": 1,
           "candidate.resume.skills": 1,
 
-          // User model fields
+          // ✅ User fields
           "user.firstName": 1,
           "user.lastName": 1,
           "user.email": 1,
           "user.imageUrl": 1,
         },
       },
-      { $sort: { createdAt: -1 } },
+      {
+        $sort: { createdAt: -1 },
+      },
     ]);
 
     return NextResponse.json({

@@ -40,7 +40,7 @@ export async function PUT(req, { params }) {
   try {
     await connect();
 
-    const id = params.id;
+    const {id} = await params;
     const body = await req.json();
 
     // find existing user by id or clerkId

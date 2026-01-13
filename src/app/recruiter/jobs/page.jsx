@@ -25,12 +25,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { redirect, useSearchParams } from "next/navigation";
+import { redirect, useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { useUser } from "@clerk/nextjs";
 import { useHeader } from "@/store/user.store";
 
 export default function JobSearchPage() {
+  const router = useRouter();
   const setTitle = useHeader((state) => state.setTitle);
   const { userId , isLoaded} = useUser();
   const [jobs, setJobs] = useState([]);
@@ -139,6 +140,19 @@ export default function JobSearchPage() {
       year: "numeric",
     });
   };
+
+  const deletePost = async (id)=>{
+    try{
+      const res = await axios.delete(`/api/job/${id}`, {
+              withCredentials: true,
+      });
+     router.push("/recruiter/jobs");
+      
+    }catch(err){
+      console.log(err);
+    }
+   
+  }
 
   if (loading) {
     return (
@@ -339,6 +353,20 @@ export default function JobSearchPage() {
                     }
                   >
                     View Details
+                  </Button>
+                   <Button
+                    className="flex-1 w-full xl:w-auto text-sm"
+                    onClick={() =>
+                      (window.location.href = `/recruiter/edit-job/${job._id}`)
+                    }
+                  >
+                    Edit
+                  </Button>
+                    <Button
+                    className="flex-1 w-full xl:w-auto text-sm"
+                    onClick={()=>deletePost(job._id)}
+                  >
+                    Delete
                   </Button>
                 </CardFooter>
               </Card>
