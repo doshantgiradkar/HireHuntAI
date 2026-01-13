@@ -4,6 +4,7 @@ import { connect } from "@/lib/db";
 import jobModel from "@/models/jobModel";
 import { checkAuth } from "@/utils/checkAuth";
 import calculateMatchScore from "@/lib/matchJobs";
+import ApplicationModel from "@/models/applicationModel";
 
 export async function GET(req, { params }) {
   const authResult = await checkAuth({
@@ -25,14 +26,33 @@ export async function GET(req, { params }) {
     }
 
     const job = await jobModel.findById(id);
+    const application = await ApplicationModel.findOne({
+      jobId: id,
+      candidateClerkId: authResult.userId,
+    }).select(["status", "applicationId"]);
+
+    let hasApplied = false;
+    let applicationStatus = 'open';
+
+    if (application) {
+      hasApplied = true;
+      applicationStatus = application.status;
+    } else {
+      hasApplied = false;
+      applicationStatus = 'open';
+    }
 
     if (!job) {
       return NextResponse.json({ message: "Job not found" }, { status: 404 });
     }
+
     const matchScore = await calculateMatchScore(authResult.userId, job._id);
     const jobWithScore = {
       ...job.toObject(),
+      applicationId: application?._id,
       matchScore,
+      hasApplied,
+      applicationStatus,
     };
 
     return NextResponse.json({ job: jobWithScore }, { status: 200 });

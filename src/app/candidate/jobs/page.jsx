@@ -2,6 +2,17 @@
 
 import { useState, useEffect } from "react";
 import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import {
   Search,
   MapPin,
   Briefcase,
@@ -76,6 +87,17 @@ export default function JobSearchPage() {
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       redirect(`/candidate/jobs?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleWithdraw = async (applicationId) => {
+    try {
+      const response = await axios.delete(`/api/application/${applicationId}`);
+      if (response.status !== 200) throw new Error("Failed to withdraw application");
+      window.location.reload();
+    } catch (err) {
+      console.error("Error withdrawing application:", err);
+      alert("Failed to withdraw application. Please try again.");
     }
   };
 
@@ -342,17 +364,51 @@ export default function JobSearchPage() {
                   >
                     View Details
                   </Button>
+                  {job.hasApplied ? (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          className="w-full text-red-400 bg-red-50"
+                          size="lg"
+                          disabled={
+                            job.status !== "Open"
+                          }
+                        >
+                          Withdraw Application
+                        </Button>
+                      </AlertDialogTrigger>
 
-                  <Button
-                    variant="outline"
-                    className="flex-1 w-full xl:w-auto text-sm"
-                    onClick={() =>
-                      (window.location.href = `/candidate/jobs/${job._id}/apply`)
-                    }
-                    disabled={!job.matchScore.isEligible}
-                  >
-                    Apply Now
-                  </Button>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. Your application will be permanently withdrawn.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleWithdraw(job.applicationId)}
+                            className="bg-red-500 hover:bg-red-600"
+                          >
+                            Yes, Withdraw
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="flex-1 w-full xl:w-auto text-sm"
+                      onClick={() =>
+                        (window.location.href = `/candidate/jobs/${job._id}/apply`)
+                      }
+                      disabled={!job.matchScore.isEligible}
+                    >
+                      Apply Now
+                    </Button>
+                  )}
                 </CardFooter>
               </Card>
             ))}

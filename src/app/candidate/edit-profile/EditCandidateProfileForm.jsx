@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import axios from "axios";
-import { redirect } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function EditCandidateProfileForm({ initialData, onSubmit }) {
@@ -72,7 +71,8 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
     }));
   };
 
-  const addSkill = () => {
+  const addSkill = (e) => {
+    e.preventDefault();
     if (!newSkill.trim()) return;
     setFormData((prev) => ({
       ...prev,
@@ -263,6 +263,12 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
                 onChange={(e) =>
                   setNewSocial({ ...newSocial, url: e.target.value })
                 }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addSocial();
+                  }
+                }}
                 className="flex-2"
               />
 
