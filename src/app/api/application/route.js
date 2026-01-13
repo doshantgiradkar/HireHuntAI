@@ -1,13 +1,25 @@
 import { NextResponse } from "next/server";
-import mongoose, { model } from "mongoose";
+import mongoose from "mongoose";
 
 import { connect } from "@/lib/db";
 import Application from "@/models/applicationModel";
 import jobModel from "@/models/jobModel";
+import calculateMatchScore from "@/lib/matchJobs";
+import { checkAuth } from "@/utils/checkAuth";
 
 export async function POST(req) {
   try {
     await connect();
+    const auth = await checkAuth(["candidate"]);
+
+    if (!auth.authenticated) {
+      return NextResponse.json(
+        { message: authResult.error },
+        { status: authResult.error === "Forbidden" ? 403 : 401 }
+      );
+    }
+
+    const { userId } = auth;
     const {
       jobId,
       recruiterId,
@@ -80,6 +92,7 @@ export async function POST(req) {
       );
     }
 
+    const eligibility = await calculateMatchScore(userId, jobId)
     // Create application object
     const applicationData = {
       jobId,
@@ -88,6 +101,7 @@ export async function POST(req) {
       candidateClerkId,
       candidateId,
       resumeUrl,
+      eligibility,
       fullName: fullName.trim(),
       email: email.trim().toLowerCase(),
       phone: phone.trim(),
@@ -95,6 +109,7 @@ export async function POST(req) {
       skills: skills.map((skill) => skill.trim()),
       whyInterested: whyInterested.trim(),
     };
+
 
     // Add optional fields if provided
     if (experienceSummary && experienceSummary.trim()) {

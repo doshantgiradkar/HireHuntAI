@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 
-const eligibility = new mongoose.Schema({
+const eligibility = {
   matchScore: { type: Number },
   isEligible: { type: Boolean },
   reason: { type: String }
-});
+};
 
 const applicationSchema = new mongoose.Schema(
   {
