@@ -109,7 +109,7 @@ export default function JobSearchPage() {
   const formatSalary = (salaryRange) => {
     if (!salaryRange?.min || !salaryRange?.max) return "Not specified";
     return `${salaryRange.currency} ${(salaryRange.min / 100000).toFixed(
-      1
+      1,
     )}L - ${(salaryRange.max / 100000).toFixed(1)}L`;
   };
 
@@ -247,11 +247,26 @@ export default function JobSearchPage() {
                     </Badge>
                     <Badge
                       className={`${getEmploymentTypeColor(
-                        job.employmentType
+                        job.employmentType,
                       )} text-xs`}
                     >
                       {job.employmentType}
                     </Badge>
+                    {job.matchScore.isEligible ? (
+                      <Badge
+                        variant="secondary"
+                        className="text-green-200 bg-green-700 whitespace-nowrap"
+                      >
+                        {job.matchScore.matchScore}% Match
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="secondary"
+                        className="text-red-200 bg-red-700 whitespace-nowrap"
+                      >
+                        {job.matchScore.matchScore}% Match
+                      </Badge>
+                    )}
                   </div>
                 </CardHeader>
 
@@ -311,6 +326,11 @@ export default function JobSearchPage() {
                       )}
                     </div>
                   )}
+                    {job.matchScore.isEligible ? ("") : (
+                      <div className={"rounded-sm px-2 bg-black text-sm w-fit text-red-400 mx-auto mt-2"}>
+                        {job.matchScore.reason}
+                      </div>
+                    )}
                 </CardContent>
 
                 <CardFooter className="flex flex-col xl:flex-row gap-2 p-4 sm:p-6 pt-0">
@@ -329,6 +349,7 @@ export default function JobSearchPage() {
                     onClick={() =>
                       (window.location.href = `/candidate/jobs/${job._id}/apply`)
                     }
+                    disabled={!job.matchScore.isEligible}
                   >
                     Apply Now
                   </Button>

@@ -38,7 +38,7 @@ const ResumeViewerPage = () => {
     if(resp.status != 200) {
       alert(resp.data.message);
     } else {
-      redirect("/candidate/edit-profile");
+      window.location.href = "/candidate/edit-profile";
     }
   };
 

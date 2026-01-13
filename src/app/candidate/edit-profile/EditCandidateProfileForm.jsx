@@ -154,12 +154,10 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
       onSubmit={async (e) => {
         e.preventDefault();
         const res = await axios.put('/api/candidate', formData, {
-          headers: {
-            Authorization: `Bearer ${await getToken()}`
-          }
+          withCredentials: true
         });
         if (res.status == 200) {
-          redirect('/candidate/profile')
+          window.location.href = '/candidate/profile'
         }
       }}
       className="container mx-auto px-4 py-8 max-w-6xl"
