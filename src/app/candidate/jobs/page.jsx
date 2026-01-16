@@ -235,7 +235,7 @@ export default function JobSearchPage() {
             {jobs.map((job) => (
               <Card
                 key={job._id}
-                className="hover:shadow-lg transition-shadow duration-300 flex flex-col"
+                className="hover:shadow-lg transition-shadow duration-300 flex min-w-fit flex-col"
               >
                 <CardHeader className="p-4 sm:p-6">
                   <div className="flex items-start justify-between mb-2">
@@ -368,7 +368,7 @@ export default function JobSearchPage() {
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
-                          className="w-full text-red-400 bg-red-50"
+                          className="flex-1 w-full xl:w-auto text-sm p-2 text-red-400 bg-red-50"
                           size="lg"
                           disabled={
                             job.status !== "Open"
