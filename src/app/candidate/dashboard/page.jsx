@@ -297,7 +297,7 @@ const Page = () => {
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button
-                                  className="w-full text-red-400 bg-red-50"
+                                  className="grow text-red-400 bg-red-50"
                                   size="lg"
                                   disabled={job.status !== "Open"}
                                 >
