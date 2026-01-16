@@ -31,12 +31,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import axios from "axios";
+import { useMemo } from "react";
+import { Users } from "lucide-react";
+import { XCircle } from "lucide-react";
 
 const Page = () => {
   const setTitle = useHeader((state) => state.setTitle);
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [topJobs, setTopJobs] = useState(null);
+  const [topJobs, setTopJobs] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -48,7 +52,12 @@ const Page = () => {
       setTopJobs(res.data.jobs);
       setIsLoading(false);
     });
-  }, [setTopJobs]);
+
+    axios.get("/api/application", { withCredentials: true }).then((res) => {
+      setApplications(res.data.applications || []);
+      setIsLoading(false);
+    });
+  }, [setTopJobs, setApplications]);
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && searchQuery.trim()) {
@@ -82,57 +91,65 @@ const Page = () => {
     });
   };
 
-  const stats = [
-    {
-      title: "Applications",
-      value: "24",
-      change: "+3 this week",
-      icon: Briefcase,
-      color: "text-blue-600",
-    },
-    {
-      title: "Interviews",
-      value: "5",
-      change: "2 upcoming",
-      icon: Calendar,
-      color: "text-green-600",
-    },
-    {
-      title: "Profile Views",
-      value: "127",
-      change: "+12 this week",
-      icon: TrendingUp,
-      color: "text-purple-600",
-    },
-    {
-      title: "Offers",
-      value: "2",
-      change: "Pending review",
-      icon: CheckCircle,
-      color: "text-orange-600",
-    },
-  ];
+  const stats = useMemo(() => {
+    const total = applications?.length;
+
+    const statusCounts = applications?.reduce((acc, app) => {
+      acc[app.status] = (acc[app.status] || 0) + 1;
+      return acc;
+    }, {});
+
+    return [
+      {
+        title: "Total Applied",
+        value: total,
+        icon: Briefcase,
+        color: "text-blue-600 dark:text-blue-400",
+      },
+      {
+        title: "Shortlisted",
+        value: statusCounts?.shortlisted || 0,
+        icon: Clock,
+        color: "text-yellow-600 dark:text-yellow-400",
+      },
+      {
+        title: "Interviews",
+        value: statusCounts?.interview_scheduled || 0,
+        icon: Users,
+        color: "text-purple-600 dark:text-purple-400",
+      },
+      {
+        title: "Offers",
+        value: statusCounts?.hired || 0,
+        icon: CheckCircle,
+        color: "text-green-600 dark:text-green-400",
+      },
+      {
+        title: "Rejections",
+        value: statusCounts?.rejected || 0,
+        icon: XCircle,
+        color: "text-red-600 dark:text-red-400",
+      },
+    ];
+  }, [applications]);
 
   return (
     <div className="w-full min-h-screen bg-background">
       <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8 space-y-6 sm:space-y-8 max-w-7xl">
         {/* Statistics Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {stats.map((stat) => {
+          {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <Card key={stat.title} className="overflow-hidden">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-                  <CardTitle className="text-xl font-medium truncate pr-2">
+              <Card key={index} className="hover:shadow-md transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
                     {stat.title}
                   </CardTitle>
-                  <Icon className={`h-4 w-4 shrink-0 ${stat.color}`} />
+                  <Icon className={`h-4 w-4 ${stat.color}`} />
                 </CardHeader>
-                <CardContent className="p-4 sm:p-6 pt-0">
-                  <div className="text-5xl  font-bold">{stat.value}</div>
-                  <p className="text-md sm:text-xs text-muted-foreground mt-1 truncate">
-                    {stat.change}
-                  </p>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
                 </CardContent>
               </Card>
             );
@@ -141,9 +158,7 @@ const Page = () => {
 
         {/* Search Section */}
         <div className="w-full space-y-2">
-          <h2 className="text-lg sm:text-xl font-semibold">
-            Find Your Next Opportunity
-          </h2>
+          <h2 className="text-lg sm:text-xl font-semibold">Find Your Next Opportunity</h2>
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -156,34 +171,21 @@ const Page = () => {
                 className="pl-10 h-10 sm:h-12 w-full"
               />
             </div>
-            <Button
-              onClick={handleSearchClick}
-              className="h-10 sm:h-12 w-full sm:w-auto sm:px-8"
-            >
+            <Button onClick={handleSearchClick} className="h-10 sm:h-12 w-full sm:w-auto sm:px-8">
               Search
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Press Enter or click Search to find jobs
-          </p>
+          <p className="text-xs text-muted-foreground">Press Enter or click Search to find jobs</p>
         </div>
 
         {/* Top Matching Jobs */}
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
-                Top Jobs For You
-              </h2>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Based on your profile and preferences
-              </p>
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">Top Jobs For You</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">Based on your profile and preferences</p>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => router.push("/candidate/jobs")}
-              className="w-full sm:w-auto"
-            >
+            <Button variant="outline" onClick={() => router.push("/candidate/jobs")} className="w-full sm:w-auto">
               View All Jobs
             </Button>
           </div>
@@ -205,10 +207,7 @@ const Page = () => {
           ) : topJobs && topJobs.length > 0 ? (
             <div className="grid gap-4">
               {topJobs.map((job) => (
-                <Card
-                  key={job._id}
-                  className="hover:shadow-md transition-shadow"
-                >
+                <Card key={job._id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4 sm:p-6">
                     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
                       {/* Left Content */}
@@ -216,9 +215,7 @@ const Page = () => {
                         {/* Job Header */}
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-lg sm:text-xl font-semibold mb-2 wrap-break-words">
-                              {job.title}
-                            </h3>
+                            <h3 className="text-lg sm:text-xl font-semibold mb-2 wrap-break-words">{job.title}</h3>
                             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Building2 className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
@@ -237,8 +234,7 @@ const Page = () => {
                           <span className="flex items-center gap-1 text-muted-foreground">
                             <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
                             <span className="truncate">
-                              {job.salaryRange.currency} {job.salaryRange.min} - {" "}
-                              {job.salaryRange.max}
+                              {job.salaryRange.currency} {job.salaryRange.min} - {job.salaryRange.max}
                             </span>
                           </span>
                           <Badge variant="outline" className="w-fit inline">
@@ -276,11 +272,7 @@ const Page = () => {
                         {/* Skills */}
                         <div className="flex flex-wrap gap-2">
                           {job.skills.slice(0, 5).map((skill) => (
-                            <Badge
-                              key={skill}
-                              variant="secondary"
-                              className="text-xs"
-                            >
+                            <Badge key={skill} variant="secondary" className="text-xs">
                               {skill}
                             </Badge>
                           ))}
@@ -307,21 +299,16 @@ const Page = () => {
 
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Withdraw Application?
-                                  </AlertDialogTitle>
+                                  <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    This action cannot be undone. Your
-                                    application will be permanently withdrawn.
+                                    This action cannot be undone. Your application will be permanently withdrawn.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
 
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() =>
-                                      handleWithdraw(job.applicationId)
-                                    }
+                                    onClick={() => handleWithdraw(job.applicationId)}
                                     className="bg-red-500 hover:bg-red-600"
                                   >
                                     Yes, Withdraw
@@ -368,21 +355,16 @@ const Page = () => {
 
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Withdraw Application?
-                                  </AlertDialogTitle>
+                                  <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    This action cannot be undone. Your
-                                    application will be permanently withdrawn.
+                                    This action cannot be undone. Your application will be permanently withdrawn.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
 
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() =>
-                                      handleWithdraw(job.applicationId)
-                                    }
+                                    onClick={() => handleWithdraw(job.applicationId)}
                                     className="bg-red-500 hover:bg-red-600"
                                   >
                                     Yes, Withdraw
@@ -419,8 +401,7 @@ const Page = () => {
           ) : (
             <Alert>
               <AlertDescription>
-                No matching jobs found. Try adjusting your profile or check back
-                later for new opportunities.
+                No matching jobs found. Try adjusting your profile or check back later for new opportunities.
               </AlertDescription>
             </Alert>
           )}
