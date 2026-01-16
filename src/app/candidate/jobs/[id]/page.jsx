@@ -2,6 +2,17 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import {
   Loader2,
   MapPin,
   Briefcase,
@@ -24,6 +35,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useHeader } from "@/store/user.store";
 import { XCircle } from "lucide-react";
 import axios from "axios";
+import { useRouter } from "next/router";
 
 export default function Page({ params }) {
   const [loading, setLoading] = useState(true);
@@ -66,6 +78,17 @@ export default function Page({ params }) {
 
   const handleApply = () => {
     window.location.href = `/candidate/jobs/${jobId}/apply`;
+  };
+
+  const handleWithdraw = async () => {
+    try {
+      const response = await axios.delete(`/api/application/${details.applicationId}`);
+      if (response.status !== 200) throw new Error("Failed to withdraw application");
+      window.location.reload();
+    } catch (err) {
+      console.error("Error withdrawing application:", err);
+      alert("Failed to withdraw application. Please try again.");
+    }
   };
 
   const formatSalary = (min, max, currency) => {
@@ -160,6 +183,21 @@ export default function Page({ params }) {
                   >
                     {details.status}
                   </Badge>
+                  {details.matchScore.isEligible ? (
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-200 text-green-700 whitespace-nowrap"
+                    >
+                      {details.matchScore.matchScore}% Match
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="secondary"
+                      className="bg-red-200 text-red-700 whitespace-nowrap"
+                    >
+                      {details.matchScore.matchScore}% Match
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>
@@ -169,16 +207,53 @@ export default function Page({ params }) {
         {/* Desktop Apply Button */}
         <Card className="hidden lg:block">
           <CardContent className="pt-6">
-            <Button
-              onClick={handleApply}
-              className="w-full"
-              size="lg"
-              disabled={
-                details.status !== "Open" || !details.matchScore.isEligible
-              }
-            >
-              {details.status === "Open" ? "Apply Now" : "Applications Closed"}
-            </Button>
+            {details.hasApplied ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    className="w-full text-red-400 bg-red-50"
+                    size="lg"
+                    disabled={
+                      details.status !== "Open"
+                    }
+                  >
+                    Withdraw Application
+                  </Button>
+                </AlertDialogTrigger>
+
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. Your application will be permanently withdrawn.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleWithdraw}
+                      className="bg-red-500 hover:bg-red-600"
+                    >
+                      Yes, Withdraw
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : (
+              <Button
+                onClick={handleApply}
+                className="w-full"
+                size="lg"
+                disabled={
+                  details.status !== "Open" || !details.matchScore.isEligible
+                }
+              >
+                {details.status === "Open"
+                  ? "Apply Now"
+                  : "Applications Closed"}
+              </Button>
+            )}
             {details.applicationDeadline && (
               <p className="text-sm text-muted-foreground text-center mt-3">
                 Apply before {formatDate(details.applicationDeadline)}
@@ -476,19 +551,60 @@ export default function Page({ params }) {
 
       {/* Mobile Fixed Apply Button */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t p-4 z-50">
-        <Button
-          onClick={handleApply}
-          className="w-full"
-          size="lg"
-          disabled={details.status != "Open" || !eligibile.isEligible}
-        >
-          {details.status === "Open" ? "Apply Now" : "Applications Closed"}
-        </Button>
+        {details.hasApplied ? (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                className="w-full text-red-400 bg-red-50"
+                size="lg"
+                disabled={
+                  details.status !== "Open"
+                }
+              >
+                Withdraw Application
+              </Button>
+            </AlertDialogTrigger>
+
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. Your application will be permanently withdrawn.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleWithdraw}
+                  className="bg-red-500 hover:bg-red-600"
+                >
+                  Yes, Withdraw
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : (
+          <Button
+            onClick={handleApply}
+            className="w-full"
+            size="lg"
+            disabled={
+              details.status !== "Open" || !details.matchScore.isEligible
+            }
+          >
+            {details.status === "Open"
+              ? "Apply Now"
+              : "Applications Closed"}
+          </Button>
+        )}
         {details.applicationDeadline && (
           <p className="text-xs text-muted-foreground text-center mt-2">
             Apply before {formatDate(details.applicationDeadline)}
-            <span className="text-red-600 block mt-1">
-              {!eligibile.isEligible ? "Not Eligible" : ""}
+            <span className="text-red-500 block mt-1">
+              {!details.matchScore.isEligible
+                ? `Not Eligible: ${details.matchScore.reason}`
+                : ""}
             </span>
           </p>
         )}

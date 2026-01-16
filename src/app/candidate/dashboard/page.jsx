@@ -4,6 +4,17 @@ import { useHeader } from "@/store/user.store";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import {
   Search,
   Briefcase,
   Calendar,
@@ -12,14 +23,9 @@ import {
   TrendingUp,
   MapPin,
   Building2,
-  DollarSign
+  DollarSign,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,8 +44,8 @@ const Page = () => {
   }, [setTitle]);
 
   useEffect(() => {
-    axios.get("/api/job/top", { withCredentials: true }).then((res) => {
-      setTopJobs(res.data.jobsWithScore);
+    axios.get("/api/job", { withCredentials: true }).then((res) => {
+      setTopJobs(res.data.jobs);
       setIsLoading(false);
     });
   }, [setTopJobs]);
@@ -47,6 +53,17 @@ const Page = () => {
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && searchQuery.trim()) {
       router.push(`/candidate/jobs?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleWithdraw = async (applicationId) => {
+    try {
+      const response = await axios.delete(`/api/application/${applicationId}`);
+      if (response.status !== 200) throw new Error("Failed to withdraw application");
+      window.location.reload();
+    } catch (err) {
+      console.error("Error withdrawing application:", err);
+      alert("Failed to withdraw application. Please try again.");
     }
   };
 
@@ -124,7 +141,9 @@ const Page = () => {
 
         {/* Search Section */}
         <div className="w-full space-y-2">
-          <h2 className="text-lg sm:text-xl font-semibold">Find Your Next Opportunity</h2>
+          <h2 className="text-lg sm:text-xl font-semibold">
+            Find Your Next Opportunity
+          </h2>
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -211,21 +230,6 @@ const Page = () => {
                               </span>
                             </div>
                           </div>
-                          {job.matchScore.isEligible ?
-                            (<Badge
-                              variant="secondary"
-                              className="bg-green-50 text-green-700 hover:bg-green-100 whitespace-nowrap self-start lg:hidden w-full"
-                            >
-                              {job.matchScore.matchScore}% Match
-                            </Badge>) : (
-
-                              <Badge
-                                variant="secondary"
-                                className="bg-red-50 text-red-700 hover:bg-red-100 whitespace-nowrap self-start lg:hidden w-full"
-                              >
-                                {job.matchScore.matchScore}% Match
-                              </Badge>
-                            )}
                         </div>
 
                         {/* Job Details */}
@@ -233,10 +237,28 @@ const Page = () => {
                           <span className="flex items-center gap-1 text-muted-foreground">
                             <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
                             <span className="truncate">
-                              {job.salaryRange.currency} {job.salaryRange.min} - {job.salaryRange.max}
+                              {job.salaryRange.currency} {job.salaryRange.min} - {" "}
+                              {job.salaryRange.max}
                             </span>
                           </span>
-                          <Badge variant="outline" className="w-fit">{job.employmentType}</Badge>
+                          <Badge variant="outline" className="w-fit inline">
+                            {job.employmentType}
+                          </Badge>
+                          {job.matchScore.isEligible ? (
+                            <Badge
+                              variant="secondary"
+                              className="bg-green-50 text-green-700 hover:bg-green-100 whitespace-nowrap"
+                            >
+                              {job.matchScore.matchScore}% Match
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="secondary"
+                              className="bg-red-50 text-red-700 hover:bg-red-100 whitespace-nowrap"
+                            >
+                              {job.matchScore.matchScore}% Match
+                            </Badge>
+                          )}
                         </div>
 
                         {/* Dates */}
@@ -254,7 +276,11 @@ const Page = () => {
                         {/* Skills */}
                         <div className="flex flex-wrap gap-2">
                           {job.skills.slice(0, 5).map((skill) => (
-                            <Badge key={skill} variant="secondary" className="text-xs">
+                            <Badge
+                              key={skill}
+                              variant="secondary"
+                              className="text-xs"
+                            >
                               {skill}
                             </Badge>
                           ))}
@@ -267,14 +293,52 @@ const Page = () => {
 
                         {/* Mobile Buttons */}
                         <div className="flex flex-col sm:flex-row gap-2 lg:hidden">
-                          <Button
-                            onClick={() => {
-                              router.push(`/candidate/jobs/${job._id}/apply`);
-                            }}
-                            className="flex-1"
-                          >
-                            Apply Now
-                          </Button>
+                          {job.hasApplied ? (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  className="grow text-red-400 bg-red-50"
+                                  size="lg"
+                                  disabled={job.status !== "Open"}
+                                >
+                                  Withdraw Application
+                                </Button>
+                              </AlertDialogTrigger>
+
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Withdraw Application?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. Your
+                                    application will be permanently withdrawn.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() =>
+                                      handleWithdraw(job.applicationId)
+                                    }
+                                    className="bg-red-500 hover:bg-red-600"
+                                  >
+                                    Yes, Withdraw
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          ) : (
+                            <Button
+                              onClick={() => {
+                                router.push(`/candidate/jobs/${job._id}/apply`);
+                              }}
+                              className="flex-1"
+                            >
+                              Apply Now
+                            </Button>
+                          )}
                           <Button
                             onClick={() => {
                               router.push(`/candidate/jobs/${job._id}`);
@@ -290,29 +354,52 @@ const Page = () => {
                       {/* Right Action Buttons - Desktop Only */}
                       <div className="hidden lg:flex lg:flex-col lg:items-end lg:justify-between lg:min-w-45">
                         <div className="flex flex-col gap-2 w-full justify-end">
-                          {job.matchScore.isEligible ? (
-                            <Badge
-                              variant="secondary"
-                              className="bg-green-50 text-green-700 hover:bg-green-100 whitespace-nowrap w-full"
-                            >
-                              {job.matchScore.matchScore}% Match
-                            </Badge>
+                          {job.hasApplied ? (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  className="w-full text-red-400 bg-red-50"
+                                  size="lg"
+                                  disabled={job.status !== "Open"}
+                                >
+                                  Withdraw Application
+                                </Button>
+                              </AlertDialogTrigger>
+
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Withdraw Application?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. Your
+                                    application will be permanently withdrawn.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() =>
+                                      handleWithdraw(job.applicationId)
+                                    }
+                                    className="bg-red-500 hover:bg-red-600"
+                                  >
+                                    Yes, Withdraw
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           ) : (
-                            <Badge
-                              variant="secondary"
-                              className="bg-red-50 text-red-700 hover:bg-red-100 whitespace-nowrap w-full"
+                            <Button
+                              onClick={() => {
+                                router.push(`/candidate/jobs/${job._id}/apply`);
+                              }}
+                              className="flex-1"
                             >
-                              {job.matchScore.matchScore}% Match
-                            </Badge>
+                              Apply Now
+                            </Button>
                           )}
-                          <Button
-                            onClick={() => {
-                              router.push(`/candidate/jobs/${job._id}/apply`);
-                            }}
-                            className="w-full"
-                          >
-                            Apply Now
-                          </Button>
                           <Button
                             onClick={() => {
                               router.push(`/candidate/jobs/${job._id}`);
@@ -332,7 +419,8 @@ const Page = () => {
           ) : (
             <Alert>
               <AlertDescription>
-                No matching jobs found. Try adjusting your profile or check back later for new opportunities.
+                No matching jobs found. Try adjusting your profile or check back
+                later for new opportunities.
               </AlertDescription>
             </Alert>
           )}

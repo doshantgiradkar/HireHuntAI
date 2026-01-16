@@ -6,6 +6,7 @@ import { useHeader } from "@/store/user.store";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
+import { Loader2 } from "lucide-react";
 
 export default function Page() {
   const setTitle = useHeader((s) => s.setTitle);
@@ -40,11 +41,13 @@ export default function Page() {
     <div className="min-h-screen bg-background">
       {candidateData && Object.keys(candidateData).length > 0 ? (
         <EditCandidateProfileForm
-          initialData={candidateData}
-          onSubmit={(data) => console.log("Updated Candidate:", data)}
+        initialData={candidateData}
+        onSubmit={(data) => console.log("Updated Candidate:", data)}
         />
       ) : (
-        <p>Loading...</p>
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
       )}
     </div>
   );

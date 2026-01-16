@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+
 import {
   Select,
   SelectContent,
@@ -40,7 +41,8 @@ const statusConfig = {
   },
   interview_scheduled: {
     label: "Interview Scheduled",
-    color: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    color:
+      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
     icon: Users,
   },
   hired: {
@@ -104,7 +106,9 @@ const StatsCards = ({ applications }) => {
         return (
           <Card key={index} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {stat.title}
+              </CardTitle>
               <Icon className={`h-4 w-4 ${stat.color}`} />
             </CardHeader>
             <CardContent>
@@ -151,7 +155,9 @@ const ApplicationFilters = ({
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="applied">Applied</SelectItem>
                 <SelectItem value="shortlisted">Shortlisted</SelectItem>
-                <SelectItem value="interview_scheduled">Interview Scheduled</SelectItem>
+                <SelectItem value="interview_scheduled">
+                  Interview Scheduled
+                </SelectItem>
                 <SelectItem value="hired">Hired</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
@@ -204,7 +210,9 @@ const ApplicationCard = ({ application, onViewDetails, onWithdraw }) => {
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg mb-1">{application.jobTitle}</CardTitle>
+            <CardTitle className="text-lg mb-1">
+              {application.jobTitle}
+            </CardTitle>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Building className="h-4 w-4" />
               <span>{application.company}</span>
@@ -330,7 +338,8 @@ const ApplicationsDashboard = () => {
         app.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
         app.company.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus = statusFilter === "all" || app.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "all" || app.status === statusFilter;
 
       const matchesDate =
         dateFilter === "all" ||
@@ -340,8 +349,8 @@ const ApplicationsDashboard = () => {
     });
   }, [applications, searchTerm, statusFilter, dateFilter]);
 
-  const handleViewDetails = (application) => {
-    console.log("View details for", application);
+  const handleViewDetails = (jobId) => {
+    window.location.href = `/candidate/jobs/${jobId}`;
   };
 
   const handleWithdraw = async (application) => {
@@ -352,7 +361,7 @@ const ApplicationsDashboard = () => {
     try {
       await axios.delete(`/api/application/${application.applicationId}`);
       setApplications((prev) =>
-        prev.filter((app) => app.applicationId !== application.applicationId)
+        prev.filter((app) => app.applicationId !== application.applicationId),
       );
     } catch (err) {
       console.error("Error withdrawing application:", err);
@@ -444,7 +453,9 @@ const ApplicationsDashboard = () => {
               <ApplicationCard
                 key={application.applicationId}
                 application={application}
-                onViewDetails={handleViewDetails}
+                onViewDetails={() => {
+                  window.location.href = `/candidate/jobs/${application.jobId._id}`;
+                }}
                 onWithdraw={handleWithdraw}
               />
             ))}
