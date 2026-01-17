@@ -376,15 +376,14 @@ export default function Page({ params }) {
                               </span>
                             )}
                           </td>
+                
 
                           {/* Experience */}
-                          <td className="p-4 text-sm">
-                            {getCandidateExperience(app).length > 0 ? (
-                              <div className="flex items-center gap-1">
-                                <Award className="h-4 w-4" />
-                                {getCandidateExperience(app).length} entries
-                              </div>
-                            ) : (
+                          <td className="p-4">
+                            {app.candidate?.totalExperienceDuration ? (<div className="flex items-center gap-1">
+                              
+                              {app.candidate?.totalExperienceDuration} years
+                            </div>) : (
                               <span className="text-xs text-muted-foreground">
                                 —
                               </span>

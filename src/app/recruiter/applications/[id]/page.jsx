@@ -1,201 +1,237 @@
-'use client'
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+"use client"
+import React from 'react';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
-import { Mail, Phone, ExternalLink, Briefcase } from 'lucide-react';
-import { use } from 'react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Mail, Phone, ExternalLink, Calendar, Briefcase, FileText, CheckCircle2, XCircle, Target, Clock } from 'lucide-react';
 
-/* ---------- Status Badge ---------- */
+const getInitials = (name = '') => name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+
 const StatusBadge = ({ status }) => {
-  const label = status.replace('_', ' ').toUpperCase();
-  return <Badge variant="secondary">{label}</Badge>;
+  const labels = {
+    pending: 'Pending Review',
+    reviewed: 'Reviewed',
+    interviewing: 'Interviewing',
+    accepted: 'Accepted',
+    rejected: 'Rejected'
+  };
+  return <Badge variant="secondary" className="text-xs font-medium">{labels[status?.toLowerCase()] || 'Pending Review'}</Badge>;
 };
 
-/* ---------- Main Page ---------- */
+const EligibilityBadge = ({ isEligible, matchScore }) => {
+  const Icon = isEligible ? CheckCircle2 : XCircle;
+  return (
+    <Badge variant={isEligible ? 'default' : 'destructive'} className="text-xs font-medium gap-1">
+      <Icon className="h-3 w-3" />
+      {isEligible ? 'Eligible' : 'Not Eligible'} · {matchScore}%
+    </Badge>
+  );
+};
+
+const formatDate = (date) => date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not specified';
+
+const Section = ({ title, icon, children }) => (
+  <div className="space-y-4">
+    <div className="flex items-center gap-2">
+      {icon}
+      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{title}</h3>
+    </div>
+    <div className="rounded-lg border bg-muted/40 p-5">{children}</div>
+  </div>
+);
+
+const InfoField = ({ label, icon, children, fullWidth }) => (
+  <div className={`space-y-2 ${fullWidth ? 'col-span-full' : ''}`}>
+    <Label className="text-xs text-muted-foreground font-normal">{label}</Label>
+    <div className="flex items-center gap-2.5">
+      {icon}
+      <div className="flex-1 min-w-0">{children}</div>
+    </div>
+  </div>
+);
+
 export default function JobApplicationDetailsPage({ params }) {
-  const { id: applicationId } = params; // 👈 dynamic route param
+  const { id } = params;
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!applicationId) return;
-
-    const fetchApplication = async () => {
-      try {
-        setLoading(true);
-        const res = await axios.get(
-          `/api/application/${applicationId}`
-        );
-        setApplication(res.data);
-        console.log(res.data);
+    if (!id) return;
+    fetch(`/api/application/${id}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load application');
+        return res.json();
+      })
+      .then(data => {
+        setApplication(data);
         setLoading(false);
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load application details');
-      } finally {
+      })
+      .catch(err => {
+        setError(err.message);
         setLoading(false);
-      }
-    };
-
-    fetchApplication();
-  }, [applicationId]);
+      });
+  }, [id]);
 
   if (loading) {
-    return <div className="p-8">Loading application details...</div>;
+    return (
+      <div className="min-h-screen bg-muted/30 py-10 px-4">
+        <div className="container mx-auto max-w-4xl">
+          <Card className="shadow-md">
+            <CardContent className="py-20">
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-16 w-16 rounded-full bg-muted animate-pulse" />
+                <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
-  if (error) {
-    return <div className="p-8 text-red-500">{error}</div>;
-  }
-
-  if (!application) {
-    return <div className="p-8">Application not found</div>;
+  if (error || !application) {
+    return (
+      <div className="min-h-screen bg-muted/30 py-10 px-4">
+        <div className="container mx-auto max-w-4xl">
+          <Card className="shadow-md border-destructive">
+            <CardContent className="py-12 text-center">
+              <p className="text-destructive">{error || 'Application not found'}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-5xl space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold">{application.fullName}</h1>
-          <p className="text-muted-foreground">
-            Application ID: {application._id}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <StatusBadge status={application.status} />
-          <Badge
-            className={
-              application.eligibility?.isEligible
-                ? 'bg-green-100 text-green-800'
-                : ''
-            }
-            variant={
-              application.eligibility?.isEligible
-                ? 'secondary'
-                : 'destructive'
-            }
-          >
-            {application.eligibility?.isEligible ? 'Eligible' : 'Not Eligible'}
-          </Badge>
-        </div>
-      </div>
-
-      {/* Contact Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Contact Information</CardTitle>
-        </CardHeader>
-        <CardContent className="grid md:grid-cols-2 gap-6">
-          <div>
-            <Label>Email</Label>
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              {application.email}
+    <div className="min-h-screen bg-muted/30 py-10 px-4">
+      <div className="container mx-auto max-w-4xl">
+        <Card className="shadow-lg">
+          <CardHeader className="space-y-6 pb-6">
+            <div className="text-center">
+              <h2 className="text-lg font-semibold text-muted-foreground">Job Application Form</h2>
+              <p className="text-xs text-muted-foreground mt-1">Application ID: {id}</p>
             </div>
-          </div>
-
-          <div>
-            <Label>Phone</Label>
-            <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              {application.phone}
+            <Separator />
+            <div className="flex flex-col items-center gap-4 pt-2">
+              <Avatar className="h-28 w-28 border-4 border-background shadow-lg ring-2 ring-muted">
+                <AvatarImage src={application.profileImage} alt={application.fullName} />
+                <AvatarFallback className="text-2xl font-semibold bg-primary/10 text-primary">
+                  {getInitials(application.fullName)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="text-center space-y-2">
+                <h1 className="text-2xl font-bold tracking-tight">{application.fullName}</h1>
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Mail className="h-4 w-4" />
+                  <span>{application.email}</span>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                <StatusBadge status={application.status} />
+                <EligibilityBadge isEligible={application.eligibility?.isEligible} matchScore={application.eligibility?.matchScore || 0} />
+              </div>
             </div>
-          </div>
-
-          <div>
-            <Label>Job ID</Label>
-            <div className="flex items-center gap-2">
-              <Briefcase className="h-4 w-4" />
-              {application.jobId}
-            </div>
-          </div>
-
-          <div>
-            <Label>Resume</Label>
-            <a
-              href={application.resumeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-primary"
-            >
-              <ExternalLink className="h-4 w-4" />
-              View Resume
-            </a>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Eligibility */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Eligibility Assessment</CardTitle>
-          <CardDescription>AI-powered evaluation</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-between mb-2">
-            <span>Match Score</span>
-            <span className="font-bold">
-              {application.eligibility?.matchScore}%
-            </span>
-          </div>
+          </CardHeader>
           <Separator />
-          <p className="mt-3 text-muted-foreground">
-            {application.eligibility?.reason}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Skills */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Skills</CardTitle>
-        </CardHeader>
-        <CardContent className="flex gap-2 flex-wrap">
-          {application.skills?.map((skill) => (
-            <Badge key={skill} variant="secondary">
-              {skill}
-            </Badge>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Experience */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Experience Summary</CardTitle>
-        </CardHeader>
-        <CardContent className="text-muted-foreground">
-          {application.experienceSummary}
-        </CardContent>
-      </Card>
-
-      {/* Cover Letter */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Cover Letter</CardTitle>
-        </CardHeader>
-        <CardContent className="whitespace-pre-wrap text-muted-foreground">
-          {application.coverLetter}
-        </CardContent>
-      </Card>
-
-      {/* Actions */}
-      <div className="flex gap-3">
-        <Button>Send Email</Button>
-        <Button variant="outline">Schedule Interview</Button>
+          <CardContent className="space-y-8 pt-8 pb-8">
+            <Section title="AI Assessment" icon={<Target className="h-4 w-4 text-muted-foreground" />}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Match Score</p>
+                  <p className="text-xs text-muted-foreground">Automated eligibility evaluation</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-primary">{application.eligibility?.matchScore || 0}%</p>
+                  <p className="text-xs text-muted-foreground">compatibility</p>
+                </div>
+              </div>
+            </Section>
+            <Section title="Contact Information" icon={<Mail className="h-4 w-4 text-muted-foreground" />}>
+              <div className="grid gap-5">
+                <InfoField label="Email Address" icon={<Mail className="h-4 w-4 flex-shrink-0 text-muted-foreground" />}>
+                  <a href={`mailto:${application.email}`} className="text-sm hover:underline">{application.email}</a>
+                </InfoField>
+                <InfoField label="Phone Number" icon={<Phone className="h-4 w-4 flex-shrink-0 text-muted-foreground" />}>
+                  <a href={`tel:${application.phone}`} className="text-sm hover:underline">{application.phone}</a>
+                </InfoField>
+                <InfoField label="Resume / CV" icon={<FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />} fullWidth>
+                  <a href={application.resumeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                    View Resume Document
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </InfoField>
+              </div>
+            </Section>
+            <Section title="Job Details" icon={<Briefcase className="h-4 w-4 text-muted-foreground" />}>
+              <div className="grid gap-5">
+                <InfoField label="Position Applied For" icon={<Briefcase className="h-4 w-4 flex-shrink-0 text-muted-foreground" />}>
+                  <span className="text-sm font-medium">Job ID: {application.jobId}</span>
+                </InfoField>
+                <InfoField label="Application Status" icon={<Clock className="h-4 w-4 flex-shrink-0 text-muted-foreground" />}>
+                  <StatusBadge status={application.status} />
+                </InfoField>
+                <InfoField label="Available From" icon={<Calendar className="h-4 w-4 flex-shrink-0 text-muted-foreground" />} fullWidth>
+                  <span className="text-sm">{formatDate(application.availabilityDate)}</span>
+                </InfoField>
+              </div>
+            </Section>
+            {application.skills && application.skills.length > 0 && (
+              <Section title="Skills & Qualifications">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-3 block">
+                    {application.skills.length} {application.skills.length === 1 ? 'skill' : 'skills'} listed
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    {application.skills.map((skill, i) => <Badge key={i} variant="secondary" className="font-normal">{skill}</Badge>)}
+                  </div>
+                </div>
+              </Section>
+            )}
+            {application.experienceSummary && (
+              <Section title="Professional Experience">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">Experience Summary</Label>
+                  <p className="text-sm leading-relaxed text-foreground/90">{application.experienceSummary}</p>
+                </div>
+              </Section>
+            )}
+            {application.coverLetter && (
+              <Section title="Cover Letter">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">Letter of Interest</Label>
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed text-foreground/90">{application.coverLetter}</p>
+                </div>
+              </Section>
+            )}
+            {application.whyInterested && (
+              <Section title="Additional Information">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">Why Are You Interested in This Position?</Label>
+                  <p className="text-sm leading-relaxed text-foreground/90">{application.whyInterested}</p>
+                </div>
+              </Section>
+            )}
+            <div className="pt-6">
+              <Separator className="mb-6" />
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button size="lg" className="flex-1">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Send Email to Applicant
+                </Button>
+                <Button size="lg" variant="outline" className="flex-1">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Schedule Interview
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

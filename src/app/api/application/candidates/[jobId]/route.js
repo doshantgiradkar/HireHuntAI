@@ -52,7 +52,6 @@ export async function GET(req, { params }) {
       },
       {
         $project: {
-          // ✅ KEEP ALL APPLICATION FIELDS
           _id: 1,
           jobId: 1,
           candidateId: 1,
@@ -73,11 +72,11 @@ export async function GET(req, { params }) {
           createdAt: 1,
           updatedAt: 1,
 
-          // ✅ Candidate fields
-          "candidate.resume.experience": 1,
+        
+          "candidate.totalExperienceDuration": 1,
           "candidate.resume.skills": 1,
 
-          // ✅ User fields
+          
           "user.firstName": 1,
           "user.lastName": 1,
           "user.email": 1,
