@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-
 import { connect } from "@/lib/db";
 import Application from "@/models/applicationModel";
 
@@ -10,23 +9,90 @@ export async function GET(req, { params }) {
 
     const { id } = await params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { message: "Invalid application id" },
         { status: 400 }
       );
     }
 
-    const application = await Application.findById(id);
+    const applications = await Application.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(id),
+        },
+      },
+      {
+        $lookup: {
+          from: "candidates",
+          localField: "candidateClerkId",
+          foreignField: "clerkId",
+          as: "candidate",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "candidateClerkId",
+          foreignField: "clerkId",
+          as: "user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$candidate",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $unwind: {
+          path: "$user",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          jobId: 1,
+          candidateId: 1,
+          candidateClerkId: 1,
+          recruiterId: 1,
+          recruiterClerkId: 1,
+          resumeUrl: 1,
+          fullName: 1,
+          email: 1,
+          phone: 1,
+          coverLetter: 1,
+          eligibility: 1,
+          skills: 1,
+          experienceSummary: 1,
+          whyInterested: 1,
+          availabilityDate: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
 
-    if (!application) {
+          // candidate fields
+          "candidate.totalExperienceDuration": 1,
+          "candidate.resume": 1,
+
+          // user fields
+          "user.firstName": 1,
+          "user.lastName": 1,
+          "user.email": 1,
+          "user.imageUrl": 1,
+        },
+      },
+    ]);
+
+    if (!applications.length) {
       return NextResponse.json(
         { message: "Application not found" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(application, { status: 200 });
+    return NextResponse.json(applications[0], { status: 200 });
   } catch (error) {
     console.error("Get application error:", error);
     return NextResponse.json(

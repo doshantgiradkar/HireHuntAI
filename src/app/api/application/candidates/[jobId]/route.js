@@ -74,7 +74,7 @@ export async function GET(req, { params }) {
 
         
           "candidate.totalExperienceDuration": 1,
-          "candidate.resume.skills": 1,
+          "candidate.resume": 1,
 
           
           "user.firstName": 1,

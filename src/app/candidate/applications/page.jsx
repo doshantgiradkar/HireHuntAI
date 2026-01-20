@@ -291,7 +291,7 @@ const ApplicationsDashboard = () => {
     const fetchApplications = async () => {
       try {
         const response = await axios.get("/api/application");
-        const applicationsData = response.data.applications || [];
+        const applicationsData = response.data?.data?.applications ?? [];
 
         const formattedApplications = applicationsData.map((app) => {
           const job = app.jobId;
