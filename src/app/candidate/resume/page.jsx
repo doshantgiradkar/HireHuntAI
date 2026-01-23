@@ -1,23 +1,24 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { redirect } from "next/navigation";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useHeader } from "@/store/user.store";
-import { Upload, FileText, X } from "lucide-react";
+import { Upload, FileText, X, ChevronDown, ChevronUp } from "lucide-react";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const PDFViewer = dynamic(() => import("@/components/pdf-renderer"), {
+  ssr: false,
+  loading: () => <p>Loading PDF Viewer...</p>,
+});
 
 const ResumeViewerPage = () => {
   const [resumeFile, setResumeFile] = useState(null);
+  const [resumeUrl, setResumeUrl] = useState(null);
   const [isLoading, setLoading] = useState(false);
+  const [showResume, setShowResume] = useState(false);
   const setTitle = useHeader((state) => state.setTitle);
   const fileInputRef = useRef(null);
 
@@ -35,7 +36,7 @@ const ResumeViewerPage = () => {
       },
     });
 
-    if(resp.status != 200) {
+    if (resp.status != 200) {
       alert(resp.data.message);
     } else {
       window.location.href = "/candidate/edit-profile";
@@ -47,24 +48,33 @@ const ResumeViewerPage = () => {
       setResumeFile(e.target.files[0]);
     }
   };
+
   const handleClearFile = () => {
     setResumeFile(null);
-
-    // Reset native file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  useEffect( () => {
+  const toggleResumeView = () => {
+    setShowResume(!showResume);
+  };
+
+  useEffect(() => {
     setTitle("Upload Your Resume");
-  }, []);
+    axios.get("/api/candidate/resume/url").then((resp) => {
+      if (resp.status !== 200) {
+        setResumeUrl("");
+      }
+      setResumeUrl(resp.data.resumeUrl);
+    });
+  }, [setTitle, setResumeUrl]);
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-background via-background to-muted/20">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-4">
         {/* Upload Section */}
-        <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+        <div className="flex items-center justify-center min-h-[calc(100vh-30rem)]">
           <div className="w-full max-w-2xl">
             <div className="text-center mb-6 sm:mb-8">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-2 px-4">
@@ -74,6 +84,7 @@ const ResumeViewerPage = () => {
                 Get started by uploading your resume
               </p>
             </div>
+
             <Card className="border-dashed border-2 hover:border-primary/50 transition-colors mx-4">
               <CardHeader className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-center">
@@ -81,9 +92,7 @@ const ResumeViewerPage = () => {
                     <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                   </div>
                 </div>
-                <CardTitle className="text-center text-lg sm:text-xl">
-                  Upload Your Resume
-                </CardTitle>
+                <CardTitle className="text-center text-lg sm:text-xl">Upload Your Resume</CardTitle>
                 <CardDescription className="text-center text-sm sm:text-base px-2">
                   Support for PDF, DOC, and DOCX files
                 </CardDescription>
@@ -101,12 +110,7 @@ const ResumeViewerPage = () => {
                   </label>
 
                   {isLoading ? (
-                    <Button
-                      onClick={handleUpload}
-                      disabled={true}
-                      size="lg"
-                      className="h-11 sm:h-12 whitespace-nowrap"
-                    >
+                    <Button onClick={handleUpload} disabled={true} size="lg" className="h-11 sm:h-12 whitespace-nowrap">
                       <Loader2 className="h-8 w-8 animate-spin" />
                     </Button>
                   ) : (
@@ -147,6 +151,43 @@ const ResumeViewerPage = () => {
             </Card>
           </div>
         </div>
+
+        {/* Resume Preview Section */}
+        {resumeUrl && (
+          <div className="mt-8 mx-4">
+            <div
+              onClick={toggleResumeView}
+              className="cursor-pointer hover:bg-muted/50 transition-colors p-4 sm:p-6 border rounded-lg bg-card"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-semibold">Current Resume</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {showResume ? "Your uploaded resume is displayed below" : "Click to preview your current resume"}
+                    </p>
+                  </div>
+                </div>
+                <div className="transition-transform duration-300" style={{ transform: showResume ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="overflow-hidden transition-all duration-500 ease-in-out"
+              style={{
+                maxHeight: showResume ? '2000px' : '0px',
+                opacity: showResume ? 1 : 0
+              }}
+            >
+              <div className="mt-4">
+                <PDFViewer fileUrl={resumeUrl} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
