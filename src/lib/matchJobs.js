@@ -171,3 +171,99 @@ export default async function calculateMatchScore (userId, jobId) {
     };
   }
 };
+
+export async function calculateMatchScoreByJobs (userId, jobs) {
+  let Match = {
+    isEligible: false,
+    matchScore: 0,
+    reason: "",
+  };
+
+  try {
+    const candidate = await Candidate.findOne({ clerkId: userId });
+    if (!candidate) {
+      throw new Error("Candidate not found");
+    }
+
+    const { resume } = candidate;
+
+    if (!resume?.atsScore || resume.atsScore < 70) {
+      return {
+        ...Match,
+        matchScore: 0,
+        isEligible: false,
+        reason: "ATS score is below the required threshold",
+      };
+    }
+
+    // const highestEdu = resume.education?.[resume.education.length - 1]?.eduType;
+    // const jobExpectedEdu = job.educationLevel;
+
+    // if (highestEdu !== jobExpectedEdu) {
+    //   return NextResponse.json({
+    //     matchScore: 0,
+    //     isEligible: false,
+    //     reason: "Education level does not meet job expectation"
+    //   });
+    // }
+
+    // =====================
+    // 🧮 SCORING
+    // =====================
+
+    let score = 0;
+
+    // Skills — 30
+    const candSkills = normalizeArray(resume.skills);
+    const jobSkills = normalizeArray(job.skills);
+    const overlap = candSkills.filter((s) => jobSkills.includes(s)).length;
+    const skillScore = Math.min(30, (overlap / jobSkills.length) * 30);
+    score += skillScore;
+
+    // Experience Duration — 10
+    const exp = candidate.totalExperienceDuration || 0;
+    const min = job.experienceYear || {};
+    let expScore = experienceDurationScore(exp, min);
+    score += expScore;
+
+    // ATS — 35
+    const atsScore = linearMap(resume.atsScore, 70, 100, 10, 35);
+    score += atsScore;
+
+    // Education — 10
+    score += 10; // Passed hard filter → full score
+
+    // Semantic — 10
+    const resumeText = JSON.stringify(resume);
+    const sim = await semanticSimilarity(resumeText, job.description);
+    score += sim * 10;
+
+    // Certificates — 3
+    const certCount = resume.certifications?.length || 0;
+    score += Math.min(3, certCount);
+
+    // Location / WorkMode — 2
+    let locScore = 0;
+    if (job.workMode === "Remote") locScore = 2;
+    else if (candidate.address?.city === job.location) locScore = 2;
+    else if (candidate.address?.state === job.location) locScore = 1;
+    score += locScore;
+
+    const matchScore = Math.round(score);
+    const isEligible = matchScore >= 60;
+
+    return isEligible
+      ? { matchScore, isEligible }
+      : {
+          matchScore,
+          isEligible,
+          reason: "Overall match score below eligibility threshold",
+        };
+  } catch (err) {
+    console.error(err);
+    return {
+      ...Match,
+       reason: "Error Calculating Match Score"
+    };
+  }
+};
