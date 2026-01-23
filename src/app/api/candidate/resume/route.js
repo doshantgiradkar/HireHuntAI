@@ -23,7 +23,7 @@ export async function POST(req) {
       {
         message: authResult.error,
       },
-      { status: authResult.error === "Forbidden" ? 403 : 401 }
+      { status: authResult.error === "Forbidden" ? 403 : 401 },
     );
   }
 
@@ -57,7 +57,7 @@ export async function POST(req) {
         success: false,
         message: "File Upload Unsuccessful",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -68,7 +68,7 @@ export async function POST(req) {
     fs.rmSync(resumePath);
     return NextResponse.json(
       { success: false, message: "Failed to Upload to Cloudinary" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -81,7 +81,7 @@ export async function POST(req) {
     console.error(err);
     return NextResponse.json(
       { success: false, message: "Failed Parsing Resume" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -98,13 +98,20 @@ export async function POST(req) {
         appliedJobs: parsed.appliedJobs || [],
         totalExperienceDuration: parsed.totalExperienceDuration || 0,
       });
+      const client  =  await clerkClient();
+      client.users.updateUserMetadata(userId, {
+        publicMetadata: {
+          hasResume: true,
+          isProfileComplete: true,
+        },
+      });
       fs.rmSync(resumePath);
     } catch (err) {
       console.log(err);
       fs.rmSync(resumePath);
       return NextResponse.json(
         { success: false, message: "File Upload Unsuccessful" },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } else {
@@ -116,15 +123,13 @@ export async function POST(req) {
         ...parsed.resume,
         resumeUrl: (await result).secure_url,
       };
-      await existing.save();
-      const client = await clerkClient();
+      const client  =  await clerkClient();
       client.users.updateUserMetadata(userId, {
         publicMetadata: {
           hasResume: true,
           isProfileComplete: true,
         },
       });
-
 
       return NextResponse.json({
         success: true,

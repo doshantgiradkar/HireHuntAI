@@ -94,3 +94,91 @@ export async function GET(req) {
     );
   }
 }
+
+
+export async function POST(req) {
+  const authResult = await checkAuth({
+    allowedRoles: ["recruiter", "candidate"],
+  });
+
+  if (!authResult.authenticated) {
+    return NextResponse.json(
+      { message: authResult.error },
+      {
+        status: authResult.error === "Forbidden" ? 403 : 401,
+      },
+    );
+  }
+
+  try {
+    await connect();
+
+    const body = await req.json();
+    const { label, aliases = [] } = body;
+
+    if (!label) {
+      return NextResponse.json(
+        { error: "Skill label is required" },
+        { status: 400 },
+      );
+    }
+
+    const key = normalizeKey(label);
+
+    // Check if skill already exists by key or aliases
+    const existingSkill = await skillsModel.findOne({
+      $or: [
+        { key },
+        { aliases: { $in: [key] } },
+      ],
+    });
+
+    if (existingSkill) {
+      return NextResponse.json(
+        {
+          message: "Skill already exists",
+          skill: {
+            key: existingSkill.key,
+            label: existingSkill.label,
+            aliases: existingSkill.aliases,
+          },
+        },
+        { status: 200 },
+      );
+    }
+
+    // Normalize aliases
+    const normalizedAliases = [
+      ...new Set(
+        aliases
+          .filter(Boolean)
+          .map((a) => normalizeKey(a))
+          .filter((a) => a !== key),
+      ),
+    ];
+
+    const newSkill = await skillsModel.create({
+      key,
+      label,
+      aliases: normalizedAliases,
+    });
+
+    return NextResponse.json(
+      {
+        message: "Skill created successfully",
+        skill: {
+          key: newSkill.key,
+          label: newSkill.label,
+          aliases: newSkill.aliases,
+        },
+      },
+      { status: 201 },
+    );
+  } catch (error) {
+    console.error("Error creating skill:", error);
+    return NextResponse.json(
+      { error: "Failed to create skill" },
+      { status: 500 },
+    );
+  }
+}
