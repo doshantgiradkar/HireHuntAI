@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { connect } from "@/lib/db";
 import Application from "@/models/applicationModel";
+import { checkAuth } from "@/utils/checkAuth";
 
 export async function GET(req, { params }) {
   try {
@@ -155,10 +156,20 @@ export async function PUT(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
+   const authResult = await checkAuth({ allowedRoles: ["candidate"] });
+
+  if (!authResult.authenticated) {
+    return NextResponse.json(
+      { message: authResult.error },
+      { status: authResult.error === "Forbidden" ? 403 : 401 },
+    );
+  }
+
+  const userId = authResult.userId;
   try {
     await connect();
 
-    const { id } = params;
+    const { id } = await params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
@@ -167,14 +178,23 @@ export async function DELETE(req, { params }) {
       );
     }
 
-    const application = await Application.findByIdAndDelete(id);
-
+    const application = await Application.findById(id);
     if (!application) {
       return NextResponse.json(
         { message: "Application not found" },
         { status: 404 }
       );
     }
+    if(application.candidateClerkId !== userId){
+      return NextResponse.json(
+      { message: "Forbidden" },
+      { status: 403 }
+    );
+
+  }
+  await Application.findByIdAndDelete(id);
+
+
 
     return NextResponse.json(
       { message: "Application deleted successfully" },

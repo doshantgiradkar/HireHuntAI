@@ -27,6 +27,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useHeader } from "@/store/user.store";
+import { useUser } from "@clerk/nextjs";
 
 const statusConfig = {
   applied: {
@@ -277,6 +278,7 @@ const ApplicationCard = ({ application, onViewDetails, onWithdraw }) => {
 };
 
 const ApplicationsDashboard = () => {
+  const { user, isLoaded } = useUser();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -290,9 +292,12 @@ const ApplicationsDashboard = () => {
     setTitle("My Applications");
     const fetchApplications = async () => {
       try {
-        const response = await axios.get("/api/application");
-        const applicationsData = response.data?.data?.applications ?? [];
-
+         
+          const response = await axios.get(
+          `/api/application/candidate/${user?.id}`,
+        );
+        const applicationsData = response.data?.applications || [];
+        console.log(applicationsData)
         const formattedApplications = applicationsData.map((app) => {
           const job = app.jobId;
 
@@ -325,7 +330,7 @@ const ApplicationsDashboard = () => {
     };
 
     fetchApplications();
-  }, [setTitle]);
+  }, [setTitle,isLoaded]);
 
   const filteredApplications = useMemo(() => {
     const now = Date.now();
