@@ -1,5 +1,5 @@
 import { connect } from "@/lib/db";
-import calculateMatchScore from "@/lib/matchJobs";
+import {calculateMatchScoreByJobs} from "@/lib/matchJobs";
 import jobModel from "@/models/jobModel";
 import { checkAuth } from "@/utils/checkAuth";
 import { auth } from "@clerk/nextjs/server";
@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const { userId } = await auth()
   const authResult = await checkAuth({
-    allowedRoles: ["recruiter", "candidate"],
+    allowedRoles: ["recruiter"],
   });
   if (!authResult.authenticated) {
     return NextResponse.json(
@@ -21,20 +21,24 @@ export async function GET() {
     await connect();
     const count = 3;
 
-    // todo: implement this
-
     // Get paginated jobs
-    const jobs = await jobModel.find().limit(count);
-    const jobsWithScore = await Promise.all(
-      jobs.map(async (job) => {
-        const matchScore = await calculateMatchScore(userId, job._id);
+    const allJobs = await jobModel.find();
 
-        return {
-          ...job.toObject(),
-          matchScore,
-        };
+    // Score all jobs for the current user and sort by descending match score
+    const scoredJobs = await Promise.all(
+      allJobs.map(async (job) => {
+        const score = await calculateMatchScoreByJobs(userId, job);
+        return { job, score };
       })
     );
+
+    scoredJobs.sort((a, b) => b.score - a.score);
+    const topScored = scoredJobs.slice(0, count);
+
+    const jobsWithScore = topScored.map(({ job, score }) => ({
+      ...job.toObject(),
+      matchScore: score,
+    }));
 
     return NextResponse.json({ jobsWithScore, count }, { status: 200 });
   } catch (error) {

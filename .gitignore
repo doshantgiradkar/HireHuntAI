@@ -12,6 +12,7 @@
 test.js
 test/
 .node*
+docs/
 
 # temp folder
 tmp/

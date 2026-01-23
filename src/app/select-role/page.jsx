@@ -151,7 +151,7 @@ export default function SelectRolePage() {
                             key={index}
                             className="flex items-start space-x-2"
                           >
-                            <div className="h-1.5 w-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
+                            <div className="h-1.5 w-1.5 bg-foreground rounded-full mt-1.5 shrink-0"></div>
                             <span className="text-sm text-muted-foreground">
                               {feature}
                             </span>
@@ -169,7 +169,7 @@ export default function SelectRolePage() {
                 onClick={handleSubmit}
                 disabled={!selectedRole || isLoading}
                 size="lg"
-                className="w-full md:w-auto md:min-w-[240px]"
+                className="w-full md:w-auto md:min-w-60"
               >
                 {isLoading ? (
                   <span className="flex items-center space-x-2">
