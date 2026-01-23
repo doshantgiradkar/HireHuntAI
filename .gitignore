@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+node_modules/*
 /.pnp
 .pnp.*
 .yarn/*
@@ -12,6 +13,7 @@
 test.js
 test/
 .node*
+.venv/
 docs/
 
 # temp folder
@@ -32,6 +34,7 @@ tmp/
 *.pem
 *.ts
 ngrok
+AGENTS.md
 
 # debug
 npm-debug.log*
