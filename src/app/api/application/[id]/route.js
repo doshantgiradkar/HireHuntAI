@@ -192,9 +192,8 @@ export async function DELETE(req, { params }) {
     );
 
   }
+  
   await Application.findByIdAndDelete(id);
-
-
 
     return NextResponse.json(
       { message: "Application deleted successfully" },
