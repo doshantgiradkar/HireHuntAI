@@ -87,503 +87,630 @@ function formatRupees(amount) {
   return `Rs ${formatCurrency(amount)}`;
 }
 
+// Helper function to wrap text into lines
+function wrapText(text, maxWidth, font, fontSize) {
+  const words = text.split(' ');
+  const lines = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const textWidth = font.widthOfTextAtSize(testLine, fontSize);
+    
+    if (textWidth > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+  
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  
+  return lines;
+}
+
 async function generateProfessionalOfferLetter() {
   try {
-    console.log("Starting PDF generation...");
+    console.log("Starting pixel-perfect PDF generation...");
     
     const pdfDoc = await PDFDocument.create();
     const regularFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
     const boldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
     const italicFont = await pdfDoc.embedFont(StandardFonts.TimesRomanItalic);
 
-    // =================== PAGE 1 ===================
-    const page1 = pdfDoc.addPage([595.28, 841.89]); // A4
-    const { width, height } = page1.getSize();
+    // A4 dimensions in points
+    const PAGE_WIDTH = 595.28;
+    const PAGE_HEIGHT = 841.89;
+    const MARGIN_LEFT = 50;
+    const MARGIN_RIGHT = 50;
+    const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
 
-    // Header Section
-    let y = height - 50;
-    
-    // Company Name and Title
+    // Color palette
+    const PRIMARY_BLUE = rgb(0, 0.2, 0.4);
+    const ACCENT_BLUE = rgb(0, 0.3, 0.6);
+    const LIGHT_BLUE_BG = rgb(0.96, 0.98, 1);
+    const BORDER_BLUE = rgb(0, 0.3, 0.6);
+    const WARNING_BG = rgb(1, 0.95, 0.9);
+    const WARNING_BORDER = rgb(1, 0.8, 0.4);
+    const WARNING_TEXT = rgb(0.8, 0.4, 0);
+    const GRAY_TEXT = rgb(0.5, 0.5, 0.5);
+    const GRAY_LINE = rgb(0.7, 0.7, 0.7);
+
+    // =================== PAGE 1 ===================
+    const page1 = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    let y = PAGE_HEIGHT - 50;
+
+    // HEADER - Company Name
     page1.drawText(recruiterData.name, {
-      x: 50,
+      x: MARGIN_LEFT,
       y: y,
-      size: 16,
+      size: 18,
       font: boldFont,
-      color: rgb(0, 0.3, 0.6),
+      color: ACCENT_BLUE,
     });
     
-    page1.drawText("OFFER OF EMPLOYMENT", {
-      x: width / 2 - 80,
-      y: y - 30,
+    // TITLE - Centered
+    const titleText = "OFFER OF EMPLOYMENT";
+    const titleWidth = boldFont.widthOfTextAtSize(titleText, 20);
+    page1.drawText(titleText, {
+      x: (PAGE_WIDTH - titleWidth) / 2,
+      y: y - 35,
       size: 20,
       font: boldFont,
-      color: rgb(0, 0.2, 0.4),
+      color: PRIMARY_BLUE,
     });
     
-    y -= 70;
+    y -= 75;
     
     // Date
     page1.drawText(`Date: ${formatDate(jobData.postedAt.$date)}`, {
-      x: 50,
-      y,
+      x: MARGIN_LEFT,
+      y: y,
       size: 11,
       font: regularFont,
+      color: rgb(0, 0, 0),
     });
     
     y -= 40;
     
-    // To: Section
+    // TO Section
     page1.drawText("TO:", {
-      x: 50,
-      y,
+      x: MARGIN_LEFT,
+      y: y,
       size: 12,
       font: boldFont,
+      color: rgb(0, 0, 0),
     });
     
-    y -= 25;
+    y -= 22;
     page1.drawText(candidateData.name, {
-      x: 50,
-      y,
-      size: 14,
+      x: MARGIN_LEFT,
+      y: y,
+      size: 13,
       font: boldFont,
+      color: rgb(0, 0, 0),
     });
     
-    y -= 20;
+    y -= 18;
     page1.drawText(candidateData.address.line, {
-      x: 50,
-      y,
+      x: MARGIN_LEFT,
+      y: y,
       size: 11,
       font: regularFont,
+      color: rgb(0, 0, 0),
     });
     
-    y -= 15;
+    y -= 16;
     page1.drawText(`${candidateData.address.city}, ${candidateData.address.state} - ${candidateData.address.pinCode}`, {
-      x: 50,
-      y,
+      x: MARGIN_LEFT,
+      y: y,
       size: 11,
       font: regularFont,
+      color: rgb(0, 0, 0),
     });
     
-    y -= 15;
+    y -= 16;
     page1.drawText(candidateData.address.country, {
-      x: 50,
-      y,
+      x: MARGIN_LEFT,
+      y: y,
       size: 11,
       font: regularFont,
+      color: rgb(0, 0, 0),
     });
     
-    y -= 40;
+    y -= 35;
     
     // Greeting
     page1.drawText(`Dear ${candidateData.name.split(' ')[0]},`, {
-      x: 50,
-      y,
-      size: 12,
+      x: MARGIN_LEFT,
+      y: y,
+      size: 11,
       font: regularFont,
+      color: rgb(0, 0, 0),
     });
     
-    y -= 30;
+    y -= 25;
     
-    // Introduction
-    const introLines = [
-      "We are delighted to extend an offer of employment to you for the position of",
-      `${jobData.title} at ${recruiterData.name}.`,
-      "",
-      "After careful consideration of your qualifications and experience, we are confident",
-      "that you will make a valuable contribution to our team and help us achieve our goals.",
-      "",
-      "This offer is subject to the terms and conditions outlined below:"
-    ];
-
+    // Introduction paragraph
+    const introText = `We are delighted to extend an offer of employment to you for the position of ${jobData.title} at ${recruiterData.name}. After careful consideration of your qualifications and experience, we are confident that you will make a valuable contribution to our team and help us achieve our goals.`;
+    
+    const introLines = wrapText(introText, CONTENT_WIDTH, regularFont, 11);
     introLines.forEach(line => {
       page1.drawText(line, {
-        x: 50,
-        y,
+        x: MARGIN_LEFT,
+        y: y,
         size: 11,
         font: regularFont,
+        color: rgb(0, 0, 0),
       });
       y -= 16;
     });
 
-    y -= 20;
-
-    // Position Details Box - FIXED: Using absolute positioning
-    const boxY = y;
-    page1.drawRectangle({
-      x: 40,
-      y: boxY - 160,
-      width: 515,
-      height: 170,
-      color: rgb(0.96, 0.98, 1),
-      borderColor: rgb(0, 0.3, 0.6),
-      borderWidth: 1,
-    });
-
-    page1.drawText("OFFER DETAILS", {
-      x: width / 2 - 40,
-      y: boxY,
-      size: 14,
-      font: boldFont,
-      color: rgb(0, 0.3, 0.6),
-    });
-
-    y = boxY - 30;
-
-    const positionDetails = [
-      `Position: ${jobData.title}`,
-      `Department: Engineering`,
-      `Location: ${jobData.location}`,
-      `Work Mode: ${jobData.workMode}`,
-      `Employment Type: ${jobData.employmentType}`,
-      `Experience Level: ${jobData.experienceLevel}`,
-      `Required Experience: ${jobData.experienceYear} years`,
-      `Start Date: February 1, 2027`,
-      `Probation Period: 3 months`,
-    ];
-
-    let detailY = y;
-    positionDetails.forEach((line, index) => {
-      const xPos = index < 5 ? 60 : 300;
-      if (index === 5) detailY = y; // Reset for right column
-      
-      page1.drawText(line, {
-        x: xPos,
-        y: detailY,
-        size: 11,
-        font: regularFont,
-      });
-      detailY -= 18;
-    });
-
-    y = boxY - 190; // Reset y for next section
-
-    // Compensation Section
-    page1.drawText("COMPENSATION & BENEFITS", {
-      x: width / 2 - 70,
-      y,
-      size: 14,
-      font: boldFont,
-      color: rgb(0, 0.3, 0.6),
+    y -= 5;
+    page1.drawText("This offer is subject to the terms and conditions outlined below:", {
+      x: MARGIN_LEFT,
+      y: y,
+      size: 11,
+      font: regularFont,
+      color: rgb(0, 0, 0),
     });
 
     y -= 30;
 
-    const compensationDetails = [
-      `Annual Salary: ${formatRupees(jobData.salaryRange.min)} - ${formatRupees(jobData.salaryRange.max)}`,
-      `Salary Frequency: Monthly`,
-      `Performance Bonus: Up to 15% of annual salary`,
-      `Benefits: Health Insurance, Provident Fund, Gratuity`,
-      `Leave Policy: 18 Paid Leaves per year`,
-      `Other Benefits: Flexible working hours, Skill development allowance`
-    ];
-
-    compensationDetails.forEach(line => {
-      page1.drawText(line, {
-        x: 50,
-        y,
-        size: 11,
-        font: regularFont,
-      });
-      y -= 18;
+    // OFFER DETAILS BOX
+    const boxHeight = 170;
+    const boxY = y;
+    
+    // Draw box background
+    page1.drawRectangle({
+      x: MARGIN_LEFT - 10,
+      y: boxY - boxHeight,
+      width: CONTENT_WIDTH + 20,
+      height: boxHeight,
+      color: LIGHT_BLUE_BG,
+      borderColor: BORDER_BLUE,
+      borderWidth: 1.5,
     });
 
-    // Make sure we have enough space for important notice
-    y = Math.max(y, 150); // Ensure minimum space at bottom
+    // Box title - centered
+    const boxTitleText = "OFFER DETAILS";
+    const boxTitleWidth = boldFont.widthOfTextAtSize(boxTitleText, 13);
+    page1.drawText(boxTitleText, {
+      x: (PAGE_WIDTH - boxTitleWidth) / 2,
+      y: boxY - 20,
+      size: 13,
+      font: boldFont,
+      color: ACCENT_BLUE,
+    });
+
+    // Position details in two columns
+    let leftY = boxY - 45;
+    let rightY = boxY - 45;
+    const leftX = MARGIN_LEFT;
+    const rightX = PAGE_WIDTH / 2 + 10;
+
+    const leftDetails = [
+      { label: "Position:", value: jobData.title },
+      { label: "Department:", value: "Engineering" },
+      { label: "Location:", value: jobData.location },
+      { label: "Work Mode:", value: jobData.workMode },
+      { label: "Employment Type:", value: jobData.employmentType },
+    ];
+
+    const rightDetails = [
+      { label: "Experience Level:", value: jobData.experienceLevel },
+      { label: "Required Experience:", value: `${jobData.experienceYear} years` },
+      { label: "Start Date:", value: "February 1, 2027" },
+      { label: "Probation Period:", value: "3 months" },
+    ];
+
+    leftDetails.forEach(detail => {
+      page1.drawText(detail.label, {
+        x: leftX,
+        y: leftY,
+        size: 10,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      page1.drawText(detail.value, {
+        x: leftX + boldFont.widthOfTextAtSize(detail.label, 10) + 5,
+        y: leftY,
+        size: 10,
+        font: regularFont,
+        color: rgb(0, 0, 0),
+      });
+      leftY -= 18;
+    });
+
+    rightDetails.forEach(detail => {
+      page1.drawText(detail.label, {
+        x: rightX,
+        y: rightY,
+        size: 10,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      page1.drawText(detail.value, {
+        x: rightX + boldFont.widthOfTextAtSize(detail.label, 10) + 5,
+        y: rightY,
+        size: 10,
+        font: regularFont,
+        color: rgb(0, 0, 0),
+      });
+      rightY -= 18;
+    });
+
+    y = boxY - boxHeight - 25;
+
+    // COMPENSATION SECTION
+    const compTitleText = "COMPENSATION & BENEFITS";
+    const compTitleWidth = boldFont.widthOfTextAtSize(compTitleText, 13);
+    page1.drawText(compTitleText, {
+      x: (PAGE_WIDTH - compTitleWidth) / 2,
+      y: y,
+      size: 13,
+      font: boldFont,
+      color: ACCENT_BLUE,
+    });
+
+    y -= 25;
+
+    const compensationDetails = [
+      { label: "Annual Salary:", value: `${formatRupees(jobData.salaryRange.min)} - ${formatRupees(jobData.salaryRange.max)}` },
+      { label: "Salary Frequency:", value: "Monthly (via bank transfer)" },
+      { label: "Performance Bonus:", value: "Up to 15% of annual salary (based on performance)" },
+      { label: "Health Insurance:", value: "Medical coverage for self and family" },
+      { label: "Provident Fund:", value: "12% employer contribution" },
+      { label: "Annual Leave:", value: "18 Paid Leaves + 12 Casual Leaves" },
+    ];
+
+    compensationDetails.forEach(detail => {
+      const labelWidth = boldFont.widthOfTextAtSize(detail.label, 10);
+      page1.drawText(detail.label, {
+        x: MARGIN_LEFT,
+        y: y,
+        size: 10,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      
+      const valueLines = wrapText(detail.value, CONTENT_WIDTH - labelWidth - 10, regularFont, 10);
+      let valueY = y;
+      valueLines.forEach((line, idx) => {
+        page1.drawText(line, {
+          x: MARGIN_LEFT + labelWidth + 5,
+          y: valueY,
+          size: 10,
+          font: regularFont,
+          color: rgb(0, 0, 0),
+        });
+        valueY -= 14;
+      });
+      
+      y -= (valueLines.length * 14 + 4);
+    });
+
+    // IMPORTANT NOTICE BOX - Fixed at 120 from bottom
+    const noticeBoxY = 120;
+    const noticeBoxHeight = 48;
     
-    // IMPORTANT NOTICE BOX - FIXED POSITION
-    const noticeBoxY = 120; // Fixed position from bottom
     page1.drawRectangle({
-      x: 50,
-      y: noticeBoxY - 40,
-      width: 495,
-      height: 40,
-      color: rgb(1, 0.95, 0.9),
-      borderColor: rgb(1, 0.8, 0.4),
-      borderWidth: 1,
+      x: MARGIN_LEFT,
+      y: noticeBoxY - noticeBoxHeight,
+      width: CONTENT_WIDTH,
+      height: noticeBoxHeight,
+      color: WARNING_BG,
+      borderColor: WARNING_BORDER,
+      borderWidth: 1.5,
+    });
+
+    page1.drawText("", {
+      x: MARGIN_LEFT + 10,
+      y: noticeBoxY - 22,
+      size: 14,
+      font: boldFont,
+      color: WARNING_TEXT,
     });
 
     page1.drawText(`IMPORTANT: Please respond to this offer by ${formatDate(jobData.applicationDeadline.$date)}`, {
-      x: 60,
-      y: noticeBoxY - 25,
-      size: 11,
+      x: MARGIN_LEFT + 30,
+      y: noticeBoxY - 22,
+      size: 10.5,
       font: boldFont,
-      color: rgb(0.8, 0.4, 0),
+      color: WARNING_TEXT,
     });
 
-    page1.drawText("Your offer will be considered withdrawn if we do not receive your acceptance by this date.", {
-      x: 60,
-      y: noticeBoxY - 40,
+    const noticeSubText = "Your offer will be considered withdrawn if we do not receive your acceptance by this date.";
+    page1.drawText(noticeSubText, {
+      x: MARGIN_LEFT + 30,
+      y: noticeBoxY - 38,
       size: 9,
       font: italicFont,
       color: rgb(0.6, 0.3, 0),
     });
 
-    // Footer for Page 1 - FIXED POSITION
-    const footerY = 50;
+    // FOOTER - Page 1
+    const footerY = 40;
     page1.drawLine({
-      start: { x: 50, y: footerY },
-      end: { x: width - 50, y: footerY },
+      start: { x: MARGIN_LEFT, y: footerY },
+      end: { x: PAGE_WIDTH - MARGIN_RIGHT, y: footerY },
       thickness: 0.5,
-      color: rgb(0.7, 0.7, 0.7),
+      color: GRAY_LINE,
     });
 
-    page1.drawText(`Page 1 of 2 | ${recruiterData.name} | Confidential`, {
-      x: 50,
-      y: footerY - 15,
+    page1.drawText(`Page 1 of 2`, {
+      x: MARGIN_LEFT,
+      y: footerY - 12,
       size: 8,
       font: regularFont,
-      color: rgb(0.5, 0.5, 0.5),
+      color: GRAY_TEXT,
+    });
+
+    page1.drawText(`${recruiterData.name} | Confidential`, {
+      x: PAGE_WIDTH / 2 - 60,
+      y: footerY - 12,
+      size: 8,
+      font: regularFont,
+      color: GRAY_TEXT,
     });
 
     // =================== PAGE 2 ===================
-    const page2 = pdfDoc.addPage([595.28, 841.89]);
-    y = height - 50;
+    const page2 = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    y = PAGE_HEIGHT - 50;
 
     // Page 2 Header
-    page2.drawText("TERMS & CONDITIONS", {
-      x: width / 2 - 60,
-      y,
+    const page2Title = "TERMS & CONDITIONS";
+    const page2TitleWidth = boldFont.widthOfTextAtSize(page2Title, 18);
+    page2.drawText(page2Title, {
+      x: (PAGE_WIDTH - page2TitleWidth) / 2,
+      y: y,
       size: 18,
       font: boldFont,
-      color: rgb(0, 0.3, 0.6),
+      color: PRIMARY_BLUE,
     });
 
-    y -= 40;
+    y -= 35;
 
-    // Job Description
-    page2.drawText("JOB DESCRIPTION & RESPONSIBILITIES:", {
-      x: 50,
-      y,
-      size: 12,
-      font: boldFont,
-      color: rgb(0, 0.3, 0.6),
-    });
-
-    y -= 25;
-
-    // Split description into paragraphs
-    const description = jobData.description;
-    const sentences = description.split('. ');
-    let currentParagraph = '';
-    const paragraphs = [];
-
-    for (const sentence of sentences) {
-      if ((currentParagraph + sentence).length > 100) {
-        if (currentParagraph) paragraphs.push(currentParagraph + '.');
-        currentParagraph = sentence;
-      } else {
-        currentParagraph += (currentParagraph ? ' ' : '') + sentence;
-      }
-    }
-    if (currentParagraph) paragraphs.push(currentParagraph + '.');
-
-    paragraphs.forEach(para => {
-      const words = para.split(' ');
-      let line = '';
-      const lines = [];
-      
-      for (const word of words) {
-        if ((line + ' ' + word).length > 80) {
-          lines.push(line);
-          line = word;
-        } else {
-          line = line ? line + ' ' + word : word;
-        }
-      }
-      if (line) lines.push(line);
-      
-      lines.forEach(line => {
-        page2.drawText(line, {
-          x: 50,
-          y,
-          size: 10,
-          font: regularFont,
-        });
-        y -= 14;
-      });
-      y -= 5; // Space between paragraphs
-    });
-
-    y -= 20;
-
-    // Terms and Conditions
-    page2.drawText("TERMS & CONDITIONS:", {
-      x: 50,
-      y,
-      size: 12,
-      font: boldFont,
-      color: rgb(0, 0.3, 0.6),
-    });
-
-    y -= 25;
-
-    const terms = [
-      "1. This offer is contingent upon satisfactory verification of your educational qualifications,",
-      "   employment history, background checks, and references.",
-      "2. You will be required to submit original documents for verification before joining.",
-      "3. Employment is subject to a probation period of 3 months, which may be extended at",
-      "   the company's discretion based on performance.",
-      "4. During probation, either party may terminate employment with one week's notice.",
-      "5. After confirmation, the notice period will be 30 days for resignation.",
-      "6. You are required to maintain confidentiality of all company information during and",
-      "   after your employment.",
-      "7. You must comply with all company policies, rules, and regulations as amended from",
-      "   time to time.",
-      "8. Intellectual property created during employment belongs to the company.",
-      "9. The company reserves the right to modify compensation and benefits as per business",
-      "   requirements, with appropriate notice.",
-      "10. This offer supersedes all previous discussions and agreements.",
-      "11. Any disputes arising from this employment will be subject to the jurisdiction of",
-      "    courts in Nagpur, Maharashtra."
-    ];
-
-    terms.forEach(line => {
-      if (y < 250) {
-        y -= 5;
-      }
-      page2.drawText(line, {
-        x: 50,
-        y,
-        size: 9,
-        font: regularFont,
-      });
-      y -= 13;
-    });
-
-    y -= 20;
-
-    // =================== SIGNATURE SECTION ===================
-    // Draw horizontal line
-    page2.drawLine({
-      start: { x: 50, y: 220 },
-      end: { x: width - 50, y: 220 },
-      thickness: 1,
-      color: rgb(0.7, 0.7, 0.7),
-    });
-
-    // Company Signature (Left side)
-    page2.drawText("FOR " + recruiterData.name.toUpperCase(), {
-      x: 50,
-      y: 200,
+    // JOB DESCRIPTION
+    page2.drawText("1. JOB DESCRIPTION & RESPONSIBILITIES", {
+      x: MARGIN_LEFT,
+      y: y,
       size: 11,
       font: boldFont,
-      color: rgb(0, 0.3, 0.6),
+      color: ACCENT_BLUE,
+    });
+
+    y -= 20;
+
+    const descLines = wrapText(jobData.description, CONTENT_WIDTH - 10, regularFont, 10);
+    descLines.forEach(line => {
+      page2.drawText(line, {
+        x: MARGIN_LEFT + 10,
+        y: y,
+        size: 10,
+        font: regularFont,
+        color: rgb(0, 0, 0),
+      });
+      y -= 14;
+    });
+
+    y -= 15;
+
+    // TERMS & CONDITIONS
+    page2.drawText("2. TERMS & CONDITIONS", {
+      x: MARGIN_LEFT,
+      y: y,
+      size: 11,
+      font: boldFont,
+      color: ACCENT_BLUE,
+    });
+
+    y -= 18;
+
+    const terms = [
+      { num: "2.1", text: "This offer is contingent upon satisfactory verification of your educational qualifications, employment history, background checks, and references." },
+      { num: "2.2", text: "You will be required to submit original documents for verification before joining." },
+      { num: "2.3", text: "Employment is subject to a probation period of 3 months, which may be extended at the company's discretion based on performance." },
+      { num: "2.4", text: "During probation, either party may terminate employment with one week's notice." },
+      { num: "2.5", text: "After confirmation, the notice period will be 30 days for resignation." },
+      { num: "2.6", text: "You are required to maintain confidentiality of all company information during and after your employment." },
+      { num: "2.7", text: "You must comply with all company policies, rules, and regulations as amended from time to time." },
+      { num: "2.8", text: "Intellectual property created during employment belongs to the company." },
+      { num: "2.9", text: "The company reserves the right to modify compensation and benefits as per business requirements, with appropriate notice." },
+      { num: "2.10", text: "This offer supersedes all previous discussions and agreements." },
+      { num: "2.11", text: "Any disputes arising from this employment will be subject to the jurisdiction of courts in Nagpur, Maharashtra." },
+    ];
+
+    terms.forEach(term => {
+      const termLines = wrapText(term.text, CONTENT_WIDTH - 40, regularFont, 9.5);
+      
+      page2.drawText(term.num, {
+        x: MARGIN_LEFT + 10,
+        y: y,
+        size: 9.5,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      
+      let termY = y;
+      termLines.forEach((line, idx) => {
+        page2.drawText(line, {
+          x: MARGIN_LEFT + 35,
+          y: termY,
+          size: 9.5,
+          font: regularFont,
+          color: rgb(0, 0, 0),
+        });
+        termY -= 13;
+      });
+      
+      y = termY - 6;
+    });
+
+    // SIGNATURE SECTION - Fixed position
+    const sigY = 240;
+    
+    // Separator line
+    page2.drawLine({
+      start: { x: MARGIN_LEFT, y: sigY },
+      end: { x: PAGE_WIDTH - MARGIN_RIGHT, y: sigY },
+      thickness: 1,
+      color: GRAY_LINE,
+    });
+
+    // Company Signature (Left)
+    page2.drawText(`FOR ${recruiterData.name.toUpperCase()}`, {
+      x: MARGIN_LEFT,
+      y: sigY - 20,
+      size: 10,
+      font: boldFont,
+      color: ACCENT_BLUE,
     });
 
     page2.drawText("Authorized Signatory", {
-      x: 50,
-      y: 185,
-      size: 10,
+      x: MARGIN_LEFT,
+      y: sigY - 34,
+      size: 9,
       font: boldFont,
+      color: rgb(0, 0, 0),
     });
 
-    // Draw signature line for company
+    // Signature line
     page2.drawLine({
-      start: { x: 50, y: 170 },
-      end: { x: 250, y: 170 },
+      start: { x: MARGIN_LEFT, y: sigY - 55 },
+      end: { x: MARGIN_LEFT + 180, y: sigY - 55 },
       thickness: 1,
-      color: rgb(0.5, 0.5, 0.5),
+      color: rgb(0.3, 0.3, 0.3),
     });
 
     page2.drawText(recruiterData.admin.name, {
-      x: 50,
-      y: 155,
-      size: 11,
+      x: MARGIN_LEFT,
+      y: sigY - 70,
+      size: 10,
       font: boldFont,
+      color: rgb(0, 0, 0),
     });
 
     page2.drawText(recruiterData.admin.role, {
-      x: 50,
-      y: 140,
-      size: 10,
+      x: MARGIN_LEFT,
+      y: sigY - 84,
+      size: 9,
       font: regularFont,
+      color: rgb(0, 0, 0),
     });
 
     page2.drawText(`Date: ${formatDate(new Date().toISOString())}`, {
-      x: 50,
-      y: 125,
+      x: MARGIN_LEFT,
+      y: sigY - 98,
       size: 9,
       font: regularFont,
+      color: rgb(0, 0, 0),
     });
 
-    // Candidate Signature (Right side)
+    // Candidate Signature (Right)
+    const rightSigX = PAGE_WIDTH / 2 + 30;
+    
     page2.drawText("CANDIDATE ACCEPTANCE", {
-      x: 350,
-      y: 200,
-      size: 11,
+      x: rightSigX,
+      y: sigY - 20,
+      size: 10,
       font: boldFont,
-      color: rgb(0, 0.3, 0.6),
+      color: ACCENT_BLUE,
     });
 
     page2.drawText("I accept the terms of this employment offer", {
-      x: 350,
-      y: 185,
-      size: 9,
+      x: rightSigX,
+      y: sigY - 34,
+      size: 8.5,
       font: regularFont,
+      color: rgb(0, 0, 0),
     });
 
-    // Signature line for candidate
+    // Signature line
     page2.drawLine({
-      start: { x: 350, y: 155 },
-      end: { x: 500, y: 155 },
+      start: { x: rightSigX, y: sigY - 55 },
+      end: { x: PAGE_WIDTH - MARGIN_RIGHT, y: sigY - 55 },
       thickness: 1,
-      color: rgb(0.5, 0.5, 0.5),
+      color: rgb(0.3, 0.3, 0.3),
     });
     
     page2.drawText("Signature", {
-      x: 350,
-      y: 145,
+      x: rightSigX,
+      y: sigY - 67,
       size: 8,
       font: italicFont,
-      color: rgb(0.5, 0.5, 0.5),
+      color: GRAY_TEXT,
     });
 
-    // Draw line for candidate name
+    // Name line
     page2.drawLine({
-      start: { x: 350, y: 120 },
-      end: { x: 500, y: 120 },
+      start: { x: rightSigX, y: sigY - 85 },
+      end: { x: PAGE_WIDTH - MARGIN_RIGHT, y: sigY - 85 },
       thickness: 1,
-      color: rgb(0.5, 0.5, 0.5),
+      color: rgb(0.3, 0.3, 0.3),
     });
 
     page2.drawText(candidateData.name, {
-      x: 350,
-      y: 105,
-      size: 11,
+      x: rightSigX,
+      y: sigY - 70,
+      size: 10,
       font: boldFont,
+      color: rgb(0, 0, 0),
     });
 
     page2.drawText(`Date: ________________`, {
-      x: 350,
-      y: 90,
+      x: rightSigX,
+      y: sigY - 98,
       size: 9,
       font: regularFont,
+      color: rgb(0, 0, 0),
     });
 
-    // Footer for Page 2
-    const footerY2 = 50;
+    // FOOTER - Page 2
+    const footer2Y = 40;
     page2.drawLine({
-      start: { x: 50, y: footerY2 },
-      end: { x: width - 50, y: footerY2 },
+      start: { x: MARGIN_LEFT, y: footer2Y },
+      end: { x: PAGE_WIDTH - MARGIN_RIGHT, y: footer2Y },
       thickness: 0.5,
-      color: rgb(0.7, 0.7, 0.7),
+      color: GRAY_LINE,
     });
 
     const currentYear = new Date().getFullYear();
-    page2.drawText(`© ${currentYear} ${recruiterData.name} | Page 2 of 2 | Offer Letter ID: JKT-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`, {
-      x: 50,
-      y: footerY2 - 15,
+    const offerId = `JKT-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+    
+    page2.drawText(`Page 2 of 2`, {
+      x: MARGIN_LEFT,
+      y: footer2Y - 12,
       size: 8,
       font: regularFont,
-      color: rgb(0.5, 0.5, 0.5),
+      color: GRAY_TEXT,
+    });
+
+    page2.drawText(`© ${currentYear} ${recruiterData.name}`, {
+      x: PAGE_WIDTH / 2 - 60,
+      y: footer2Y - 12,
+      size: 8,
+      font: regularFont,
+      color: GRAY_TEXT,
+    });
+
+    page2.drawText(`Offer ID: ${offerId}`, {
+      x: PAGE_WIDTH - MARGIN_RIGHT - 80,
+      y: footer2Y - 12,
+      size: 8,
+      font: regularFont,
+      color: GRAY_TEXT,
     });
 
     page2.drawText("This is an electronically generated document and is legally binding.", {
-      x: 50,
-      y: footerY2 - 30,
+      x: MARGIN_LEFT,
+      y: footer2Y - 24,
       size: 7,
       font: italicFont,
-      color: rgb(0.5, 0.5, 0.5),
+      color: GRAY_TEXT,
     });
 
     // =================== SAVE PDF ===================
@@ -591,39 +718,45 @@ async function generateProfessionalOfferLetter() {
     const outputPath = path.join(
       os.homedir(),
       "Desktop",
-      `Offer_Letter_${candidateData.name.replace(/\s+/g, '_')}.pdf`
+      `Offer_Letter_${candidateData.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`
     );
 
     fs.writeFileSync(outputPath, pdfBytes);
 
-    console.log("\n" + "=".repeat(50));
-    console.log("✅ PROFESSIONAL OFFER LETTER GENERATED!");
-    console.log("=".repeat(50));
+    console.log("\n" + "=".repeat(60));
+    console.log("✅ PIXEL-PERFECT PROFESSIONAL OFFER LETTER GENERATED!");
+    console.log("=".repeat(60));
     console.log(`📁 File saved at: ${outputPath}`);
     console.log("\n📊 OFFER SUMMARY:");
-    console.log("─".repeat(35));
-    console.log(`🏢 Company: ${recruiterData.name}`);
-    console.log(`💼 Position: ${jobData.title}`);
-    console.log(`👤 Candidate: ${candidateData.name}`);
-    console.log(`💰 Salary: ${formatRupees(jobData.salaryRange.min)} - ${formatRupees(jobData.salaryRange.max)}/year`);
-    console.log(`📍 Location: ${jobData.location}`);
-    console.log(`📅 Offer Date: ${formatDate(jobData.postedAt.$date)}`);
-    console.log(`⏰ Response Due: ${formatDate(jobData.applicationDeadline.$date)}`);
-    console.log(`📄 Pages: 2`);
-    console.log("─".repeat(35));
+    console.log("─".repeat(60));
+    console.log(`🏢 Company      : ${recruiterData.name}`);
+    console.log(`💼 Position     : ${jobData.title}`);
+    console.log(`👤 Candidate    : ${candidateData.name}`);
+    console.log(`💰 Salary       : ${formatRupees(jobData.salaryRange.min)} - ${formatRupees(jobData.salaryRange.max)}/year`);
+    console.log(`📍 Location     : ${jobData.location} (${jobData.workMode})`);
+    console.log(`📅 Offer Date   : ${formatDate(jobData.postedAt.$date)}`);
+    console.log(`⏰ Response Due : ${formatDate(jobData.applicationDeadline.$date)}`);
+    console.log(`📄 Pages        : 2`);
+    console.log(`🆔 Offer ID     : ${offerId}`);
+    console.log("─".repeat(60));
+    console.log("✨ Features:");
+    console.log("  • Pixel-perfect alignment and spacing");
+    console.log("  • Professional color scheme");
+    console.log("  • Properly wrapped text (no overflow)");
+    console.log("  • Fixed positioned boxes and signatures");
+    console.log("  • Two-column layout for details");
+    console.log("  • Legal disclaimer and footer");
+    console.log("─".repeat(60));
     console.log("✅ PDF generation completed successfully!");
-    console.log("=".repeat(50));
+    console.log("=".repeat(60) + "\n");
     
   } catch (err) {
-    console.error("\n" + "=".repeat(50));
+    console.error("\n" + "=".repeat(60));
     console.error("❌ ERROR GENERATING PDF:");
-    console.error("=".repeat(50));
+    console.error("=".repeat(60));
     console.error("Error:", err.message);
-    console.error("\n💡 Troubleshooting Tips:");
-    console.error("1. The important notice box is now at fixed position (y=120)");
-    console.error("2. Footer is at fixed position (y=50)");
-    console.error("3. Using TimesRoman fonts for better compatibility");
-    console.error("=".repeat(50));
+    console.error("Stack:", err.stack);
+    console.error("=".repeat(60) + "\n");
   }
 }
 
