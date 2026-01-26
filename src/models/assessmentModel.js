@@ -11,4 +11,5 @@ const assessmentSchema = new mongoose.Schema({
   questions: [questionSchema],
 }, { timestamps: true });
 
-export const Assessment = mongoose.model('Assessment', assessmentSchema);
+// FIX: Check if the model exists first. If yes, use it. If no, create it.
+export const Assessment = mongoose.models.Assessment || mongoose.model('Assessment', assessmentSchema);

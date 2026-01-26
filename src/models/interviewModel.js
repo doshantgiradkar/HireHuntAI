@@ -1,36 +1,58 @@
 import mongoose from "mongoose";
 
+// Single Answer Schema
 const answerSchema = new mongoose.Schema({
   questionId: {
-    type: mongoose.Schema.Types.ObjectId, // CRITICAL: Links this answer to a specific question
+    type: mongoose.Schema.Types.ObjectId,
     required: true
   },
   response: { type: String, required: true },
   score: { type: Number, default: 0 },
-  feedback: { type: Number, min: 0, max: 5 },
-}, { _id: false }); // No need for an ID for the answer itself
+}, { _id: false });
 
-const interviewSessionSchema = new mongoose.Schema({
+// Single Candidate Schema
+// This represents ONE candidate inside the session
+const candidateSubSchema = new mongoose.Schema({
   candidateId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'User'
+    ref: 'Candidate'
+  },
+  matchScore: { type: Number, default: 0 },
+  feedback: { type: Number, min: 0, max: 5 },
+  answers: [answerSchema]
+}, { _id: false });
+
+const interviewSessionSchema = new mongoose.Schema({
+  jobId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    unique: true,
+    ref: 'Job',
   },
   assessmentId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'Assessment' // Links back to the question paper
+    ref: 'Assessment'
   },
-  answers: [answerSchema], // Lightweight: Only stores ID and response
-  totalScore: { type: Number, default: 0 },
+  // The Array of Candidates
+  candidates: {
+    type: [candidateSubSchema],
+    required: true
+  },
   status: {
     type: String,
     enum: ['scheduled', 'in-progress', 'completed'],
     default: 'scheduled'
+  },
+  startAt: {
+    type: Date,
+    required: true // Removed default Date.now
+  },
+  endAt: {
+    type: Date,
+    required: true
   }
 }, { timestamps: true });
 
-// Ensure a candidate can only take a specific assessment once (optional)
-interviewSessionSchema.index({ candidateId: 1, assessmentId: 1 }, { unique: true });
-
-export const Interview = mongoose.model('InterviewSession', interviewSessionSchema);
+export const Interview = mongoose.models.Interview || mongoose.model('Interview', interviewSessionSchema);
