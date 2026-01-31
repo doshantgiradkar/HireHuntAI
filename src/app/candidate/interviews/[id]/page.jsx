@@ -1,5 +1,8 @@
 "use client"
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "react-speech-recognition";
 import {
   Mic,
   MicOff,
@@ -17,6 +20,9 @@ import {
   Camera,
   ChevronDown,
   ChevronUp,
+  Radio,
+  Square,
+  Play,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,13 +45,180 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 /* -------------------------------------------------------------------------- */
+/*                          Speech Recognition Data                           */
+/* -------------------------------------------------------------------------- */
+
+const initialTranscriptData = [
+  {
+    id: 1,
+    speaker: "AI Interviewer",
+    timestamp: "10:00 AM",
+    message: "Welcome to your technical interview. Could you briefly introduce yourself?",
+    isAI: true,
+  },
+  {
+    id: 2,
+    speaker: "You",
+    timestamp: "10:01 AM",
+    message: "Sure. I'm a frontend developer with strong experience in React and Next.js.",
+    isAI: false,
+  },
+  {
+    id: 3,
+    speaker: "AI Interviewer",
+    timestamp: "10:02 AM",
+    message: "Great. Can you explain when you would use useMemo versus useCallback?",
+    isAI: true,
+  },
+  {
+    id: 4,
+    speaker: "You",
+    timestamp: "10:03 AM",
+    message: "useMemo is for expensive calculations, useCallback is for memoizing functions.",
+    isAI: false,
+  },
+  {
+    id: 5,
+    speaker: "AI Interviewer",
+    timestamp: "10:05 AM",
+    message: "Excellent. How would you optimize a React application?",
+    isAI: true,
+  },
+];
+
+const aiQuestions = [
+  "Welcome to your technical interview. Could you briefly introduce yourself?",
+  "Great. Can you explain when you would use useMemo versus useCallback?",
+  "Excellent. How would you optimize a React application for performance?",
+  "What's your experience with TypeScript in React applications?",
+  "Can you explain the virtual DOM and how it works in React?",
+];
+
+/* -------------------------------------------------------------------------- */
+/*                          Speech Recognition Hook                           */
+/* -------------------------------------------------------------------------- */
+
+function useInterviewSpeechRecognition() {
+  const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
+  
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [transcriptMessages, setTranscriptMessages] = useState(initialTranscriptData);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentTranscript, setCurrentTranscript] = useState("");
+  const [hasStarted, setHasStarted] = useState(false);
+
+  useEffect(() => {
+    setCurrentTranscript(transcript);
+  }, [transcript]);
+
+  const startListening = () => {
+    SpeechRecognition.startListening({ continuous: true, language: "en-IN" });
+    setIsListening(true);
+  };
+
+  const stopListening = () => {
+    SpeechRecognition.stopListening();
+    setIsListening(false);
+    
+    // Save the current transcript as a message
+    if (transcript.trim()) {
+      addTranscriptMessage("You", transcript);
+      resetTranscript();
+      setCurrentTranscript("");
+      
+      // Automatically trigger next AI question after a delay
+      setTimeout(() => {
+        if (currentQuestionIndex < aiQuestions.length) {
+          speakNextQuestion();
+        }
+      }, 2000);
+    }
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  };
+
+  const startInterview = () => {
+    setHasStarted(true);
+    // Start listening immediately
+    startListening();
+    // Ask first question after a short delay
+    setTimeout(() => {
+      speakNextQuestion();
+    }, 1000);
+  };
+
+  const speakNextQuestion = () => {
+    if (currentQuestionIndex < aiQuestions.length) {
+      const question = aiQuestions[currentQuestionIndex];
+      
+      // Add AI message to transcript
+      addTranscriptMessage("AI Interviewer", question);
+      
+      // Speak the question
+      const speech = new SpeechSynthesisUtterance(question);
+      speech.lang = "en-IN";
+      speech.rate = 1.0;
+      speech.pitch = 1.0;
+      
+      speech.onstart = () => setIsSpeaking(true);
+      speech.onend = () => {
+        setIsSpeaking(false);
+        setCurrentQuestionIndex(prev => prev + 1);
+        // Automatically start listening for user's response
+        if (hasStarted) {
+          setTimeout(() => {
+            startListening();
+          }, 500);
+        }
+      };
+      
+      window.speechSynthesis.speak(speech);
+    }
+  };
+
+  const addTranscriptMessage = (speaker, message) => {
+    if (message.trim()) {
+      const newMessage = {
+        id: Date.now(),
+        speaker,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        message: message.trim(),
+        isAI: speaker === "AI Interviewer",
+      };
+      setTranscriptMessages(prev => [...prev, newMessage]);
+    }
+  };
+
+  return {
+    currentTranscript,
+    transcriptMessages,
+    isListening,
+    isSpeaking,
+    hasStarted,
+    browserSupportsSpeechRecognition,
+    startListening,
+    stopListening,
+    toggleListening,
+    startInterview,
+    addTranscriptMessage,
+    currentQuestionIndex,
+    hasMoreQuestions: currentQuestionIndex < aiQuestions.length,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
 /*                          WebRTC Media Hook                                 */
 /* -------------------------------------------------------------------------- */
 
 function useLocalMediaStream() {
   const [stream, setStream] = useState(null);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
-  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [permissionError, setPermissionError] = useState(null);
   const [isInitializing, setIsInitializing] = useState(false);
   
@@ -93,28 +266,6 @@ function useLocalMediaStream() {
     }
   }, []);
 
-  const toggleAudio = useCallback(() => {
-    if (streamRef.current) {
-      const audioTracks = streamRef.current.getAudioTracks();
-      const newState = !isAudioEnabled;
-      audioTracks.forEach(track => {
-        track.enabled = newState;
-      });
-      setIsAudioEnabled(newState);
-    }
-  }, [isAudioEnabled]);
-
-  const toggleVideo = useCallback(() => {
-    if (streamRef.current) {
-      const videoTracks = streamRef.current.getVideoTracks();
-      const newState = !isVideoEnabled;
-      videoTracks.forEach(track => {
-        track.enabled = newState;
-      });
-      setIsVideoEnabled(newState);
-    }
-  }, [isVideoEnabled]);
-
   const cleanup = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => {
@@ -133,84 +284,12 @@ function useLocalMediaStream() {
 
   return {
     stream,
-    isAudioEnabled,
-    isVideoEnabled,
     permissionError,
     isInitializing,
     initializeStream,
-    toggleAudio,
-    toggleVideo,
     cleanup,
   };
 }
-
-/* -------------------------------------------------------------------------- */
-/*                              Transcript Data                               */
-/* -------------------------------------------------------------------------- */
-
-const transcriptData = [
-  {
-    id: 1,
-    speaker: "AI Interviewer",
-    timestamp: "10:00 AM",
-    message:
-      "Welcome to your technical interview. Could you briefly introduce yourself?",
-    isAI: true,
-  },
-  {
-    id: 2,
-    speaker: "You",
-    timestamp: "10:01 AM",
-    message:
-      "Sure. I'm a frontend developer with strong experience in React and Next.js. I've worked on multiple enterprise applications and have 5 years of experience in the field.",
-    isAI: false,
-  },
-  {
-    id: 3,
-    speaker: "AI Interviewer",
-    timestamp: "10:02 AM",
-    message: "Great. Can you explain when you would use useMemo versus useCallback?",
-    isAI: true,
-  },
-  {
-    id: 4,
-    speaker: "You",
-    timestamp: "10:03 AM",
-    message:
-      "useMemo is used to memoize expensive calculations, while useCallback is used to memoize functions to prevent unnecessary re-renders of child components.",
-    isAI: false,
-  },
-  {
-    id: 5,
-    speaker: "AI Interviewer",
-    timestamp: "10:05 AM",
-    message: "Excellent. How would you optimize a React application for performance?",
-    isAI: true,
-  },
-  {
-    id: 6,
-    speaker: "You",
-    timestamp: "10:06 AM",
-    message:
-      "I would use React.memo for components, implement code splitting with dynamic imports, use virtualization for large lists, and optimize images and assets.",
-    isAI: false,
-  },
-  {
-    id: 7,
-    speaker: "AI Interviewer",
-    timestamp: "10:08 AM",
-    message: "What's your experience with TypeScript in React applications?",
-    isAI: true,
-  },
-  {
-    id: 8,
-    speaker: "You",
-    timestamp: "10:09 AM",
-    message:
-      "I've been using TypeScript for 3 years. I'm comfortable with generics, type inference, and creating custom types and interfaces for complex applications.",
-    isAI: false,
-  },
-];
 
 /* -------------------------------------------------------------------------- */
 /*                               Video Card                                   */
@@ -351,7 +430,7 @@ function VideoCard({
 /*                              Transcript Panel                              */
 /* -------------------------------------------------------------------------- */
 
-function TranscriptPanel() {
+function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentTranscript }) {
   const [autoScroll, setAutoScroll] = useState(true);
   const scrollAreaRef = useRef(null);
 
@@ -362,7 +441,21 @@ function TranscriptPanel() {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
     }
-  }, [transcriptData, autoScroll]);
+  }, [transcriptMessages, currentTranscript, autoScroll]);
+
+  const allMessages = [...transcriptMessages];
+  
+  // Add current speech recognition if available
+  if (currentTranscript && currentTranscript.trim()) {
+    allMessages.push({
+      id: Date.now(),
+      speaker: "You",
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      message: currentTranscript,
+      isAI: false,
+      isLive: true,
+    });
+  }
 
   return (
     <Card className="h-full flex flex-col border-2 border-transparent hover:border-primary/30 transition-colors">
@@ -370,6 +463,12 @@ function TranscriptPanel() {
         <div className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5 text-primary" />
           <h3 className="font-semibold">Live Transcript</h3>
+          {isListening && (
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+              <div className="h-2 w-2 rounded-full bg-green-500 mr-1 animate-pulse"></div>
+              Listening
+            </Badge>
+          )}
         </div>
         <Button
           variant="ghost"
@@ -394,7 +493,7 @@ function TranscriptPanel() {
       <CardContent className="flex-1 p-0 overflow-hidden">
         <ScrollArea className="h-full" ref={scrollAreaRef}>
           <div className="p-4 space-y-4">
-            {transcriptData.map((msg) => (
+            {allMessages.map((msg) => (
               <div
                 key={msg.id}
                 className={`flex ${msg.isAI ? "justify-start" : "justify-end"}`}
@@ -403,6 +502,8 @@ function TranscriptPanel() {
                   className={`max-w-[85%] rounded-2xl px-4 py-3 break-words ${
                     msg.isAI
                       ? "bg-muted border"
+                      : msg.isLive
+                      ? "bg-primary/80 border-2 border-primary/50"
                       : "bg-primary text-primary-foreground"
                   }`}
                 >
@@ -412,6 +513,7 @@ function TranscriptPanel() {
                       className="text-xs shrink-0"
                     >
                       {msg.speaker}
+                      {msg.isLive && " (live)"}
                     </Badge>
                     <span className="text-xs opacity-70 shrink-0">{msg.timestamp}</span>
                   </div>
@@ -420,23 +522,26 @@ function TranscriptPanel() {
               </div>
             ))}
             
-            <div className="flex justify-start">
-              <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-muted border border-dashed">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="outline" className="text-xs bg-blue-500/10">
-                    AI Interviewer
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex space-x-1">
-                    <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
-                    <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse delay-75"></div>
-                    <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse delay-150"></div>
+            {/* AI Speaking Indicator */}
+            {isSpeaking && (
+              <div className="flex justify-start">
+                <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-muted border border-dashed">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline" className="text-xs bg-blue-500/10">
+                      AI Interviewer
+                    </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">Speaking...</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex space-x-1">
+                      <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
+                      <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse delay-75"></div>
+                      <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse delay-150"></div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Speaking...</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </ScrollArea>
       </CardContent>
@@ -449,12 +554,13 @@ function TranscriptPanel() {
 /* -------------------------------------------------------------------------- */
 
 function ControlBar({
-  isAudioMuted,
-  isVideoEnabled,
-  onToggleAudio,
-  onToggleVideo,
   onEndInterview,
   hasStream,
+  isListening,
+  onToggleListening,
+  isSpeaking,
+  hasStarted,
+  onStartInterview,
 }) {
   const [volume, setVolume] = useState(80);
 
@@ -496,28 +602,39 @@ function ControlBar({
               <span className="text-xs w-8">{volume}%</span>
             </div>
 
-            <Button
-              variant={isAudioMuted ? "destructive" : "secondary"}
-              size="icon"
-              onClick={onToggleAudio}
-              className="h-10 w-10 rounded-full"
-              aria-label={isAudioMuted ? "Unmute microphone" : "Mute microphone"}
-              disabled={!hasStream}
-            >
-              {isAudioMuted ? <MicOff /> : <Mic />}
-            </Button>
+            {/* Start Interview Button - Only show if interview hasn't started */}
+            {!hasStarted && (
+              <Button
+                variant="default"
+                size="lg"
+                onClick={onStartInterview}
+                className="h-10 px-4 sm:px-6 rounded-full bg-green-600 hover:bg-green-700"
+                aria-label="Start Interview"
+              >
+                <Play className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Start Interview</span>
+              </Button>
+            )}
 
-            <Button
-              variant={!isVideoEnabled ? "destructive" : "secondary"}
-              size="icon"
-              onClick={onToggleVideo}
-              className="h-10 w-10 rounded-full"
-              aria-label={isVideoEnabled ? "Turn off camera" : "Turn on camera"}
-              disabled={!hasStream}
-            >
-              {isVideoEnabled ? <Video /> : <VideoOff />}
-            </Button>
+            {/* Speech Transcription Button - Different icon to distinguish */}
+            {hasStarted && (
+              <Button
+                variant={isListening ? "destructive" : "secondary"}
+                size="icon"
+                onClick={onToggleListening}
+                className="h-10 w-10 rounded-full"
+                aria-label={isListening ? "Stop transcription" : "Start transcription"}
+                disabled={!hasStream}
+              >
+                {isListening ? (
+                  <Square className="h-4 w-4" />
+                ) : (
+                  <Radio className="h-4 w-4" />
+                )}
+              </Button>
+            )}
 
+            {/* End Interview Button */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="h-10 px-4 sm:px-6 rounded-full">
@@ -553,17 +670,43 @@ function ControlBar({
 /* -------------------------------------------------------------------------- */
 
 export default function InterviewLayout() {
+  // WebRTC Media Hook
   const {
     stream: candidateStream,
-    isAudioEnabled,
-    isVideoEnabled,
     permissionError,
     isInitializing,
     initializeStream,
-    toggleAudio,
-    toggleVideo,
     cleanup,
   } = useLocalMediaStream();
+
+  // Speech Recognition Hook
+  const {
+    currentTranscript,
+    transcriptMessages,
+    isListening,
+    isSpeaking,
+    hasStarted,
+    browserSupportsSpeechRecognition,
+    toggleListening,
+    startInterview,
+  } = useInterviewSpeechRecognition();
+
+  // Check browser support
+  if (!browserSupportsSpeechRecognition) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardContent className="p-6 text-center">
+            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold mb-2">Browser Not Supported</h2>
+            <p className="text-muted-foreground mb-4">
+              Your browser doesn't support speech recognition. Please use Chrome, Edge, or Safari.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const [fullscreenMode, setFullscreenMode] = useState(null);
   const [interviewStarted, setInterviewStarted] = useState(false);
@@ -571,20 +714,19 @@ export default function InterviewLayout() {
   const handleStartInterview = async () => {
     await initializeStream();
     setInterviewStarted(true);
+    startInterview();
   };
 
   const handleEndInterview = () => {
     cleanup();
+    SpeechRecognition.stopListening();
+    window.speechSynthesis.cancel();
     setInterviewStarted(false);
     setFullscreenMode(null);
   };
 
   const handleToggleFullscreen = (mode) => {
-    if (fullscreenMode === mode) {
-      setFullscreenMode(null);
-    } else {
-      setFullscreenMode(mode);
-    }
+    setFullscreenMode(fullscreenMode === mode ? null : mode);
   };
 
   return (
@@ -597,7 +739,7 @@ export default function InterviewLayout() {
                 AI Technical Interview — Frontend Developer
               </h1>
               <p className="text-sm text-muted-foreground">
-                Real-time AI-powered interview session
+                Real-time AI-powered interview session with speech recognition
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -611,6 +753,12 @@ export default function InterviewLayout() {
                     <div className="h-2 w-2 rounded-full bg-primary mr-1"></div>
                     Recording
                   </Badge>
+                  {isListening && (
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      <div className="h-2 w-2 rounded-full bg-green-500 mr-1 animate-pulse"></div>
+                      Transcribing
+                    </Badge>
+                  )}
                 </>
               )}
             </div>
@@ -630,6 +778,7 @@ export default function InterviewLayout() {
                 <h2 className="text-2xl font-bold">Ready to Start?</h2>
                 <p className="text-muted-foreground">
                   Click the button below to start your AI interview. We'll need access to your camera and microphone.
+                  Speech transcription will be enabled automatically.
                 </p>
                 
                 {permissionError && (
@@ -668,7 +817,9 @@ export default function InterviewLayout() {
 
         {interviewStarted && (
           <div className="h-full flex gap-4">
-            <div className={`flex-1 ${fullscreenMode ? 'h-full' : 'grid grid-rows-2 gap-4 md:grid-rows-1 md:grid-cols-2'}`}>
+            {/* Left side - Video cards */}
+            <div className={`${fullscreenMode ? 'flex-1' : 'flex-1 grid grid-rows-2 gap-4 md:grid-rows-1 md:grid-cols-2'}`}>
+              {/* Fullscreen AI Video */}
               {fullscreenMode === 'ai' && (
                 <div className="h-full">
                   <VideoCard
@@ -676,7 +827,7 @@ export default function InterviewLayout() {
                     role="AI Assistant"
                     isAI={true}
                     isMuted={false}
-                    isSpeaking={true}
+                    isSpeaking={isSpeaking}
                     isVideoEnabled={true}
                     isFullscreen={true}
                     onToggleFullscreen={() => handleToggleFullscreen('ai')}
@@ -685,15 +836,16 @@ export default function InterviewLayout() {
                 </div>
               )}
               
+              {/* Fullscreen Candidate Video */}
               {fullscreenMode === 'candidate' && (
                 <div className="h-full">
                   <VideoCard
                     name="Alex Johnson"
                     role="Candidate"
                     isAI={false}
-                    isMuted={!isAudioEnabled}
-                    isSpeaking={false}
-                    isVideoEnabled={isVideoEnabled}
+                    isMuted={false} // Always unmuted in interview
+                    isSpeaking={isListening}
+                    isVideoEnabled={true} // Always enabled in interview
                     isFullscreen={true}
                     onToggleFullscreen={() => handleToggleFullscreen('candidate')}
                     stream={candidateStream}
@@ -702,6 +854,7 @@ export default function InterviewLayout() {
                 </div>
               )}
               
+              {/* Normal view (both videos) */}
               {!fullscreenMode && (
                 <>
                   <VideoCard
@@ -709,7 +862,7 @@ export default function InterviewLayout() {
                     role="AI Assistant"
                     isAI={true}
                     isMuted={false}
-                    isSpeaking={true}
+                    isSpeaking={isSpeaking}
                     isVideoEnabled={true}
                     isFullscreen={false}
                     onToggleFullscreen={() => handleToggleFullscreen('ai')}
@@ -719,9 +872,9 @@ export default function InterviewLayout() {
                     name="Alex Johnson"
                     role="Candidate"
                     isAI={false}
-                    isMuted={!isAudioEnabled}
-                    isSpeaking={false}
-                    isVideoEnabled={isVideoEnabled}
+                    isMuted={false} // Always unmuted in interview
+                    isSpeaking={isListening}
+                    isVideoEnabled={true} // Always enabled in interview
                     isFullscreen={false}
                     onToggleFullscreen={() => handleToggleFullscreen('candidate')}
                     stream={candidateStream}
@@ -731,23 +884,29 @@ export default function InterviewLayout() {
               )}
             </div>
 
-            {!fullscreenMode && (
-              <div className="hidden lg:flex w-[400px] h-full">
-                <TranscriptPanel />
-              </div>
-            )}
+            {/* Right side - Transcript Panel */}
+            {/* Always show transcript panel, even in fullscreen mode */}
+            <div className={`${fullscreenMode ? 'w-[400px]' : 'hidden lg:flex w-[400px]'} h-full`}>
+              <TranscriptPanel
+                transcriptMessages={transcriptMessages}
+                isSpeaking={isSpeaking}
+                isListening={isListening}
+                currentTranscript={currentTranscript}
+              />
+            </div>
           </div>
         )}
       </main>
 
       {interviewStarted && (
         <ControlBar
-          isAudioMuted={!isAudioEnabled}
-          isVideoEnabled={isVideoEnabled}
-          onToggleAudio={toggleAudio}
-          onToggleVideo={toggleVideo}
           onEndInterview={handleEndInterview}
           hasStream={!!candidateStream}
+          isListening={isListening}
+          onToggleListening={toggleListening}
+          isSpeaking={isSpeaking}
+          hasStarted={hasStarted}
+          onStartInterview={startInterview}
         />
       )}
     </div>
