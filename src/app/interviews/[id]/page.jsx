@@ -43,7 +43,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import StartInterviewScreen from "@/components/ui/start-interview-screen";
+import StartInterviewScreen from "@/components/start-interview-screen";
 
 /* -------------------------------------------------------------------------- */
 /*                          Speech Recognition Data                           */
