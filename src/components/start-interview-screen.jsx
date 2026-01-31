@@ -1,56 +1,18 @@
 "use client"
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import SpeechRecognition, {
-  useSpeechRecognition,
-} from "react-speech-recognition";
+import React, { useState, useEffect, useRef } from "react";
 import {
-  Mic,
-  MicOff,
   Video,
-  VideoOff,
-  PhoneOff,
-  Volume2,
-  User,
-  Bot,
-  MessageSquare,
-  Clock,
-  Maximize2,
-  Minimize2,
-  AlertTriangle,
-  Camera,
-  ChevronDown,
-  ChevronUp,
-  Radio,
-  Square,
-  Play,
   CheckCircle2,
-  AlertCircle,
-  Calendar,
-  Briefcase,
-  FileText,
-  Monitor,
-  Wifi,
+  AlertTriangle,
+  Clock,
+  Mic,
+  Bot,
 } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress"; // If you're using Progress component
+
 /* -------------------------------------------------------------------------- */
 /*                              Start Interview Component                     */
 /* -------------------------------------------------------------------------- */
@@ -64,6 +26,11 @@ function StartInterviewScreen({
     camera: "checking",
     microphone: "checking",
   });
+  
+  const [timeLeft, setTimeLeft] = useState(5); // 5 seconds countdown
+  const [isCountingDown, setIsCountingDown] = useState(false);
+  const [canStartInterview, setCanStartInterview] = useState(false);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     const checkSequence = async () => {
@@ -73,11 +40,32 @@ function StartInterviewScreen({
 
       setTimeout(() => {
         setSystemChecks((prev) => ({ ...prev, microphone: "success" }));
+        // Start countdown when all checks are done
+        setIsCountingDown(true);
       }, 2000);
     };
 
     checkSequence();
   }, []);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (isCountingDown && timeLeft > 0) {
+      timerRef.current = setTimeout(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0 && isCountingDown) {
+      // Enable the button when countdown reaches 0
+      setCanStartInterview(true);
+      setIsCountingDown(false);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, [isCountingDown, timeLeft]);
 
   const getStatusIcon = (status) => {
     if (status === "success")
@@ -97,16 +85,33 @@ function StartInterviewScreen({
       <Card className="w-full max-w-md mx-auto border-2 shadow-2xl">
         <CardContent className="p-6">
           <div className="text-center space-y-4">
-            {/* Header */}
+            {/* Header with Counter */}
             <div className="space-y-2">
               <div className="relative mx-auto w-16 h-16">
                 <Video className="h-16 w-16 text-primary" />
                 <div className="absolute inset-0 bg-primary/10 blur-xl rounded-full"></div>
               </div>
-              <h2 className="text-2xl font-bold">Start Interview</h2>
-              <p className="text-sm text-muted-foreground">
-                AI-powered technical interview with real-time transcription
-              </p>
+              
+              {/* Dynamic Header - Counter or Start Interview */}
+              <div className="h-16 flex flex-col items-center justify-center">
+                {isCountingDown ? (
+                  <>
+                    <div className="text-5xl font-bold text-primary animate-pulse">
+                      {timeLeft}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Starting in...
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-2xl font-bold">Start Interview</h2>
+                    <p className="text-sm text-muted-foreground">
+                      AI-powered technical interview with real-time transcription
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* System Checks */}
@@ -160,7 +165,7 @@ function StartInterviewScreen({
             <div className="pt-4">
               <Button
                 onClick={onStartInterview}
-                disabled={isInitializing}
+                disabled={isInitializing || !canStartInterview}
                 size="lg"
                 className="w-full"
               >
@@ -172,10 +177,23 @@ function StartInterviewScreen({
                 ) : (
                   <>
                     <Video className="h-5 w-5 mr-2" />
-                    Start Interview Now
+                    {!canStartInterview ? (
+                      <span>Preparing Interview...</span>
+                    ) : (
+                      <span>Start Interview Now</span>
+                    )}
                   </>
                 )}
               </Button>
+              
+              {/* Helper text */}
+              {!canStartInterview && !isInitializing && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {isCountingDown 
+                    ? `Starting automatically in ${timeLeft} seconds...` 
+                    : 'Please wait for system checks to complete'}
+                </p>
+              )}
             </div>
 
           </div>
