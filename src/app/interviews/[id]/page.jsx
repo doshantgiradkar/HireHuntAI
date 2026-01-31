@@ -43,6 +43,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import StartInterviewScreen from "@/components/ui/start-interview-screen";
 
 /* -------------------------------------------------------------------------- */
 /*                          Speech Recognition Data                           */
@@ -767,55 +768,13 @@ export default function InterviewLayout() {
       </header>
 
       <main className="flex-1 overflow-hidden p-4">
-        {!interviewStarted && (
-          <div className="h-full flex items-center justify-center">
-            <Card className="max-w-md w-full border-2 hover:border-primary/30 transition-colors">
-              <CardContent className="p-6 text-center space-y-4">
-                <div className="relative">
-                  <Camera className="h-16 w-16 mx-auto text-primary" />
-                  <div className="absolute inset-0 bg-primary/10 blur-xl rounded-full"></div>
-                </div>
-                <h2 className="text-2xl font-bold">Ready to Start?</h2>
-                <p className="text-muted-foreground">
-                  Click the button below to start your AI interview. We'll need access to your camera and microphone.
-                  Speech transcription will be enabled automatically.
-                </p>
-                
-                {permissionError && (
-                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>{permissionError}</AlertDescription>
-                  </Alert>
-                )}
-
-                <Button
-                  onClick={handleStartInterview}
-                  disabled={isInitializing}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isInitializing ? (
-                    <>
-                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                      Initializing...
-                    </>
-                  ) : (
-                    <>
-                      <Video className="h-5 w-5 mr-2" />
-                      Start Interview
-                    </>
-                  )}
-                </Button>
-
-                <p className="text-xs text-muted-foreground">
-                  By starting, you agree to video and audio recording for interview purposes.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {interviewStarted && (
+        {!interviewStarted ? (
+          <StartInterviewScreen
+            onStartInterview={handleStartInterview}
+            isInitializing={isInitializing}
+            permissionError={permissionError}
+          />
+        ):(
           <div className="h-full flex gap-4">
             {/* Left side - Video cards */}
             <div className={`${fullscreenMode ? 'flex-1' : 'flex-1 grid grid-rows-2 gap-4 md:grid-rows-1 md:grid-cols-2'}`}>

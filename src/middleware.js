@@ -20,6 +20,7 @@ const isCandidateRoute = createRouteMatcher(["/candidate(.*)"]);
 const isRecruiterRoot = createRouteMatcher(["/recruiter"]);
 const isRecruiterEditProfile = createRouteMatcher(["/recruiter/edit-profile"]);
 const isRecruiterRoute = createRouteMatcher(["/recruiter(.*)"]);
+const isInterviewRoute = createRouteMatcher(["/interview(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
@@ -45,6 +46,15 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Prevent role-selected users from visiting select-role again
+  // Interview pages → ONLY candidates
+  if (userId && isInterviewRoute(req) && role !== "candidate") {
+    return NextResponse.redirect(new URL(`/${role}/dashboard`, req.url));
+  }
+
+  // Not logged in trying to access interview
+  if (!userId && isInterviewRoute(req)) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
   if (userId && role && isSelectRoleRoute(req)) {
     return NextResponse.redirect(new URL(`/${role}/dashboard`, req.url));
   }
@@ -63,12 +73,12 @@ export default clerkMiddleware(async (auth, req) => {
     }
 
     // Resume uploaded + profile complete → dashboard
-    if (hasResume && isProfileComplete && !isCandidateRoute(req)) {
+   if (hasResume && isProfileComplete && !isCandidateRoute(req) && !isInterviewRoute(req)) {
       return NextResponse.redirect(new URL("/candidate/dashboard", req.url));
     }
 
     // Prevent candidate from accessing recruiter routes
-    if (!isCandidateRoute(req) || isCandidateRoot(req)) {
+   if (!isCandidateRoute(req) && !isInterviewRoute(req) || isCandidateRoot(req)) {
       return NextResponse.redirect(new URL("/candidate/dashboard", req.url));
     }
   }

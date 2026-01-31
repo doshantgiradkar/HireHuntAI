@@ -101,7 +101,7 @@ const Page = () => {
 
     return [
       {
-        title: "Total Applied",
+        title: "Matched Jobs",
         value: total,
         icon: Briefcase,
         color: "text-blue-600 dark:text-blue-400",
@@ -124,12 +124,7 @@ const Page = () => {
         icon: CheckCircle,
         color: "text-green-600 dark:text-green-400",
       },
-      {
-        title: "Rejections",
-        value: statusCounts?.rejected || 0,
-        icon: XCircle,
-        color: "text-red-600 dark:text-red-400",
-      },
+
     ];
   }, [applications]);
 

@@ -1,410 +1,598 @@
-"use client";
-import React, { useState, useEffect } from "react";
+"use client"
+import React, { useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { Progress } from "@/components/ui/progress";
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  Clock,
-  Video,
-  Mic,
-  Wifi,
-  CheckCircle2,
-  AlertCircle,
   Calendar,
+  Clock,
+  MapPin,
+  Video,
   Briefcase,
+  Building,
+  CheckCircle,
+  AlertCircle,
+  MoreVertical,
+  ExternalLink,
+  CalendarDays,
+  Users,
   FileText,
-  Monitor,
-} from "lucide-react";
-import { useHeader } from "@/store/user.store";
-import { redirect } from "next/navigation";
-import { Target } from "lucide-react";
+} from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Progress } from "@/components/ui/progress"
 
-const InterviewLobbyPage = () => {
-  const [timeUntilStart, setTimeUntilStart] = useState(300);
-  const [systemChecks, setSystemChecks] = useState({
-    internet: "checking",
-    camera: "checking",
-    microphone: "checking",
-  });
-  const [progress, setProgress] = useState(0);
-
-  const candidate = {
-    name: "Alex Morgan",
-    role: "Full Stack Developer",
-    avatar: "",
-  };
-
-  const interviewDetails = {
-    type: "Technical Round - DSA",
+// Mock data for upcoming interviews
+const upcomingInterviews = [
+  {
+    id: 1,
     company: "TechCorp Solutions",
+    position: "Senior Frontend Developer",
+    type: "Technical Round",
     interviewer: "Sarah Chen",
     interviewerRole: "Senior Engineering Manager",
-    scheduledTime: "2:30 PM IST",
+    scheduledTime: new Date(Date.now() + 86400000 * 2), // 2 days from now
     duration: "60 minutes",
-    date: "December 2, 2024",
-  };
+    status: "scheduled",
+    difficulty: "Medium",
+    preparationStatus: "In Progress",
+    preparationProgress: 65,
+    meetingLink: "#",
+    interviewMode: "video",
+  },
+  {
+    id: 2,
+    company: "InnovateAI",
+    position: "React Native Developer",
+    type: "Cultural Fit",
+    interviewer: "Michael Rodriguez",
+    interviewerRole: "CTO",
+    scheduledTime: new Date(Date.now() + 86400000 * 5), // 5 days from now
+    duration: "45 minutes",
+    status: "scheduled",
+    difficulty: "Easy",
+    preparationStatus: "Not Started",
+    preparationProgress: 20,
+    meetingLink: "#",
+    interviewMode: "video",
+  },
+  {
+    id: 3,
+    company: "QuantumSoft",
+    position: "Full Stack Developer",
+    type: "System Design",
+    interviewer: "David Kim",
+    interviewerRole: "Principal Engineer",
+    scheduledTime: new Date(Date.now() + 86400000 * 7), // 7 days from now
+    duration: "90 minutes",
+    status: "scheduled",
+    difficulty: "Hard",
+    preparationStatus: "Completed",
+    preparationProgress: 100,
+    meetingLink: "#",
+    interviewMode: "onsite",
+  },
+  {
+    id: 4,
+    company: "MetaTech",
+    position: "Frontend Engineer II",
+    type: "Coding Round",
+    interviewer: "Lisa Wang",
+    interviewerRole: "Engineering Lead",
+    scheduledTime: new Date(Date.now() + 86400000 * 3), // 3 days from now
+    duration: "75 minutes",
+    status: "rescheduled",
+    difficulty: "Medium",
+    preparationStatus: "In Progress",
+    preparationProgress: 45,
+    meetingLink: "#",
+    interviewMode: "video",
+  },
+  {
+    id: 5,
+    company: "CloudScale",
+    position: "DevOps Engineer",
+    type: "Technical Screening",
+    interviewer: "Robert Johnson",
+    interviewerRole: "DevOps Manager",
+    scheduledTime: new Date(Date.now() + 86400000 * 10), // 10 days from now
+    duration: "50 minutes",
+    status: "scheduled",
+    difficulty: "Medium",
+    preparationStatus: "Not Started",
+    preparationProgress: 0,
+    meetingLink: "#",
+    interviewMode: "video",
+  },
+  {
+    id: 6,
+    company: "DataFlow Inc",
+    position: "Backend Engineer",
+    type: "Technical + HR",
+    interviewer: "Alexandra Smith",
+    interviewerRole: "Head of Engineering",
+    scheduledTime: new Date(Date.now() + 86400000 * 12), // 12 days from now
+    duration: "120 minutes",
+    status: "pending",
+    difficulty: "Hard",
+    preparationStatus: "In Progress",
+    preparationProgress: 30,
+    meetingLink: "#",
+    interviewMode: "video",
+  },
+]
 
-  const guidelines = [
-    "Ensure you're in a quiet environment with stable internet",
-    "Keep your camera on throughout the interview",
-    "You'll have access to a code editor during the technical assessment",
-    "Feel free to think aloud and explain your approach",
-    "Ask clarifying questions if needed",
-  ];
+const completedInterviews = [
+  {
+    id: 7,
+    company: "WebTech",
+    position: "Frontend Developer",
+    type: "Final Round",
+    interviewer: "John Davis",
+    interviewerRole: "Director of Engineering",
+    scheduledTime: new Date(Date.now() - 86400000 * 3), // 3 days ago
+    duration: "45 minutes",
+    status: "completed",
+    result: "Passed",
+    rating: 4.5,
+    feedback: "Excellent performance",
+  },
+]
 
-  const setTitle = useHeader((state) => state.setTitle);
-  useEffect(() => {
-    setTitle("Interviews");
-    const timer = setInterval(() => {
-      setTimeUntilStart((prev) => {
-        if (prev <= 0) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+const candidate = {
+  name: "Alex Johnson",
+  avatar: "",
+  role: "Full Stack Developer",
+  upcomingCount: 6,
+  completedCount: 1,
+  nextInterview: upcomingInterviews[0],
+}
 
-  useEffect(() => {
-    const checkSequence = async () => {
-      setTimeout(() => {
-        setSystemChecks((prev) => ({ ...prev, internet: "success" }));
-        setProgress(33);
-      }, 1000);
+const getStatusBadge = (status) => {
+  switch (status) {
+    case "scheduled":
+      return (
+        <Badge variant="default" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+          <Clock className="w-3 h-3 mr-1" />
+          Scheduled
+        </Badge>
+      )
+    case "rescheduled":
+      return (
+        <Badge variant="outline" className="text-amber-700 border-amber-200 bg-amber-50">
+          <AlertCircle className="w-3 h-3 mr-1" />
+          Rescheduled
+        </Badge>
+      )
+    case "pending":
+      return (
+        <Badge variant="outline" className="text-gray-700 border-gray-200 bg-gray-50">
+          <Calendar className="w-3 h-3 mr-1" />
+          Pending
+        </Badge>
+      )
+    case "completed":
+      return (
+        <Badge variant="outline" className="text-green-700 border-green-200 bg-green-50">
+          <CheckCircle className="w-3 h-3 mr-1" />
+          Completed
+        </Badge>
+      )
+    default:
+      return <Badge variant="outline">{status}</Badge>
+  }
+}
 
-      setTimeout(() => {
-        setSystemChecks((prev) => ({ ...prev, camera: "success" }));
-        setProgress(66);
-      }, 2000);
+const getDifficultyBadge = (difficulty) => {
+  switch (difficulty) {
+    case "Easy":
+      return <Badge variant="outline" className="text-green-700 border-green-200">Easy</Badge>
+    case "Medium":
+      return <Badge variant="outline" className="text-amber-700 border-amber-200">Medium</Badge>
+    case "Hard":
+      return <Badge variant="outline" className="text-red-700 border-red-200">Hard</Badge>
+    default:
+      return <Badge variant="outline">{difficulty}</Badge>
+  }
+}
 
-      setTimeout(() => {
-        setSystemChecks((prev) => ({ ...prev, microphone: "success" }));
-        setProgress(100);
-      }, 3000);
-    };
+const getInterviewModeIcon = (mode) => {
+  switch (mode) {
+    case "video":
+      return <Video className="w-4 h-4" />
+    case "onsite":
+      return <MapPin className="w-4 h-4" />
+    case "phone":
+      return <Briefcase className="w-4 h-4" />
+    default:
+      return <Video className="w-4 h-4" />
+  }
+}
 
-    checkSequence();
-  }, []);
+const formatDate = (date) => {
+  const options = { month: 'short', day: 'numeric', year: 'numeric' }
+  return date.toLocaleDateString('en-US', options)
+}
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
+const formatTime = (date) => {
+  const options = { hour: 'numeric', minute: '2-digit', hour12: true }
+  return date.toLocaleTimeString('en-US', options)
+}
 
-  const getStatusIcon = (status) => {
-    if (status === "success")
-      return <CheckCircle2 className="w-5 h-5 text-green-600" />;
-    if (status === "error")
-      return <AlertCircle className="w-5 h-5 text-destructive" />;
-    return (
-      <div className="w-5 h-5 border-2 border-muted border-t-primary rounded-full animate-spin" />
-    );
-  };
+const getDaysUntil = (date) => {
+  const now = new Date()
+  const diffTime = date.getTime() - now.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return diffDays
+}
 
-  const getStatusColor = (status) => {
-    if (status === "success") return "text-green-600";
-    if (status === "error") return "text-destructive";
-    return "text-muted-foreground";
-  };
+export default function InterviewsPage() {
+  const router = useRouter()
+  const [activeTab, setActiveTab] = useState("upcoming")
+
+  const handleJoinInterview = (interviewId) => {
+    // Navigate to the interview page
+    router.push(`/interviews/${interviewId}`)
+  }
+
+  const handleViewDetails = (interviewId) => {
+    // Navigate to interview details page or show modal
+    router.push(`/interviews/${interviewId}/details`)
+  }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl">
-        {/* Welcome Section */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <Avatar className="w-20 h-20 sm:w-24 sm:h-24 border-4 border-background shadow-lg">
-              <AvatarImage src={candidate.avatar} alt={candidate.name} />
-              <AvatarFallback className="text-2xl sm:text-3xl">
-                {candidate.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-              </AvatarFallback>
-            </Avatar>
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Interview Dashboard</h1>
+              <p className="text-muted-foreground mt-2">
+                Manage and prepare for your upcoming interviews
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={candidate.avatar} alt={candidate.name} />
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                  AJ
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold">{candidate.name}</p>
+                <p className="text-sm text-muted-foreground">{candidate.role}</p>
+              </div>
+            </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
-            Welcome, {candidate.name}!
-          </h1>
-          <p className="text-base sm:text-lg text-muted-foreground mb-1">
-            {candidate.role}
-          </p>
-          <Badge variant="outline" className="text-sm px-3 py-1">
-            Your interview will start soon
-          </Badge>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {/* Left Column - Interview Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Countdown Card */}
-            <Card>
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl sm:text-2xl">
-                    Interview Starting In
-                  </CardTitle>
-                  <Clock className="w-6 h-6 text-muted-foreground" />
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Upcoming Interviews</p>
+                  <p className="text-3xl font-bold">{candidate.upcomingCount}</p>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center">
-                  <div className="text-5xl sm:text-6xl md:text-7xl font-bold mb-4 font-mono">
-                    {formatTime(timeUntilStart)}
-                  </div>
-                  <div className="flex items-center justify-center space-x-2 mb-4">
-                    <div className="w-3 h-3 bg-primary rounded-full animate-pulse" />
-                    <p className="text-sm sm:text-base text-muted-foreground">
-                      Waiting for interviewer
-                    </p>
-                  </div>
-                  <Progress
-                    value={(300 - timeUntilStart) / 3}
-                    className="h-2"
-                  />
+                <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <CalendarDays className="h-6 w-6 text-blue-600" />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Interview Details Card */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Next Interview In</p>
+                  <p className="text-3xl font-bold">
+                    {getDaysUntil(candidate.nextInterview.scheduledTime)} days
+                  </p>
+                </div>
+                <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Completion Rate</p>
+                  <p className="text-3xl font-bold">85%</p>
+                </div>
+                <div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-6 w-6 text-purple-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Upcoming Interviews List */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Your Interviews</h2>
+              <Button variant="outline">
+                <Calendar className="mr-2 h-4 w-4" />
+                Add to Calendar
+              </Button>
+            </div>
+
+            <Tabs defaultValue="upcoming" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="upcoming">Upcoming ({upcomingInterviews.length})</TabsTrigger>
+                <TabsTrigger value="completed">Completed ({completedInterviews.length})</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="upcoming" className="space-y-4 mt-4">
+                {upcomingInterviews.map((interview) => (
+                  <Card key={interview.id} className="hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-lg">{interview.position}</CardTitle>
+                            {getStatusBadge(interview.status)}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Building className="h-4 w-4 text-muted-foreground" />
+                            <CardDescription className="text-base font-medium">
+                              {interview.company}
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => handleViewDetails(interview.id)}>
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>Reschedule</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-red-600">Cancel Interview</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="pb-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{formatDate(interview.scheduledTime)}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{formatTime(interview.scheduledTime)} • {interview.duration}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{interview.interviewer} • {interview.interviewerRole}</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            {getInterviewModeIcon(interview.interviewMode)}
+                            <span className="text-sm capitalize">{interview.interviewMode} Interview</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{interview.type}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {getDifficultyBadge(interview.difficulty)}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Preparation Progress */}
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium">Preparation Status</span>
+                          <span>{interview.preparationStatus}</span>
+                        </div>
+                        <Progress value={interview.preparationProgress} className="h-2" />
+                      </div>
+                    </CardContent>
+
+                    <CardFooter className="border-t pt-4 flex justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        {getDaysUntil(interview.scheduledTime) === 0
+                          ? "Today"
+                          : `${getDaysUntil(interview.scheduledTime)} days left`}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewDetails(interview.id)}
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Details
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          disabled={interview.status === "pending"}
+                          onClick={() => handleJoinInterview(interview.id)}
+                        >
+                          <Video className="mr-2 h-4 w-4" />
+                          Join Interview
+                        </Button>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </TabsContent>
+
+              <TabsContent value="completed" className="space-y-4 mt-4">
+                {completedInterviews.map((interview) => (
+                  <Card key={interview.id} className="opacity-80 hover:opacity-100 transition-opacity">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-lg">{interview.position}</CardTitle>
+                            {getStatusBadge(interview.status)}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Building className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-base font-medium">{interview.company}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            {formatDate(interview.scheduledTime)}
+                            <Clock className="h-4 w-4 ml-2" />
+                            {formatTime(interview.scheduledTime)}
+                          </div>
+                          {interview.result && (
+                            <Badge variant={interview.result === "Passed" ? "default" : "destructive"}>
+                              {interview.result}
+                            </Badge>
+                          )}
+                        </div>
+                        <Button variant="outline" size="sm">
+                          View Feedback
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Right Column - Next Interview & Tips */}
+          <div className="space-y-6">
+            {/* Next Interview Card */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center text-lg sm:text-xl">
-                  <Briefcase className="w-5 h-5 mr-2 text-muted-foreground" />
-                  Interview Details
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-primary" />
+                  Next Interview
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex items-start space-x-3">
-                    <FileText className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12 border">
+                      <AvatarFallback className="bg-blue-100 text-blue-800">
+                        {candidate.nextInterview.company.substring(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
                     <div>
-                      <p className="text-sm text-muted-foreground">
-                        Interview Type
-                      </p>
-                      <p className="font-semibold">{interviewDetails.type}</p>
+                      <p className="font-semibold">{candidate.nextInterview.position}</p>
+                      <p className="text-sm text-muted-foreground">{candidate.nextInterview.company}</p>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Scheduled Time
-                      </p>
-                      <p className="font-semibold">
-                        {interviewDetails.scheduledTime}
-                      </p>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Date & Time</span>
+                      <span className="text-sm font-medium">
+                        {formatDate(candidate.nextInterview.scheduledTime)} at{" "}
+                        {formatTime(candidate.nextInterview.scheduledTime)}
+                      </span>
                     </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Monitor className="w-5 h-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Company</p>
-                      <p className="font-semibold">
-                        {interviewDetails.company}
-                      </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Duration</span>
+                      <span className="text-sm font-medium">{candidate.nextInterview.duration}</span>
                     </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Clock className="w-5 h-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Duration</p>
-                      <p className="font-semibold">
-                        {interviewDetails.duration}
-                      </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Interviewer</span>
+                      <span className="text-sm font-medium">{candidate.nextInterview.interviewer}</span>
                     </div>
                   </div>
                 </div>
 
-                <Separator />
+                <Button 
+                  className="w-full" 
+                  size="lg"
+                  onClick={() => handleJoinInterview(candidate.nextInterview.id)}
+                >
+                  <Video className="mr-2 h-4 w-4" />
+                  Join Interview
+                </Button>
 
-                <div className="bg-muted p-4 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="w-12 h-12">
-                      <AvatarFallback>
-                        {interviewDetails.interviewer
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold">
-                        {interviewDetails.interviewer}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {interviewDetails.interviewerRole}
-                      </p>
-                    </div>
-                  </div>
+                <div className="text-xs text-muted-foreground text-center">
+                  Join 10 minutes before scheduled time
                 </div>
               </CardContent>
             </Card>
 
-            {/* Guidelines Card */}
+            {/* Preparation Tips */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">
-                  Interview Guidelines
+                <CardTitle className="flex items-center gap-2">
+                  <Briefcase className="h-5 w-5 text-primary" />
+                  Preparation Tips
                 </CardTitle>
-                <CardDescription>
-                  Please review these important points before starting
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
-                  {guidelines.map((guideline, index) => (
-                    <li key={index} className="flex items-start space-x-3">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
-                      <span className="text-sm sm:text-base">{guideline}</span>
-                    </li>
-                  ))}
+                  <li className="flex items-start gap-2">
+                    <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-semibold text-blue-800">1</span>
+                    </div>
+                    <p className="text-sm">Review the company's tech stack and recent projects</p>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="h-6 w-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-semibold text-green-800">2</span>
+                    </div>
+                    <p className="text-sm">Practice common algorithm and system design questions</p>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="h-6 w-6 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-semibold text-amber-800">3</span>
+                    </div>
+                    <p className="text-sm">Test your camera, microphone, and internet connection</p>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="h-6 w-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-semibold text-purple-800">4</span>
+                    </div>
+                    <p className="text-sm">Prepare 2-3 questions to ask the interviewer</p>
+                  </li>
                 </ul>
               </CardContent>
             </Card>
           </div>
-
-          {/* Right Column - System Checks */}
-          <div className="space-y-6">
-            {/* System Checks Card */}
-            <Card className="top-4">
-              <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">
-                  System Checks
-                </CardTitle>
-                <CardDescription>Verifying your setup</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <Wifi className="w-5 h-5 text-muted-foreground" />
-                      <span
-                        className={`font-medium ${getStatusColor(systemChecks.internet)}`}
-                      >
-                        Internet Connection
-                      </span>
-                    </div>
-                    {getStatusIcon(systemChecks.internet)}
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <Video className="w-5 h-5 text-muted-foreground" />
-                      <span
-                        className={`font-medium ${getStatusColor(systemChecks.camera)}`}
-                      >
-                        Camera
-                      </span>
-                    </div>
-                    {getStatusIcon(systemChecks.camera)}
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <Mic className="w-5 h-5 text-muted-foreground" />
-                      <span
-                        className={`font-medium ${getStatusColor(systemChecks.microphone)}`}
-                      >
-                        Microphone
-                      </span>
-                    </div>
-                    {getStatusIcon(systemChecks.microphone)}
-                  </div>
-                </div>
-
-                <Separator />
-
-                <Button
-                  className="w-full"
-                  variant="outline"
-                  size="lg"
-                  onClick={() => {
-                    window.open("https://webcammictest.com/", "_blank");
-                  }}
-                >
-                  <Video className="w-4 h-4 mr-2" />
-                  Test Camera & Microphone
-                </Button>
-
-                {progress === 100 && (
-                  <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                      <p className="text-sm text-green-800 dark:text-green-300 font-medium">
-                        All systems ready!
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Quick Tips Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base sm:text-lg">
-                  Quick Tips
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-sm">💡 Keep water nearby</p>
-                <p className="text-sm">💡 Have a pen and paper ready</p>
-                <p className="text-sm">💡 Close unnecessary tabs</p>
-                <p className="text-sm">💡 Ensure good lighting</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Footer Message */}
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-3 text-center">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                <div
-                  className="w-2 h-2 bg-primary rounded-full animate-pulse"
-                  style={{ animationDelay: "0.2s" }}
-                />
-                <div
-                  className="w-2 h-2 bg-primary rounded-full animate-pulse"
-                  style={{ animationDelay: "0.4s" }}
-                />
-              </div>
-              <p className="text-sm sm:text-base text-muted-foreground font-medium">
-                Please wait while the interviewer joins. You'll be notified when
-                the interview begins.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Emergency Contact */}
-        <div className="text-center mt-6">
-          <p className="text-sm text-muted-foreground">
-            Having technical issues?
-            <Button variant="link" className="px-2">
-              Contact Support
-            </Button>
-          </p>
         </div>
       </div>
     </div>
-  );
-};
-
-export default InterviewLobbyPage;
+  )
+}

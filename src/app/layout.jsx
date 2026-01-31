@@ -17,13 +17,15 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "HireHunt.Ai",
-  description: "A smart interview management system powerd by AI",
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
+  description: "A smart interview management system powered by AI",
 };
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 
 export default function RootLayout({ children }) {
   return (
