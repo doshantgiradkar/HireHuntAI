@@ -272,7 +272,7 @@ export default function InterviewsPage() {
             <div className="flex items-center gap-4">
               <Avatar className="h-12 w-12">
                 <AvatarImage src={candidate.avatar} alt={candidate.name} />
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                <AvatarFallback className="bg-linear-to-br from-blue-500 to-purple-600 text-white">
                   AJ
                 </AvatarFallback>
               </Avatar>
@@ -434,16 +434,16 @@ export default function InterviewsPage() {
                           : `${getDaysUntil(interview.scheduledTime)} days left`}
                       </div>
                       <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => handleViewDetails(interview.id)}
                         >
                           <ExternalLink className="mr-2 h-4 w-4" />
                           Details
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           disabled={interview.status === "pending"}
                           onClick={() => handleJoinInterview(interview.id)}
                         >
@@ -538,8 +538,8 @@ export default function InterviewsPage() {
                   </div>
                 </div>
 
-                <Button 
-                  className="w-full" 
+                <Button
+                  className="w-full"
                   size="lg"
                   onClick={() => handleJoinInterview(candidate.nextInterview.id)}
                 >
@@ -564,25 +564,25 @@ export default function InterviewsPage() {
               <CardContent>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2">
-                    <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
                       <span className="text-xs font-semibold text-blue-800">1</span>
                     </div>
                     <p className="text-sm">Review the company's tech stack and recent projects</p>
                   </li>
                   <li className="flex items-start gap-2">
-                    <div className="h-6 w-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                    <div className="h-6 w-6 rounded-full bg-green-100 flex items-center justify-center shrink-0">
                       <span className="text-xs font-semibold text-green-800">2</span>
                     </div>
                     <p className="text-sm">Practice common algorithm and system design questions</p>
                   </li>
                   <li className="flex items-start gap-2">
-                    <div className="h-6 w-6 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                    <div className="h-6 w-6 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
                       <span className="text-xs font-semibold text-amber-800">3</span>
                     </div>
                     <p className="text-sm">Test your camera, microphone, and internet connection</p>
                   </li>
                   <li className="flex items-start gap-2">
-                    <div className="h-6 w-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <div className="h-6 w-6 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
                       <span className="text-xs font-semibold text-purple-800">4</span>
                     </div>
                     <p className="text-sm">Prepare 2-3 questions to ask the interviewer</p>

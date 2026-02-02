@@ -292,8 +292,8 @@ const ApplicationsDashboard = () => {
     setTitle("My Applications");
     const fetchApplications = async () => {
       try {
-         
-          const response = await axios.get(
+        if (!user) return;
+        const response = await axios.get(
           `/api/application/candidate/${user?.id}`,
         );
         const applicationsData = response.data?.applications || [];
@@ -378,16 +378,16 @@ const ApplicationsDashboard = () => {
     return (
       <div className="min-h-screen w-full p-4">
         <div className="max-w-7xl mx-auto">
-          <div className="h-8 w-64 bg-gray-200 rounded animate-pulse mb-6" />
+          <div className="h-8 w-64 bg-neutral-900 rounded animate-pulse mb-6" />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
             {[...Array(5)].map((_, i) => (
-              <Card key={i} className="h-32 animate-pulse bg-gray-100" />
+              <Card key={i} className="h-32 animate-pulse bg-neutral-900" />
             ))}
           </div>
-          <Card className="mb-6 h-32 animate-pulse bg-gray-100" />
+          <Card className="mb-6 h-32 animate-pulse bg-neutral-900" />
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
-              <Card key={i} className="h-48 animate-pulse bg-gray-100" />
+              <Card key={i} className="h-48 animate-pulse bg-neutral-900" />
             ))}
           </div>
         </div>
