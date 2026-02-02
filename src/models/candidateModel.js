@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const experienceSchema = new mongoose.Schema({
   jobTitle: { type: String, required: true },
   jobDesc: { type: String },
+  months: { type: Number, required: true },
 });
 
 const educationSchema = new mongoose.Schema({

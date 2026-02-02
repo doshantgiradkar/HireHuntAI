@@ -49,7 +49,8 @@ export class Resume {
           "experience": [
             {
               "jobTitle": "",
-              "jobDesc": ""
+              "jobDesc": "",
+              "months": 0
             }
           ],
           "atsScore": 0,

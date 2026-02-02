@@ -124,7 +124,6 @@ const Page = () => {
         icon: CheckCircle,
         color: "text-green-600 dark:text-green-400",
       },
-
     ];
   }, [applications]);
 
@@ -283,7 +282,6 @@ const Page = () => {
                               <AlertDialogTrigger asChild>
                                 <Button
                                   className="grow text-red-400 bg-red-50"
-                                  size="lg"
                                   disabled={job.status !== "Open"}
                                 >
                                   Withdraw Application
@@ -314,7 +312,7 @@ const Page = () => {
                               onClick={() => {
                                 router.push(`/candidate/jobs/${job._id}/apply`);
                               }}
-                              className="flex-1"
+                              className="grow"
                             >
                               Apply Now
                             </Button>
@@ -324,7 +322,7 @@ const Page = () => {
                               router.push(`/candidate/jobs/${job._id}`);
                             }}
                             variant="outline"
-                            className="flex-1"
+                            className=" shrink"
                           >
                             View Details
                           </Button>

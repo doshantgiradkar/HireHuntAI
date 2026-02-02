@@ -169,7 +169,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
             {/* Avatar + Info */}
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6 w-full md:w-auto">
               <img
-                src={formData.profileImageUrl}
+                src={formData.profileImageUrl || " "}
                 alt="Profile"
                 className="h-24 w-24 rounded-full border object-cover shrink-0"
               />
@@ -210,13 +210,8 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
               <Label>Total Experience (Years)</Label>
               <Input
                 type="number"
+                disabled={true}
                 value={formData.totalExperienceDuration || ""}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    totalExperienceDuration: e.target.value,
-                  })
-                }
               />
             </div>
           </div>
@@ -280,7 +275,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
 
           <Separator />
 
-          {/* -------- SOCIAL LIST -------- */}
+          {/*  ------- SOCIAL LIST -------- */}
           <div className="space-y-3">
             <Label>Saved Social Profiles</Label>
 
@@ -379,7 +374,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
                 placeholder="Add skill"
                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addSkill()}
+                onKeyDown={(e) => e.key === "Enter" && addSkill(e)}
               />
               <Button type="button" size="icon" onClick={addSkill}>
                 <Plus className="h-4 w-4" />
@@ -463,7 +458,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
                     type="button"
                     size="icon"
                     variant="ghost"
-                    className="absolute right-2 top-2"
+                    className="absolute right-1 top-1"
                     onClick={() =>
                       updateResume(
                         "education",
@@ -546,7 +541,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
               onClick={() =>
                 updateResume("experience", [
                   ...formData.resume.experience,
-                  { jobTitle: "", jobDesc: "" },
+                  { jobTitle: "", jobDesc: "", months: "" },
                 ])
               }
             >
@@ -572,31 +567,47 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
                   key={index}
                   className="relative space-y-4 border rounded-md p-4"
                 >
-                  {/* ❌ REMOVE BUTTON */}
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="absolute right-2 top-2"
-                    onClick={() =>
-                      updateResume(
-                        "experience",
-                        formData.resume.experience.filter((_, i) => i !== index)
-                      )
-                    }
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
 
-                  <Input
-                    placeholder="Job Title"
-                    value={exp.jobTitle}
-                    onChange={(e) => {
-                      const updated = [...formData.resume.experience];
-                      updated[index].jobTitle = e.target.value;
-                      updateResume("experience", updated);
-                    }}
-                  />
+                  <div className="flex flex-1 gap-4">
+                    <Input
+                    className={"grow"}
+                      placeholder="Job Title"
+                      value={exp.jobTitle}
+                      onChange={(e) => {
+                        const updated = [...formData.resume.experience];
+                        updated[index].jobTitle = e.target.value;
+                        updateResume("experience", updated);
+                      }}
+                    />
+
+                    <Input
+                    className={"w-36"}
+                      placeholder="months"
+                      type={"number"}
+                      required={true}
+                      value={exp.months}
+                      onChange={(e) => {
+                        const updated = [...formData.resume.experience];
+                        updated[index].months = e.target.value;
+                        updateResume("experience", updated);
+                      }}
+                    />
+
+                    {/* REMOVE BUTTON */}
+                    <Button
+                      type="button"
+                      size="icon"
+                      className="outline-1 text-black outline-gray-400 hover:bg-gray-400"
+                      onClick={() =>
+                        updateResume(
+                          "experience",
+                          formData.resume.experience.filter((_, i) => i !== index)
+                        )
+                      }
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
 
                   <Textarea
                     placeholder="Job Description"

@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { connect } from "@/lib/db";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import Candidate from "@/models/candidateModel";
 import { checkAuth } from "@/utils/checkAuth";
-import { Preahvihear } from "next/font/google";
 
 export async function PUT(req) {
   try {
@@ -15,10 +14,7 @@ export async function PUT(req) {
     });
 
     if (!authResult.authenticated) {
-      return NextResponse.json(
-        { message: authResult.error },
-        { status: authResult.error === "Forbidden" ? 403 : 401 }
-      );
+      return NextResponse.json({ message: authResult.error }, { status: authResult.error === "Forbidden" ? 403 : 401 });
     }
     const userId = authResult.userId;
 
@@ -26,22 +22,14 @@ export async function PUT(req) {
     let existing = await Candidate.findOne({ clerkId: userId });
 
     if (!existing) {
-      return NextResponse.json(
-        { message: "Candidate not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "Candidate not found" }, { status: 404 });
     }
 
     // Build safe update object
     const updates = {};
 
     // Root-level fields
-    const rootFields = [
-      "dateOfBirth",
-      "appliedJobs",
-      "address",
-      "totalExperienceDuration",
-    ];
+    const rootFields = ["dateOfBirth", "appliedJobs", "address", "totalExperienceDuration"];
 
     rootFields.forEach((field) => {
       if (body[field] !== undefined) {
@@ -49,6 +37,8 @@ export async function PUT(req) {
       }
     });
 
+    // calculate total experience duration
+    const totalExperienceDuration = body.resume.experience.reduce((acc, exp) => acc + Number(exp.months), 0);
     // Resume updates (deep-safe)
     if (body.resume) {
       updates.resume = {
@@ -57,17 +47,17 @@ export async function PUT(req) {
         skills: body.resume.skills ?? existing.resume.skills,
         socials: body.resume.socials ?? existing.resume.socials,
         education: body.resume.education ?? existing.resume.education,
-        certifications:
-          body.resume.certifications ?? existing.resume.certifications,
+        certifications: body.resume.certifications ?? existing.resume.certifications,
         experience: body.resume.experience ?? existing.resume.experience,
       };
+      updates.totalExperienceDuration = (totalExperienceDuration / 12.0).toFixed(2);
     }
 
     // Execute update
     const updatedCandidate = await Candidate.findOneAndUpdate(
       { _id: existing._id },
       { $set: updates },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (
@@ -80,10 +70,7 @@ export async function PUT(req) {
       existing.resume.experience &&
       existing.dateOfBirth
     ) {
-      await Candidate.findOneAndUpdate(
-        { _id: existing._id },
-        { $set: { isProfileComplete: true } }
-      );
+      await Candidate.findOneAndUpdate({ _id: existing._id }, { $set: { isProfileComplete: true } });
 
       const client = await clerkClient();
       client.users.updateUserMetadata(userId, {
@@ -94,16 +81,10 @@ export async function PUT(req) {
       });
     }
 
-    return NextResponse.json(
-      { message: "Candidate updated", candidate: updatedCandidate },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: "Candidate updated", candidate: updatedCandidate }, { status: 200 });
   } catch (error) {
     console.error("UPDATE_CANDIDATE_ERROR:", error);
-    return NextResponse.json(
-      { message: "Failed to update candidate" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Failed to update candidate" }, { status: 500 });
   }
 }
 
@@ -122,19 +103,13 @@ export async function GET() {
     const candidate = await Candidate.findOne({ clerkId: userId });
 
     if (!candidate) {
-      return NextResponse.json(
-        { message: "Candidate not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "Candidate not found" }, { status: 404 });
     }
 
     return NextResponse.json({ candidate }, { status: 200 });
   } catch (error) {
     console.error("CANDIDATE_GET_ERROR:", error);
-    return NextResponse.json(
-      { message: "Failed to fetch candidate" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Failed to fetch candidate" }, { status: 500 });
   }
 }
 
@@ -146,10 +121,7 @@ export async function POST(req) {
     });
 
     if (!authResult.authenticated) {
-      return NextResponse.json(
-        { message: authResult.error },
-        { status: authResult.error === "Forbidden" ? 403 : 401 }
-      );
+      return NextResponse.json({ message: authResult.error }, { status: authResult.error === "Forbidden" ? 403 : 401 });
     }
     const userId = authResult.userId;
 
@@ -165,10 +137,12 @@ export async function POST(req) {
           message: "Candidate already exists",
           candidate: existingCandidate,
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
+    // calculate total experience duration
+    const totalExperienceDuration = candidate.resume.experience.reduce((acc, exp) => acc + Number(exp.months) || 0);
     // Create new candidate
     const newCandidate = new Candidate({
       clerkId: userId,
@@ -183,7 +157,7 @@ export async function POST(req) {
       },
       dateOfBirth: candidate.dateOfBirth ?? null,
       appliedJobs: candidate.appliedJobs ?? [],
-      totalExperienceDuration: candidate.totalExperienceDuration ?? 0,
+      totalExperienceDuration: (totalExperienceDuration / 12.0).toFixed(2),
     });
 
     await newCandidate.save();
@@ -196,10 +170,7 @@ export async function POST(req) {
       candidate.resume.education &&
       candidate.dateOfBirth
     ) {
-      await Candidate.findOneAndUpdate(
-        { _id: existing._id },
-        { $set: { isProfileComplete: true } }
-      );
+      await Candidate.findOneAndUpdate({ _id: existing._id }, { $set: { isProfileComplete: true } });
       const client = await clerkClient();
       client.users.updateUserMetadata(userId, {
         publicMetadata: {
@@ -215,13 +186,10 @@ export async function POST(req) {
         message: "Candidate created successfully",
         candidate: newCandidate,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("CREATE_CANDIDATE_ERROR:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

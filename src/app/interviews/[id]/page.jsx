@@ -4,9 +4,7 @@ import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import {
-  Mic,
   MicOff,
-  Video,
   VideoOff,
   PhoneOff,
   Volume2,
@@ -17,7 +15,6 @@ import {
   Maximize2,
   Minimize2,
   AlertTriangle,
-  Camera,
   ChevronDown,
   ChevronUp,
   Radio,
@@ -95,13 +92,11 @@ const aiQuestions = [
   "Can you explain the virtual DOM and how it works in React?",
 ];
 
-/* -------------------------------------------------------------------------- */
-/*                          Speech Recognition Hook                           */
-/* -------------------------------------------------------------------------- */
 
+/*                          Speech Recognition Hook                           */
 function useInterviewSpeechRecognition() {
   const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
-  
+
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcriptMessages, setTranscriptMessages] = useState(initialTranscriptData);
@@ -121,13 +116,13 @@ function useInterviewSpeechRecognition() {
   const stopListening = () => {
     SpeechRecognition.stopListening();
     setIsListening(false);
-    
+
     // Save the current transcript as a message
     if (transcript.trim()) {
       addTranscriptMessage("You", transcript);
       resetTranscript();
       setCurrentTranscript("");
-      
+
       // Automatically trigger next AI question after a delay
       setTimeout(() => {
         if (currentQuestionIndex < aiQuestions.length) {
@@ -158,16 +153,16 @@ function useInterviewSpeechRecognition() {
   const speakNextQuestion = () => {
     if (currentQuestionIndex < aiQuestions.length) {
       const question = aiQuestions[currentQuestionIndex];
-      
+
       // Add AI message to transcript
       addTranscriptMessage("AI Interviewer", question);
-      
+
       // Speak the question
       const speech = new SpeechSynthesisUtterance(question);
       speech.lang = "en-IN";
       speech.rate = 1.0;
       speech.pitch = 1.0;
-      
+
       speech.onstart = () => setIsSpeaking(true);
       speech.onend = () => {
         setIsSpeaking(false);
@@ -179,7 +174,7 @@ function useInterviewSpeechRecognition() {
           }, 500);
         }
       };
-      
+
       window.speechSynthesis.speak(speech);
     }
   };
@@ -222,7 +217,7 @@ function useLocalMediaStream() {
   const [stream, setStream] = useState(null);
   const [permissionError, setPermissionError] = useState(null);
   const [isInitializing, setIsInitializing] = useState(false);
-  
+
   const streamRef = useRef(null);
 
   const initializeStream = useCallback(async () => {
@@ -252,7 +247,7 @@ function useLocalMediaStream() {
 
     } catch (error) {
       console.error("Failed to get user media:", error);
-      
+
       if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
         setPermissionError("Camera and microphone access denied. Please allow permissions in your browser settings.");
       } else if (error.name === "NotFoundError") {
@@ -314,7 +309,7 @@ function VideoCard({
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
-    
+
     return () => {
       if (videoRef.current) {
         videoRef.current.srcObject = null;
@@ -327,8 +322,8 @@ function VideoCard({
   return (
     <Card className={`h-full flex flex-col border-2 ${isFullscreen ? 'border-primary/50' : 'border-transparent'} hover:border-primary/30 transition-colors`}>
       <CardContent className="relative flex-1 p-4">
-        <div className="relative w-full h-full bg-gradient-to-br from-gray-900 to-black rounded-lg overflow-hidden">
-          
+        <div className="relative w-full h-full bg-linear-to-br from-gray-900 to-black rounded-lg overflow-hidden">
+
           {showVideo && (
             <video
               ref={videoRef}
@@ -345,13 +340,13 @@ function VideoCard({
               <div className="relative">
                 {isAI && (
                   <div className="absolute inset-0 animate-pulse">
-                    <div className="h-full w-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 blur-xl"></div>
+                    <div className="h-full w-full bg-linear-to-r from-blue-500/10 to-purple-500/10 blur-xl"></div>
                   </div>
                 )}
-                
+
                 <div className="relative z-10">
                   <Avatar className="h-32 w-32 border-4 border-background">
-                    <AvatarFallback className={`text-2xl ${isAI ? 'bg-gradient-to-br from-blue-500 to-purple-600' : 'bg-gradient-to-br from-gray-700 to-gray-900'}`}>
+                    <AvatarFallback className={`text-2xl ${isAI ? 'bg-linear-to-br from-blue-500 to-purple-600' : 'bg-linear-to-br from-gray-700 to-gray-900'}`}>
                       {isAI ? (
                         <Bot className="h-12 w-12" />
                       ) : (
@@ -406,7 +401,7 @@ function VideoCard({
             <div className="bg-background/80 backdrop-blur-sm px-3 py-2 rounded-md">
               <p className="font-medium">{name}</p>
             </div>
-            
+
             <Button
               variant="ghost"
               size="icon"
@@ -445,7 +440,7 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
   }, [transcriptMessages, currentTranscript, autoScroll]);
 
   const allMessages = [...transcriptMessages];
-  
+
   // Add current speech recognition if available
   if (currentTranscript && currentTranscript.trim()) {
     allMessages.push({
@@ -490,7 +485,7 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
           )}
         </Button>
       </div>
-      
+
       <CardContent className="flex-1 p-0 overflow-hidden">
         <ScrollArea className="h-full" ref={scrollAreaRef}>
           <div className="p-4 space-y-4">
@@ -500,7 +495,7 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
                 className={`flex ${msg.isAI ? "justify-start" : "justify-end"}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 break-words ${
+                  className={`max-w-[85%] rounded-2xl px-4 py-3 wrap-break-words ${
                     msg.isAI
                       ? "bg-muted border"
                       : msg.isLive
@@ -518,11 +513,11 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
                     </Badge>
                     <span className="text-xs opacity-70 shrink-0">{msg.timestamp}</span>
                   </div>
-                  <p className="text-sm break-words">{msg.message}</p>
+                  <p className="text-sm wrap-break-words">{msg.message}</p>
                 </div>
               </div>
             ))}
-            
+
             {/* AI Speaking Indicator */}
             {isSpeaking && (
               <div className="flex justify-start">
@@ -550,10 +545,7 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
   );
 }
 
-/* -------------------------------------------------------------------------- */
 /*                                Control Bar                                 */
-/* -------------------------------------------------------------------------- */
-
 function ControlBar({
   onEndInterview,
   hasStream,
@@ -794,7 +786,7 @@ export default function InterviewLayout() {
                   />
                 </div>
               )}
-              
+
               {/* Fullscreen Candidate Video */}
               {fullscreenMode === 'candidate' && (
                 <div className="h-full">
@@ -812,7 +804,7 @@ export default function InterviewLayout() {
                   />
                 </div>
               )}
-              
+
               {/* Normal view (both videos) */}
               {!fullscreenMode && (
                 <>
@@ -845,7 +837,7 @@ export default function InterviewLayout() {
 
             {/* Right side - Transcript Panel */}
             {/* Always show transcript panel, even in fullscreen mode */}
-            <div className={`${fullscreenMode ? 'w-[400px]' : 'hidden lg:flex w-[400px]'} h-full`}>
+            <div className={`${fullscreenMode ? 'w-100' : 'hidden lg:flex w-100'} h-full`}>
               <TranscriptPanel
                 transcriptMessages={transcriptMessages}
                 isSpeaking={isSpeaking}

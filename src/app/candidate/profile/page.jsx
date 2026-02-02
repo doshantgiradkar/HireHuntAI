@@ -409,8 +409,8 @@ export default function CandidateProfile() {
                       key={index}
                       className={index > 0 ? "pt-4 border-t" : ""}
                     >
-                      <h3 className="font-semibold text-base">
-                        {exp.jobTitle}
+                      <h3 className="font-semibold text-base flex">
+                        {exp.jobTitle} <p  className="grow"/> <span className="text-sm text-foreground font-light">{exp.months} months</span>
                       </h3>
                       {exp.jobDesc && (
                         <p className="text-sm text-muted-foreground mt-2">

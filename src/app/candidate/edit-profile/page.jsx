@@ -29,7 +29,6 @@ export default function Page() {
   useEffect(() => {
     getUserInfo()
       .then((data) => {
-        console.log("Candidate Data:", data);
         setCandidateData(data);
       })
       .catch((err) => {
