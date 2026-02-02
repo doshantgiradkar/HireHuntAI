@@ -31,40 +31,11 @@ export default function PDFViewer({ fileUrl }) {
   }
 
   return (
-    <Card className="w-full max-w-4xl mx-0">
+    <Card className="w-full max-w-4xl mx-auto">
       <CardHeader className="pb-1">
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
             {numPages ? `Page ${pageNumber} of ${numPages}` : "Loading..."}
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                const newScale = Math.max(0.5, scale - 0.2);
-                setScale(newScale);
-                setContainerWidth(0); // Reset to recalculate
-              }}
-              disabled={scale <= 0.5}
-            >
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <span className="text-sm font-medium min-w-12 text-center">
-              {containerWidth ? "Fit" : `${Math.round(scale * 100)}%`}
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                const newScale = Math.min(2.0, scale + 0.2);
-                setScale(newScale);
-                setContainerWidth(0); // Reset to recalculate
-              }}
-              disabled={scale >= 2.0}
-            >
-              <ZoomIn className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </CardHeader>

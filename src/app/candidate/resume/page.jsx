@@ -71,7 +71,7 @@ const ResumeViewerPage = () => {
   }, [setTitle, setResumeUrl]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-linear-to-br from-background via-background to-muted/20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-4">
         {/* Upload Section */}
         <div className="flex items-center justify-center min-h-[calc(100vh-30rem)]">
