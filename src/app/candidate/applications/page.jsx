@@ -43,7 +43,7 @@ const statusConfig = {
   interview_scheduled: {
     label: "Interview Scheduled",
     color:
-      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
     icon: Users,
   },
   hired: {
@@ -140,10 +140,10 @@ const ApplicationFilters = ({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search by role or company..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+            placeholder="Search by role or company..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
             />
           </div>
 
@@ -258,18 +258,15 @@ const ApplicationCard = ({ application, onViewDetails, onWithdraw }) => {
               <Eye className="h-3 w-3 mr-1" />
               View
             </Button>
-
-            {application.status === "applied" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onWithdraw(application)}
-                className="flex-1 md:flex-none text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <Trash2 className="h-3 w-3 mr-1" />
-                Withdraw
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onWithdraw(application)}
+              className="flex-1 md:flex-none text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Withdraw
+            </Button>
           </div>
         </div>
       </CardContent>
@@ -313,8 +310,8 @@ const ApplicationsDashboard = () => {
             },
             location: job?.location || "Not specified",
             salary: job?.salaryRange
-              ? `${job.salaryRange.currency} ${job.salaryRange.min?.toLocaleString()} - ${job.salaryRange.max?.toLocaleString()}`
-              : "Not specified",
+            ? `${job.salaryRange.currency} ${job.salaryRange.min?.toLocaleString()} - ${job.salaryRange.max?.toLocaleString()}`
+            : "Not specified",
             applicationId: app._id,
             ...app,
           };
@@ -426,12 +423,12 @@ const ApplicationsDashboard = () => {
         <StatsCards applications={applications} />
 
         <ApplicationFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          dateFilter={dateFilter}
-          setDateFilter={setDateFilter}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        dateFilter={dateFilter}
+        setDateFilter={setDateFilter}
         />
 
         {filteredApplications.length === 0 ? (
@@ -456,12 +453,12 @@ const ApplicationsDashboard = () => {
           <div className="space-y-4">
             {filteredApplications.map((application) => (
               <ApplicationCard
-                key={application.applicationId}
-                application={application}
-                onViewDetails={() => {
-                  window.location.href = `/candidate/jobs/${application.jobId._id}`;
-                }}
-                onWithdraw={handleWithdraw}
+              key={application.applicationId}
+              application={application}
+              onViewDetails={() => {
+                window.location.href = `/candidate/jobs/${application.jobId._id}`;
+              }}
+              onWithdraw={handleWithdraw}
               />
             ))}
           </div>
