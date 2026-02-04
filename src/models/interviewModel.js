@@ -14,7 +14,7 @@ const answerSchema = new mongoose.Schema({
 // This represents ONE candidate inside the session
 const candidateSubSchema = new mongoose.Schema({
   candidateId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     required: true,
     ref: 'Candidate'
   },
