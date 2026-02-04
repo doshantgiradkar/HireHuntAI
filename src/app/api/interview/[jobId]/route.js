@@ -26,7 +26,7 @@ export async function POST(request, { params }) {
     // Fetch all applications for this job with their match scores
     const applications = await ApplicationModel.find(
       { jobId: jobId },
-      { candidateId: 1, "eligibility.matchScore": 1 }
+      { candidateId: 1, "eligibility.matchScore": 1, candidateClerkId: 1 }
     ).lean();
 
     if (!applications || applications.length === 0) {
@@ -50,7 +50,7 @@ export async function POST(request, { params }) {
     );
 
     const candidateList = topCandidates.map(app => ({
-      candidateId: app.candidateId,
+      candidateId: app.candidateClerkId,
       matchScore: app.eligibility?.matchScore || 0,
       feedback: 0,
       interviewScore: 0,
