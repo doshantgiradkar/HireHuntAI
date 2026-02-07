@@ -92,7 +92,6 @@ const aiQuestions = [
   "Can you explain the virtual DOM and how it works in React?",
 ];
 
-
 /*                          Speech Recognition Hook                           */
 function useInterviewSpeechRecognition() {
   const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
@@ -321,7 +320,7 @@ function VideoCard({
 
   return (
     <Card className={`h-full flex flex-col border-2 ${isFullscreen ? 'border-primary/50' : 'border-transparent'} hover:border-primary/30 transition-colors`}>
-      <CardContent className="relative flex-1 p-4">
+      <CardContent className="relative flex-1 p-2 sm:p-3 md:p-4">
         <div className="relative w-full h-full bg-linear-to-br from-gray-900 to-black rounded-lg overflow-hidden">
 
           {showVideo && (
@@ -345,12 +344,12 @@ function VideoCard({
                 )}
 
                 <div className="relative z-10">
-                  <Avatar className="h-32 w-32 border-4 border-background">
-                    <AvatarFallback className={`text-2xl ${isAI ? 'bg-linear-to-br from-blue-500 to-purple-600' : 'bg-linear-to-br from-gray-700 to-gray-900'}`}>
+                  <Avatar className="h-16 w-16 sm:h-20 md:h-24 lg:h-32 sm:w-20 md:w-24 lg:w-32 border-2 sm:border-3 md:border-4 border-background">
+                    <AvatarFallback className={`text-lg sm:text-xl md:text-2xl ${isAI ? 'bg-linear-to-br from-blue-500 to-purple-600' : 'bg-linear-to-br from-gray-700 to-gray-900'}`}>
                       {isAI ? (
-                        <Bot className="h-12 w-12" />
+                        <Bot className="h-8 w-8 sm:h-10 md:h-12 sm:w-10 md:w-12" />
                       ) : (
-                        <User className="h-12 w-12" />
+                        <User className="h-8 w-8 sm:h-10 md:h-12 sm:w-10 md:w-12" />
                       )}
                     </AvatarFallback>
                   </Avatar>
@@ -360,59 +359,59 @@ function VideoCard({
           )}
 
           {permissionError && !isAI && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 z-20">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-4 z-20">
               <div className="text-center max-w-sm">
-                <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-3" />
-                <p className="text-sm text-white mb-2 font-medium">Camera Access Required</p>
+                <AlertTriangle className="h-8 w-8 sm:h-10 md:h-12 sm:w-10 md:w-12 text-yellow-500 mx-auto mb-2 sm:mb-3" />
+                <p className="text-xs sm:text-sm text-white mb-1 sm:mb-2 font-medium">Camera Access Required</p>
                 <p className="text-xs text-gray-300">{permissionError}</p>
               </div>
             </div>
           )}
 
-          <div className="absolute top-3 left-3 flex items-center gap-2 z-10">
+          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex items-center gap-1 sm:gap-2 z-10">
             <Badge
               variant={isAI ? "default" : "secondary"}
-              className="bg-background/80 backdrop-blur-sm"
+              className="bg-background/80 backdrop-blur-sm text-xs sm:text-sm"
             >
               {role}
             </Badge>
             {isSpeaking && (
               <div className="flex items-center gap-1 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md">
                 <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
-                <span className="text-xs">Speaking</span>
+                <span className="text-xs hidden xs:inline">Speaking</span>
               </div>
             )}
           </div>
 
-          <div className="absolute top-3 right-3 flex gap-2 z-10">
+          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex gap-1 sm:gap-2 z-10">
             {isMuted && (
-              <div className="bg-destructive/80 backdrop-blur-sm p-2 rounded-md" aria-label="Microphone muted">
-                <MicOff className="h-4 w-4 text-white" />
+              <div className="bg-destructive/80 backdrop-blur-sm p-1.5 sm:p-2 rounded-md" aria-label="Microphone muted">
+                <MicOff className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
               </div>
             )}
             {!isVideoEnabled && (
-              <div className="bg-secondary/80 backdrop-blur-sm p-2 rounded-md" aria-label="Camera off">
-                <VideoOff className="h-4 w-4" />
+              <div className="bg-secondary/80 backdrop-blur-sm p-1.5 sm:p-2 rounded-md" aria-label="Camera off">
+                <VideoOff className="h-3 w-3 sm:h-4 sm:w-4" />
               </div>
             )}
           </div>
 
-          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between z-10">
-            <div className="bg-background/80 backdrop-blur-sm px-3 py-2 rounded-md">
-              <p className="font-medium">{name}</p>
+          <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 right-2 sm:right-3 flex items-center justify-between z-10">
+            <div className="bg-background/80 backdrop-blur-sm px-2 sm:px-3 py-1 sm:py-2 rounded-md">
+              <p className="font-medium text-xs sm:text-sm md:text-base">{name}</p>
             </div>
 
             <Button
               variant="ghost"
               size="icon"
-              className="bg-background/80 backdrop-blur-sm hover:bg-background"
+              className="bg-background/80 backdrop-blur-sm hover:bg-background h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
               onClick={onToggleFullscreen}
               aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
             >
               {isFullscreen ? (
-                <Minimize2 className="h-4 w-4" />
+                <Minimize2 className="h-3 w-3 sm:h-4 sm:w-4" />
               ) : (
-                <Maximize2 className="h-4 w-4" />
+                <Maximize2 className="h-3 w-3 sm:h-4 sm:w-4" />
               )}
             </Button>
           </div>
@@ -455,14 +454,14 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
 
   return (
     <Card className="h-full flex flex-col border-2 border-transparent hover:border-primary/30 transition-colors">
-      <div className="p-4 border-b flex items-center justify-between bg-card/50 shrink-0">
+      <div className="p-3 sm:p-4 border-b flex items-center justify-between bg-card/50 shrink-0">
         <div className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Live Transcript</h3>
+          <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+          <h3 className="font-semibold text-sm sm:text-base">Live Transcript</h3>
           {isListening && (
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
               <div className="h-2 w-2 rounded-full bg-green-500 mr-1 animate-pulse"></div>
-              Listening
+              <span className="hidden sm:inline">Listening</span>
             </Badge>
           )}
         </div>
@@ -470,17 +469,17 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
           variant="ghost"
           size="sm"
           onClick={() => setAutoScroll(!autoScroll)}
-          className="h-8 px-2"
+          className="h-7 sm:h-8 px-2"
         >
           {autoScroll ? (
             <>
-              <ChevronDown className="h-4 w-4 mr-1" />
-              <span className="text-xs">Auto-scroll</span>
+              <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+              <span className="text-xs hidden sm:inline">Auto-scroll</span>
             </>
           ) : (
             <>
-              <ChevronUp className="h-4 w-4 mr-1" />
-              <span className="text-xs">Scroll paused</span>
+              <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+              <span className="text-xs hidden sm:inline">Scroll paused</span>
             </>
           )}
         </Button>
@@ -488,14 +487,14 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
 
       <CardContent className="flex-1 p-0 overflow-hidden">
         <ScrollArea className="h-full" ref={scrollAreaRef}>
-          <div className="p-4 space-y-4">
+          <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
             {allMessages.map((msg) => (
               <div
                 key={msg.id}
                 className={`flex ${msg.isAI ? "justify-start" : "justify-end"}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 wrap-break-words ${
+                  className={`max-w-[85%] rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 wrap-break-words ${
                     msg.isAI
                       ? "bg-muted border"
                       : msg.isLive
@@ -503,7 +502,7 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
                       : "bg-primary text-primary-foreground"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                  <div className="flex items-center justify-between mb-1 sm:mb-2 gap-2 flex-wrap">
                     <Badge
                       variant={msg.isAI ? "outline" : "secondary"}
                       className="text-xs shrink-0"
@@ -513,7 +512,7 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
                     </Badge>
                     <span className="text-xs opacity-70 shrink-0">{msg.timestamp}</span>
                   </div>
-                  <p className="text-sm wrap-break-words">{msg.message}</p>
+                  <p className="text-xs sm:text-sm wrap-break-words">{msg.message}</p>
                 </div>
               </div>
             ))}
@@ -521,8 +520,8 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
             {/* AI Speaking Indicator */}
             {isSpeaking && (
               <div className="flex justify-start">
-                <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-muted border border-dashed">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="max-w-[85%] rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 bg-muted border border-dashed">
+                  <div className="flex items-center gap-2 mb-1 sm:mb-2">
                     <Badge variant="outline" className="text-xs bg-blue-500/10">
                       AI Interviewer
                     </Badge>
@@ -533,7 +532,7 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
                       <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse delay-75"></div>
                       <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse delay-150"></div>
                     </div>
-                    <p className="text-sm text-muted-foreground">Speaking...</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Speaking...</p>
                   </div>
                 </div>
               </div>
@@ -559,29 +558,29 @@ function ControlBar({
 
   return (
     <div className="border-t bg-card/80 backdrop-blur-sm shrink-0">
-      <div className="max-w-7xl mx-auto px-4 py-3">
+      <div className="max-w-7xl mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>22:15</span>
             </div>
-            <Separator orientation="vertical" className="h-6" />
+            <Separator orientation="vertical" className="h-4 sm:h-5 md:h-6" />
             {hasStream ? (
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
                 <div className="h-2 w-2 rounded-full bg-green-500 mr-1 animate-pulse"></div>
-                Connected
+                <span className="hidden sm:inline">Connected</span>
               </Badge>
             ) : (
               <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs">
                 <div className="h-2 w-2 rounded-full bg-yellow-500 mr-1"></div>
-                Disconnected
+                <span className="hidden sm:inline">Disconnected</span>
               </Badge>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden md:flex items-center gap-2">
               <Volume2 className="h-4 w-4 text-muted-foreground" />
               <input
                 type="range"
@@ -599,12 +598,12 @@ function ControlBar({
             {!hasStarted && (
               <Button
                 variant="default"
-                size="lg"
+                size="sm"
+                className="h-8 sm:h-9 md:h-10 px-3 sm:px-4 md:px-6 rounded-full bg-green-600 hover:bg-green-700 text-xs sm:text-sm"
                 onClick={onStartInterview}
-                className="h-10 px-4 sm:px-6 rounded-full bg-green-600 hover:bg-green-700"
                 aria-label="Start Interview"
               >
-                <Play className="h-4 w-4 sm:mr-2" />
+                <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Start Interview</span>
               </Button>
             )}
@@ -615,14 +614,14 @@ function ControlBar({
                 variant={isListening ? "destructive" : "secondary"}
                 size="icon"
                 onClick={onToggleListening}
-                className="h-10 w-10 rounded-full"
+                className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full"
                 aria-label={isListening ? "Stop transcription" : "Start transcription"}
                 disabled={!hasStream}
               >
                 {isListening ? (
-                  <Square className="h-4 w-4" />
+                  <Square className="h-3 w-3 sm:h-4 sm:w-4" />
                 ) : (
-                  <Radio className="h-4 w-4" />
+                  <Radio className="h-3 w-3 sm:h-4 sm:w-4" />
                 )}
               </Button>
             )}
@@ -630,8 +629,12 @@ function ControlBar({
             {/* End Interview Button */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="h-10 px-4 sm:px-6 rounded-full">
-                  <PhoneOff className="h-4 w-4 sm:mr-2" />
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  className="h-8 sm:h-9 md:h-10 px-3 sm:px-4 md:px-6 rounded-full text-xs sm:text-sm"
+                >
+                  <PhoneOff className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">End Interview</span>
                 </Button>
               </AlertDialogTrigger>
@@ -725,31 +728,31 @@ export default function InterviewLayout() {
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       <header className="border-b bg-card/80 backdrop-blur-sm shrink-0">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h1 className="text-xl font-bold">
+              <h1 className="text-base sm:text-lg md:text-xl font-bold">
                 AI Technical Interview — Frontend Developer
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                 Real-time AI-powered interview session with speech recognition
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
               {interviewStarted && (
                 <>
-                  <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                  <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
                     <div className="h-2 w-2 rounded-full bg-red-500 mr-1 animate-pulse"></div>
                     Live
                   </Badge>
-                  <Badge variant="secondary">
+                  <Badge variant="secondary" className="text-xs">
                     <div className="h-2 w-2 rounded-full bg-primary mr-1"></div>
-                    Recording
+                    <span className="hidden sm:inline">Recording</span>
                   </Badge>
                   {isListening && (
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
                       <div className="h-2 w-2 rounded-full bg-green-500 mr-1 animate-pulse"></div>
-                      Transcribing
+                      <span className="hidden sm:inline">Transcribing</span>
                     </Badge>
                   )}
                 </>
@@ -759,7 +762,7 @@ export default function InterviewLayout() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-hidden p-4">
+      <main className="flex-1 overflow-hidden p-2 sm:p-3 md:p-4">
         {!interviewStarted ? (
           <StartInterviewScreen
             onStartInterview={handleStartInterview}
@@ -767,9 +770,9 @@ export default function InterviewLayout() {
             permissionError={permissionError}
           />
         ):(
-          <div className="h-full flex gap-4">
-            {/* Left side - Video cards */}
-            <div className={`${fullscreenMode ? 'flex-1' : 'flex-1 grid grid-rows-2 gap-4 md:grid-rows-1 md:grid-cols-2'}`}>
+          <div className="h-full flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
+            {/* Video Section */}
+            <div className={`${fullscreenMode ? 'flex-1' : 'flex-1'} transition-all duration-300`}>
               {/* Fullscreen AI Video */}
               {fullscreenMode === 'ai' && (
                 <div className="h-full">
@@ -794,9 +797,9 @@ export default function InterviewLayout() {
                     name="Alex Johnson"
                     role="Candidate"
                     isAI={false}
-                    isMuted={false} // Always unmuted in interview
+                    isMuted={false}
                     isSpeaking={isListening}
-                    isVideoEnabled={true} // Always enabled in interview
+                    isVideoEnabled={true}
                     isFullscreen={true}
                     onToggleFullscreen={() => handleToggleFullscreen('candidate')}
                     stream={candidateStream}
@@ -805,9 +808,9 @@ export default function InterviewLayout() {
                 </div>
               )}
 
-              {/* Normal view (both videos) */}
+              {/* Normal view - Responsive Grid Layout */}
               {!fullscreenMode && (
-                <>
+                <div className="h-full grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
                   <VideoCard
                     name="AI Interviewer"
                     role="AI Assistant"
@@ -823,28 +826,39 @@ export default function InterviewLayout() {
                     name="Alex Johnson"
                     role="Candidate"
                     isAI={false}
-                    isMuted={false} // Always unmuted in interview
+                    isMuted={false}
                     isSpeaking={isListening}
-                    isVideoEnabled={true} // Always enabled in interview
+                    isVideoEnabled={true}
                     isFullscreen={false}
                     onToggleFullscreen={() => handleToggleFullscreen('candidate')}
                     stream={candidateStream}
                     permissionError={permissionError}
                   />
-                </>
+                </div>
               )}
             </div>
 
-            {/* Right side - Transcript Panel */}
-            {/* Always show transcript panel, even in fullscreen mode */}
-            <div className={`${fullscreenMode ? 'w-100' : 'hidden lg:flex w-100'} h-full`}>
-              <TranscriptPanel
-                transcriptMessages={transcriptMessages}
-                isSpeaking={isSpeaking}
-                isListening={isListening}
-                currentTranscript={currentTranscript}
-              />
-            </div>
+            {/* Transcript Panel - Responsive Width and Visibility */}
+            {!fullscreenMode ? (
+              <div className="h-64 sm:h-72 md:h-80 lg:h-full lg:w-96 lg:flex-none flex-shrink-0">
+                <TranscriptPanel
+                  transcriptMessages={transcriptMessages}
+                  isSpeaking={isSpeaking}
+                  isListening={isListening}
+                  currentTranscript={currentTranscript}
+                />
+              </div>
+            ) : (
+              // Show transcript panel in fullscreen mode only on large screens
+              <div className="hidden lg:flex lg:w-96 lg:h-full">
+                <TranscriptPanel
+                  transcriptMessages={transcriptMessages}
+                  isSpeaking={isSpeaking}
+                  isListening={isListening}
+                  currentTranscript={currentTranscript}
+                />
+              </div>
+            )}
           </div>
         )}
       </main>

@@ -414,7 +414,7 @@ export default function InterviewsPage() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[300px]">
+            <div className="flex-1 min-w-75">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -427,7 +427,7 @@ export default function InterviewsPage() {
             </div>
 
             <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-45">
                 <SelectValue placeholder="Interview Type" />
               </SelectTrigger>
               <SelectContent>
@@ -441,7 +441,7 @@ export default function InterviewsPage() {
             </Select>
 
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-45">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -738,7 +738,7 @@ export default function InterviewsPage() {
                           key={interview.id}
                           className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50"
                         >
-                          <div className="flex items-center gap-2 min-w-[100px]">
+                          <div className="flex items-center gap-2 min-w-25">
                             <Clock className="h-4 w-4 text-muted-foreground" />
                             <span className="font-medium">{interview.time}</span>
                           </div>
@@ -783,7 +783,7 @@ export default function InterviewsPage() {
                           key={interview.id}
                           className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50"
                         >
-                          <div className="flex items-center gap-2 min-w-[100px]">
+                          <div className="flex items-center gap-2 min-w-25">
                             <Clock className="h-4 w-4 text-muted-foreground" />
                             <span className="font-medium">{interview.time}</span>
                           </div>
@@ -828,7 +828,7 @@ export default function InterviewsPage() {
                           key={interview.id}
                           className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50"
                         >
-                          <div className="flex items-center gap-2 min-w-[100px]">
+                          <div className="flex items-center gap-2 min-w-25">
                             <Clock className="h-4 w-4 text-muted-foreground" />
                             <span className="font-medium">{interview.time}</span>
                           </div>
