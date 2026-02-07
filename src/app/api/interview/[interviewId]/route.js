@@ -1,6 +1,5 @@
 import { connect } from "@/lib/db";
 import Candidate from "@/models/candidateModel";
-import { Assessment } from "@/models/assessmentModel";
 import { Interview } from "@/models/interviewModel";
 import { checkAuth } from "@/utils/checkAuth";
 import { NextResponse } from "next/server";
@@ -21,7 +20,7 @@ export async function GET(request, { params }) {
   await connect();
   const { interviewId } = await params;
 
-  const interview = await Interview.findById(interviewId)
+  const interview = await Interview.findOne({ _id: interviewId, candidateId: authResult.userId})
     .populate("assessmentId");
 
   const candidate = await Candidate.findOne({ userId: authResult.userId });
