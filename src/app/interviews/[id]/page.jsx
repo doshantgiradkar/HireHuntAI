@@ -307,6 +307,9 @@ function VideoCard({
   useEffect(() => {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
+      videoRef.current.play().catch(e => {
+        console.log("Video play failed:", e);
+      });
     }
 
     return () => {
@@ -316,40 +319,38 @@ function VideoCard({
     };
   }, [stream]);
 
-  const showVideo = stream && isVideoEnabled;
+  const showVideo = stream && isVideoEnabled && !permissionError;
 
   return (
     <Card className={`h-full flex flex-col border-2 ${isFullscreen ? 'border-primary/50' : 'border-transparent'} hover:border-primary/30 transition-colors`}>
       <CardContent className="relative flex-1 p-2 sm:p-3 md:p-4">
-        <div className="relative w-full h-full bg-linear-to-br from-gray-900 to-black rounded-lg overflow-hidden">
+        <div className="relative w-full h-full bg-gradient-to-br from-gray-900 to-black rounded-lg overflow-hidden">
 
-          {showVideo && (
+          {showVideo ? (
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted={true}
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover bg-black"
               aria-label={`${name}'s video feed`}
             />
-          )}
-
-          {!showVideo && (
-            <div className="absolute inset-0 flex items-center justify-center">
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
               <div className="relative">
                 {isAI && (
                   <div className="absolute inset-0 animate-pulse">
-                    <div className="h-full w-full bg-linear-to-r from-blue-500/10 to-purple-500/10 blur-xl"></div>
+                    <div className="h-full w-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 blur-xl"></div>
                   </div>
                 )}
 
                 <div className="relative z-10">
                   <Avatar className="h-16 w-16 sm:h-20 md:h-24 lg:h-32 sm:w-20 md:w-24 lg:w-32 border-2 sm:border-3 md:border-4 border-background">
-                    <AvatarFallback className={`text-lg sm:text-xl md:text-2xl ${isAI ? 'bg-linear-to-br from-blue-500 to-purple-600' : 'bg-linear-to-br from-gray-700 to-gray-900'}`}>
+                    <AvatarFallback className={`text-lg sm:text-xl md:text-2xl ${isAI ? 'bg-gradient-to-br from-blue-500 to-purple-600' : 'bg-gradient-to-br from-gray-700 to-gray-900'}`}>
                       {isAI ? (
-                        <Bot className="h-8 w-8 sm:h-10 md:h-12 sm:w-10 md:w-12" />
+                        <Bot className="h-8 w-8 sm:h-10 md:h-12 sm:w-10 md:w-12 text-white" />
                       ) : (
-                        <User className="h-8 w-8 sm:h-10 md:h-12 sm:w-10 md:w-12" />
+                        <User className="h-8 w-8 sm:h-10 md:h-12 sm:w-10 md:w-12 text-white" />
                       )}
                     </AvatarFallback>
                   </Avatar>
@@ -494,7 +495,7 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
                 className={`flex ${msg.isAI ? "justify-start" : "justify-end"}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 wrap-break-words ${
+                  className={`max-w-[85%] rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 break-words ${
                     msg.isAI
                       ? "bg-muted border"
                       : msg.isLive
@@ -512,7 +513,7 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
                     </Badge>
                     <span className="text-xs opacity-70 shrink-0">{msg.timestamp}</span>
                   </div>
-                  <p className="text-xs sm:text-sm wrap-break-words">{msg.message}</p>
+                  <p className="text-xs sm:text-sm break-words">{msg.message}</p>
                 </div>
               </div>
             ))}
@@ -762,7 +763,7 @@ export default function InterviewLayout() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-hidden p-2 sm:p-3 md:p-4">
+      <main className="flex-1 overflow-hidden p-2 sm:p-3 md:p-4 ">
         {!interviewStarted ? (
           <StartInterviewScreen
             onStartInterview={handleStartInterview}
@@ -770,77 +771,82 @@ export default function InterviewLayout() {
             permissionError={permissionError}
           />
         ):(
-          <div className="h-full flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
-            {/* Video Section */}
-            <div className={`${fullscreenMode ? 'flex-1' : 'flex-1'} transition-all duration-300`}>
-              {/* Fullscreen AI Video */}
-              {fullscreenMode === 'ai' && (
-                <div className="h-full">
-                  <VideoCard
-                    name="AI Interviewer"
-                    role="AI Assistant"
-                    isAI={true}
-                    isMuted={false}
-                    isSpeaking={isSpeaking}
-                    isVideoEnabled={true}
-                    isFullscreen={true}
-                    onToggleFullscreen={() => handleToggleFullscreen('ai')}
-                    stream={null}
-                  />
-                </div>
-              )}
-
-              {/* Fullscreen Candidate Video */}
-              {fullscreenMode === 'candidate' && (
-                <div className="h-full">
-                  <VideoCard
-                    name="Alex Johnson"
-                    role="Candidate"
-                    isAI={false}
-                    isMuted={false}
-                    isSpeaking={isListening}
-                    isVideoEnabled={true}
-                    isFullscreen={true}
-                    onToggleFullscreen={() => handleToggleFullscreen('candidate')}
-                    stream={candidateStream}
-                    permissionError={permissionError}
-                  />
-                </div>
-              )}
-
-              {/* Normal view - Responsive Grid Layout */}
-              {!fullscreenMode && (
-                <div className="h-full grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-                  <VideoCard
-                    name="AI Interviewer"
-                    role="AI Assistant"
-                    isAI={true}
-                    isMuted={false}
-                    isSpeaking={isSpeaking}
-                    isVideoEnabled={true}
-                    isFullscreen={false}
-                    onToggleFullscreen={() => handleToggleFullscreen('ai')}
-                    stream={null}
-                  />
-                  <VideoCard
-                    name="Alex Johnson"
-                    role="Candidate"
-                    isAI={false}
-                    isMuted={false}
-                    isSpeaking={isListening}
-                    isVideoEnabled={true}
-                    isFullscreen={false}
-                    onToggleFullscreen={() => handleToggleFullscreen('candidate')}
-                    stream={candidateStream}
-                    permissionError={permissionError}
-                  />
-                </div>
-              )}
+          <div className="h-full flex flex-col md:flex-row gap-2 md:gap-4 items-center justify-center">
+            {/* Mobile Layout: Videos side by side, transcript below */}
+            <div className="md:hidden flex flex-col h-full">
+              {/* Videos side by side on mobile */}
+              <div className="grid grid-cols-2 gap-2 h-48">
+                <VideoCard
+                  name="AI Interviewer"
+                  role="AI Assistant"
+                  isAI={true}
+                  isMuted={false}
+                  isSpeaking={isSpeaking}
+                  isVideoEnabled={true}
+                  isFullscreen={fullscreenMode === 'ai'}
+                  onToggleFullscreen={() => handleToggleFullscreen('ai')}
+                  stream={null}
+                />
+                <VideoCard
+                  name="Alex Johnson"
+                  role="Candidate"
+                  isAI={false}
+                  isMuted={false}
+                  isSpeaking={isListening}
+                  isVideoEnabled={true}
+                  isFullscreen={fullscreenMode === 'candidate'}
+                  onToggleFullscreen={() => handleToggleFullscreen('candidate')}
+                  stream={candidateStream}
+                  permissionError={permissionError}
+                />
+              </div>
+              
+              {/* Transcript below on mobile */}
+              <div className="flex-1 min-h-0 mt-2">
+                <TranscriptPanel
+                  transcriptMessages={transcriptMessages}
+                  isSpeaking={isSpeaking}
+                  isListening={isListening}
+                  currentTranscript={currentTranscript}
+                />
+              </div>
             </div>
 
-            {/* Transcript Panel - Responsive Width and Visibility */}
-            {!fullscreenMode ? (
-              <div className="h-64 sm:h-72 md:h-80 lg:h-full lg:w-96 lg:flex-none flex-shrink-0">
+            {/* Tablet Layout: Videos stacked on left, transcript on right */}
+            <div className="hidden md:flex lg:hidden flex-row h-full gap-4 w-full">
+              {/* Videos stacked vertically on left (2/3 width) */}
+              <div className="flex flex-col gap-4 w-2/3">
+                <div className="h-1/2">
+                  <VideoCard
+                    name="AI Interviewer"
+                    role="AI Assistant"
+                    isAI={true}
+                    isMuted={false}
+                    isSpeaking={isSpeaking}
+                    isVideoEnabled={true}
+                    isFullscreen={fullscreenMode === 'ai'}
+                    onToggleFullscreen={() => handleToggleFullscreen('ai')}
+                    stream={null}
+                  />
+                </div>
+                <div className="h-1/2">
+                  <VideoCard
+                    name="Alex Johnson"
+                    role="Candidate"
+                    isAI={false}
+                    isMuted={false}
+                    isSpeaking={isListening}
+                    isVideoEnabled={true}
+                    isFullscreen={fullscreenMode === 'candidate'}
+                    onToggleFullscreen={() => handleToggleFullscreen('candidate')}
+                    stream={candidateStream}
+                    permissionError={permissionError}
+                  />
+                </div>
+              </div>
+              
+              {/* Transcript on right (1/3 width) */}
+              <div className="w-1/3 h-full">
                 <TranscriptPanel
                   transcriptMessages={transcriptMessages}
                   isSpeaking={isSpeaking}
@@ -848,9 +854,39 @@ export default function InterviewLayout() {
                   currentTranscript={currentTranscript}
                 />
               </div>
-            ) : (
-              // Show transcript panel in fullscreen mode only on large screens
-              <div className="hidden lg:flex lg:w-96 lg:h-full">
+            </div>
+
+            {/* Desktop/Laptop Layout: Original layout */}
+            <div className="hidden lg:flex flex-row h-full gap-4 w-full ">
+              {/* Videos side by side (2/3 width) */}
+              <div className="grid grid-cols-2 gap-4 w-2/3">
+                <VideoCard
+                  name="AI Interviewer"
+                  role="AI Assistant"
+                  isAI={true}
+                  isMuted={false}
+                  isSpeaking={isSpeaking}
+                  isVideoEnabled={true}
+                  isFullscreen={fullscreenMode === 'ai'}
+                  onToggleFullscreen={() => handleToggleFullscreen('ai')}
+                  stream={null}
+                />
+                <VideoCard
+                  name="Alex Johnson"
+                  role="Candidate"
+                  isAI={false}
+                  isMuted={false}
+                  isSpeaking={isListening}
+                  isVideoEnabled={true}
+                  isFullscreen={fullscreenMode === 'candidate'}
+                  onToggleFullscreen={() => handleToggleFullscreen('candidate')}
+                  stream={candidateStream}
+                  permissionError={permissionError}
+                />
+              </div>
+              
+              {/* Transcript on right (fixed width) */}
+              <div className=" flex-1 w-96 h-full">
                 <TranscriptPanel
                   transcriptMessages={transcriptMessages}
                   isSpeaking={isSpeaking}
@@ -858,7 +894,7 @@ export default function InterviewLayout() {
                   currentTranscript={currentTranscript}
                 />
               </div>
-            )}
+            </div>
           </div>
         )}
       </main>
