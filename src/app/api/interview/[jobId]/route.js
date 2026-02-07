@@ -6,6 +6,8 @@ import Job from "@/models/jobModel";
 import ApplicationModel from "@/models/applicationModel"; // Import Application Model
 import { Interview } from "@/models/interviewModel";
 import getQuestions from "@/lib/InterviewQuestions.js";
+import { checkAuth } from "@/utils/checkAuth";
+import Candidate from "@/models/candidateModel";
 
 export async function POST(request, { params }) {
   try {
@@ -59,7 +61,7 @@ export async function POST(request, { params }) {
 
     // If no candidates qualify (edge case), you might want to handle it
     if (candidateList.length === 0) {
-        return NextResponse.json({ error: "No eligible candidates found above percentile cutoff." }, { status: 400 });
+      return NextResponse.json({ error: "No eligible candidates found above percentile cutoff." }, { status: 400 });
     }
 
     const questions = await getQuestions(job.title, job.description, job.skills);
@@ -88,13 +90,13 @@ export async function POST(request, { params }) {
     fourHoursLater.setHours(fourHoursLater.getHours() + 4);
 
     const newInterview = await Interview.create({
-        jobId: jobId,
-        candidates: candidateList,
-        assessmentId: newAssessment._id,
-        status: "scheduled",
-        startAt: twentyfourHoursFromNow,
-        endAt: fourHoursLater,
-        duration: 240 // 4 hours in minutes
+      jobId: jobId,
+      candidates: candidateList,
+      assessmentId: newAssessment._id,
+      status: "scheduled",
+      startAt: twentyfourHoursFromNow,
+      endAt: fourHoursLater,
+      duration: 240 // 4 hours in minutes
     });
 
     return NextResponse.json(
