@@ -1,8 +1,10 @@
 "use client"
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
+import { useParams, useSearchParams } from "next/navigation";
+import axios from "axios";
 import {
   MicOff,
   VideoOff,
@@ -46,62 +48,25 @@ import StartInterviewScreen from "@/components/start-interview-screen";
 /*                          Speech Recognition Data                           */
 /* -------------------------------------------------------------------------- */
 
-const initialTranscriptData = [
-  {
-    id: 1,
-    speaker: "AI Interviewer",
-    timestamp: "10:00 AM",
-    message: "Welcome to your technical interview. Could you briefly introduce yourself?",
-    isAI: true,
-  },
-  {
-    id: 2,
-    speaker: "You",
-    timestamp: "10:01 AM",
-    message: "Sure. I'm a frontend developer with strong experience in React and Next.js.",
-    isAI: false,
-  },
-  {
-    id: 3,
-    speaker: "AI Interviewer",
-    timestamp: "10:02 AM",
-    message: "Great. Can you explain when you would use useMemo versus useCallback?",
-    isAI: true,
-  },
-  {
-    id: 4,
-    speaker: "You",
-    timestamp: "10:03 AM",
-    message: "useMemo is for expensive calculations, useCallback is for memoizing functions.",
-    isAI: false,
-  },
-  {
-    id: 5,
-    speaker: "AI Interviewer",
-    timestamp: "10:05 AM",
-    message: "Excellent. How would you optimize a React application?",
-    isAI: true,
-  },
-];
-
-const aiQuestions = [
-  "Welcome to your technical interview. Could you briefly introduce yourself?",
-  "Great. Can you explain when you would use useMemo versus useCallback?",
-  "Excellent. How would you optimize a React application for performance?",
-  "What's your experience with TypeScript in React applications?",
-  "Can you explain the virtual DOM and how it works in React?",
-];
+const initialTranscriptData = [];
 
 /*                          Speech Recognition Hook                           */
-function useInterviewSpeechRecognition() {
+function useInterviewSpeechRecognition(questions = []) {
   const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
 
+  const questionList = Array.isArray(questions) ? questions : [];
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcriptMessages, setTranscriptMessages] = useState(initialTranscriptData);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentTranscript, setCurrentTranscript] = useState("");
   const [hasStarted, setHasStarted] = useState(false);
+  useEffect(() => {
+    if (!hasStarted) {
+      setCurrentQuestionIndex(0);
+      setTranscriptMessages(initialTranscriptData);
+    }
+  }, [hasStarted, questionList]);
 
   useEffect(() => {
     setCurrentTranscript(transcript);
@@ -118,13 +83,13 @@ function useInterviewSpeechRecognition() {
 
     // Save the current transcript as a message
     if (transcript.trim()) {
-      addTranscriptMessage("You", transcript);
+      addTranscriptMessage("candidate", transcript);
       resetTranscript();
       setCurrentTranscript("");
 
       // Automatically trigger next AI question after a delay
       setTimeout(() => {
-        if (currentQuestionIndex < aiQuestions.length) {
+        if (currentQuestionIndex < questionList.length) {
           speakNextQuestion();
         }
       }, 2000);
@@ -150,8 +115,8 @@ function useInterviewSpeechRecognition() {
   };
 
   const speakNextQuestion = () => {
-    if (currentQuestionIndex < aiQuestions.length) {
-      const question = aiQuestions[currentQuestionIndex];
+    if (currentQuestionIndex < questionList.length) {
+      const question = questionList[currentQuestionIndex];
 
       // Add AI message to transcript
       addTranscriptMessage("AI Interviewer", question);
@@ -204,7 +169,7 @@ function useInterviewSpeechRecognition() {
     startInterview,
     addTranscriptMessage,
     currentQuestionIndex,
-    hasMoreQuestions: currentQuestionIndex < aiQuestions.length,
+    hasMoreQuestions: currentQuestionIndex < questionList.length,
   };
 }
 
@@ -324,7 +289,7 @@ function VideoCard({
   return (
     <Card className={`h-full flex flex-col border-2 ${isFullscreen ? 'border-primary/50' : 'border-transparent'} hover:border-primary/30 transition-colors`}>
       <CardContent className="relative flex-1 p-2 sm:p-3 md:p-4">
-        <div className="relative w-full h-full bg-gradient-to-br from-gray-900 to-black rounded-lg overflow-hidden">
+        <div className="relative w-full h-full bg-linear-to-br from-gray-900 to-black rounded-lg overflow-hidden">
 
           {showVideo ? (
             <video
@@ -336,17 +301,17 @@ function VideoCard({
               aria-label={`${name}'s video feed`}
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
+            <div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-gray-900 to-black">
               <div className="relative">
                 {isAI && (
                   <div className="absolute inset-0 animate-pulse">
-                    <div className="h-full w-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 blur-xl"></div>
+                    <div className="h-full w-full bg-linear-to-r from-blue-500/10 to-purple-500/10 blur-xl"></div>
                   </div>
                 )}
 
                 <div className="relative z-10">
                   <Avatar className="h-16 w-16 sm:h-20 md:h-24 lg:h-32 sm:w-20 md:w-24 lg:w-32 border-2 sm:border-3 md:border-4 border-background">
-                    <AvatarFallback className={`text-lg sm:text-xl md:text-2xl ${isAI ? 'bg-gradient-to-br from-blue-500 to-purple-600' : 'bg-gradient-to-br from-gray-700 to-gray-900'}`}>
+                    <AvatarFallback className={`text-lg sm:text-xl md:text-2xl ${isAI ? 'bg-linear-to-br from-blue-500 to-purple-600' : 'bg-linear-to-br from-gray-700 to-gray-900'}`}>
                       {isAI ? (
                         <Bot className="h-8 w-8 sm:h-10 md:h-12 sm:w-10 md:w-12 text-white" />
                       ) : (
@@ -495,7 +460,7 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
                 className={`flex ${msg.isAI ? "justify-start" : "justify-end"}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 break-words ${
+                  className={`max-w-[85%] rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 wrap-break-words ${
                     msg.isAI
                       ? "bg-muted border"
                       : msg.isLive
@@ -513,7 +478,7 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
                     </Badge>
                     <span className="text-xs opacity-70 shrink-0">{msg.timestamp}</span>
                   </div>
-                  <p className="text-xs sm:text-sm break-words">{msg.message}</p>
+                  <p className="text-xs sm:text-sm wrap-break-words">{msg.message}</p>
                 </div>
               </div>
             ))}
@@ -630,8 +595,8 @@ function ControlBar({
             {/* End Interview Button */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button 
-                  variant="destructive" 
+                <Button
+                  variant="destructive"
                   size="sm"
                   className="h-8 sm:h-9 md:h-10 px-3 sm:px-4 md:px-6 rounded-full text-xs sm:text-sm"
                 >
@@ -667,6 +632,89 @@ function ControlBar({
 /* -------------------------------------------------------------------------- */
 
 export default function InterviewLayout() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const interviewId = params?.id;
+  const jobIdFromQuery = searchParams?.get("jobId");
+  const [questions, setQuestions] = useState([]);
+  const [candidate, setCandidate] = useState(null);
+  const [transcript, setTranscript] = useState([]);
+  const [isLoadingInterview, setIsLoadingInterview] = useState(true);
+  const [interviewError, setInterviewError] = useState(null);
+
+  const questionPrompts = useMemo(() => {
+    if (!Array.isArray(questions)) {
+      return [];
+    }
+    return questions
+      .map((question) => (typeof question === "string" ? question : question?.text))
+      .filter(Boolean);
+  }, [questions]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadInterview = async () => {
+      if (!interviewId) {
+        setIsLoadingInterview(false);
+        return;
+      }
+
+      setIsLoadingInterview(true);
+      setInterviewError(null);
+
+      try {
+        let jobId = jobIdFromQuery;
+
+        if (!jobId) {
+          const listResponse = await axios.get("/api/interview");
+          const match = Array.isArray(listResponse.data)
+            ? listResponse.data.find((item) => String(item?._id) === String(interviewId))
+            : null;
+          jobId = match?.jobId?._id ?? match?.jobId;
+          if (jobId && typeof jobId !== "string") {
+            jobId = String(jobId);
+          }
+        }
+
+        if (!jobId) {
+          throw new Error("Missing jobId for interview request.");
+        }
+
+        const response = await axios.get(`/api/interview/${interviewId}?jobId=${jobId}`);
+        if (!isMounted) {
+          return;
+        }
+
+        const data = response.data || {};
+        setQuestions(Array.isArray(data.questions) ? data.questions : []);
+        setCandidate(data.candidate || null);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+        console.error("Error fetching interview data:", error);
+        setInterviewError("Unable to load interview details.");
+        setQuestions([]);
+        setCandidate(null);
+      } finally {
+        if (isMounted) {
+          setIsLoadingInterview(false);
+        }
+      }
+    };
+
+    loadInterview();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [interviewId, jobIdFromQuery]);
+
+  const candidateDisplayName =
+    candidate?.resume?.fullName || candidate?.fullName || candidate?.name;
+  const candidateName = candidateDisplayName || "Candidate";
+
   // WebRTC Media Hook
   const {
     stream: candidateStream,
@@ -686,7 +734,7 @@ export default function InterviewLayout() {
     browserSupportsSpeechRecognition,
     toggleListening,
     startInterview,
-  } = useInterviewSpeechRecognition();
+  } = useInterviewSpeechRecognition(questionPrompts);
 
   // Check browser support
   if (!browserSupportsSpeechRecognition) {
@@ -709,17 +757,43 @@ export default function InterviewLayout() {
   const [interviewStarted, setInterviewStarted] = useState(false);
 
   const handleStartInterview = async () => {
+    if (isLoadingInterview || questionPrompts.length === 0 || interviewError) {
+      return;
+    }
     await initializeStream();
     setInterviewStarted(true);
     startInterview();
   };
 
-  const handleEndInterview = () => {
+  const handleEndInterview = async () => {
     cleanup();
     SpeechRecognition.stopListening();
     window.speechSynthesis.cancel();
-    setInterviewStarted(false);
-    setFullscreenMode(null);
+
+    const finalTranscript = [
+      ...transcriptMessages,
+      ...(currentTranscript && currentTranscript.trim()
+        ? [{
+            id: Date.now(),
+            speaker: "candidate",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            message: currentTranscript.trim(),
+            isAI: false,
+          }]
+        : []),
+    ];
+
+    setTranscript(finalTranscript);
+
+    try {
+      await axios.post(`/api/interview/${interviewId}/transcript`, {
+        transcript: finalTranscript,
+      });
+      setInterviewStarted(false);
+      setFullscreenMode(null);
+    } catch (error) {
+      console.error("Failed to save transcript:", error);
+    }
   };
 
   const handleToggleFullscreen = (mode) => {
@@ -733,7 +807,7 @@ export default function InterviewLayout() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h1 className="text-base sm:text-lg md:text-xl font-bold">
-                AI Technical Interview — Frontend Developer
+                AI Technical Interview{candidateDisplayName ? ` — ${candidateDisplayName}` : ""}
               </h1>
               <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                 Real-time AI-powered interview session with speech recognition
@@ -763,11 +837,20 @@ export default function InterviewLayout() {
         </div>
       </header>
 
+      {interviewError && (
+        <div className="px-3 sm:px-4 py-2">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{interviewError}</AlertDescription>
+          </Alert>
+        </div>
+      )}
+
       <main className="flex-1 overflow-hidden p-2 sm:p-3 md:p-4 ">
         {!interviewStarted ? (
           <StartInterviewScreen
             onStartInterview={handleStartInterview}
-            isInitializing={isInitializing}
+            isInitializing={isInitializing || isLoadingInterview}
             permissionError={permissionError}
           />
         ):(
@@ -788,7 +871,7 @@ export default function InterviewLayout() {
                   stream={null}
                 />
                 <VideoCard
-                  name="Alex Johnson"
+                  name={candidateName}
                   role="Candidate"
                   isAI={false}
                   isMuted={false}
@@ -800,7 +883,7 @@ export default function InterviewLayout() {
                   permissionError={permissionError}
                 />
               </div>
-              
+
               {/* Transcript below on mobile */}
               <div className="flex-1 min-h-0 mt-2">
                 <TranscriptPanel
@@ -831,7 +914,7 @@ export default function InterviewLayout() {
                 </div>
                 <div className="h-1/2">
                   <VideoCard
-                    name="Alex Johnson"
+                    name={candidateName}
                     role="Candidate"
                     isAI={false}
                     isMuted={false}
@@ -844,7 +927,7 @@ export default function InterviewLayout() {
                   />
                 </div>
               </div>
-              
+
               {/* Transcript on right (1/3 width) */}
               <div className="w-1/3 h-full">
                 <TranscriptPanel
@@ -872,7 +955,7 @@ export default function InterviewLayout() {
                   stream={null}
                 />
                 <VideoCard
-                  name="Alex Johnson"
+                  name={candidateName}
                   role="Candidate"
                   isAI={false}
                   isMuted={false}
@@ -884,7 +967,7 @@ export default function InterviewLayout() {
                   permissionError={permissionError}
                 />
               </div>
-              
+
               {/* Transcript on right (fixed width) */}
               <div className=" flex-1 w-96 h-full">
                 <TranscriptPanel

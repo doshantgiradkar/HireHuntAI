@@ -3,6 +3,8 @@ import jobModel from "@/models/jobModel";
 import { TaskType } from "@google/generative-ai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// TODO: define levelOrder (e.g. ["Intern", "Junior", "Mid", "Senior", "Lead"])
+// and normalize inputs before calling this helper.
 function levelDistance(a, b) {
   return Math.abs(levelOrder.indexOf(a) - levelOrder.indexOf(b));
 }
@@ -30,7 +32,7 @@ export async function semanticSimilarity(resumeText, jobText) {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
   // 2. Get the model instance
-  const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+  const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
 
   // 3. Execute batch embeddings
   const result = await model.batchEmbedContents({
@@ -215,14 +217,14 @@ export async function calculateMatchScoreByJobs (userId, jobs) {
 
     // Skills — 30
     const candSkills = normalizeArray(resume.skills);
-    const jobSkills = normalizeArray(job.skills);
+    const jobSkills = normalizeArray(jobs.skills);
     const overlap = candSkills.filter((s) => jobSkills.includes(s)).length;
     const skillScore = Math.min(30, (overlap / jobSkills.length) * 30);
     score += skillScore;
 
     // Experience Duration — 10
     const exp = candidate.totalExperienceDuration || 0;
-    const min = job.experienceYear || {};
+    const min = jobs.experienceYear || {};
     let expScore = experienceDurationScore(exp, min);
     score += expScore;
 
@@ -235,7 +237,7 @@ export async function calculateMatchScoreByJobs (userId, jobs) {
 
     // Semantic — 10
     const resumeText = JSON.stringify(resume);
-    const sim = await semanticSimilarity(resumeText, job.description);
+    const sim = await semanticSimilarity(resumeText, jobs.description);
     score += sim * 10;
 
     // Certificates — 3
@@ -244,9 +246,9 @@ export async function calculateMatchScoreByJobs (userId, jobs) {
 
     // Location / WorkMode — 2
     let locScore = 0;
-    if (job.workMode === "Remote") locScore = 2;
-    else if (candidate.address?.city === job.location) locScore = 2;
-    else if (candidate.address?.state === job.location) locScore = 1;
+    if (jobs.workMode === "Remote") locScore = 2;
+    else if (candidate.address?.city === jobs.location) locScore = 2;
+    else if (candidate.address?.state === jobs.location) locScore = 1;
     score += locScore;
 
     const matchScore = Math.round(score);

@@ -10,6 +10,14 @@ const answerSchema = new mongoose.Schema({
   score: { type: Number, default: 0 },
 }, { _id: false });
 
+const transcriptMessageSchema = new mongoose.Schema({
+  clientId: { type: String },
+  speaker: { type: String, required: true },
+  message: { type: String, required: true },
+  timestamp: { type: String },
+  isAI: { type: Boolean, default: false },
+}, { _id: false });
+
 // Single Candidate Schema
 // This represents ONE candidate inside the session
 const candidateSubSchema = new mongoose.Schema({
@@ -20,7 +28,9 @@ const candidateSubSchema = new mongoose.Schema({
   },
   matchScore: { type: Number, default: 0 },
   feedback: { type: Number, min: 0, max: 5 },
-  answers: [answerSchema]
+  answers: [answerSchema],
+  // TODO: add interviewScore to schema if you intend to persist it.
+  transcript: { type: [transcriptMessageSchema], default: [] }
 }, { _id: false });
 
 const interviewSessionSchema = new mongoose.Schema({
@@ -51,6 +61,10 @@ const interviewSessionSchema = new mongoose.Schema({
   },
   endAt: {
     type: Date,
+    required: true
+  },
+  duration: {
+    type: Number,
     required: true
   }
 }, { timestamps: true });
