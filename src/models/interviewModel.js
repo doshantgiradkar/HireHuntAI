@@ -11,9 +11,19 @@ const answerSchema = new mongoose.Schema({
 }, { _id: false });
 
 const transcriptMessageSchema = new mongoose.Schema({
+  questionId: { type: String },
+  answer: { type: String, default: "" },
+  status: {
+    type: String,
+    enum: ["asked", "answered", "unanswered"],
+    default: "asked",
+  },
+  askedAt: { type: String },
+  answeredAt: { type: String },
+  // Backward compatibility for older transcript payloads
   clientId: { type: String },
-  speaker: { type: String, required: true },
-  message: { type: String, required: true },
+  speaker: { type: String },
+  message: { type: String },
   timestamp: { type: String },
   isAI: { type: Boolean, default: false },
 }, { _id: false });
@@ -27,10 +37,14 @@ const candidateSubSchema = new mongoose.Schema({
     ref: 'Candidate'
   },
   matchScore: { type: Number, default: 0 },
-  feedback: { type: Number, min: 0, max: 5 },
-  answers: [answerSchema],
-  // TODO: add interviewScore to schema if you intend to persist it.
-  transcript: { type: [transcriptMessageSchema], default: [] }
+  feedback: { type: String },
+  interviewScore: { type: Number, default: 0, min: 0, max: 100 },
+  transcript: { type: [transcriptMessageSchema], default: [] },
+  status: {
+    type: String,
+    enum: ['scheduled', 'in-progress', 'completed'],
+    default: 'scheduled'
+  },
 }, { _id: false });
 
 const interviewSessionSchema = new mongoose.Schema({
@@ -49,11 +63,6 @@ const interviewSessionSchema = new mongoose.Schema({
   candidates: {
     type: [candidateSubSchema],
     required: true
-  },
-  status: {
-    type: String,
-    enum: ['scheduled', 'in-progress', 'completed'],
-    default: 'scheduled'
   },
   startAt: {
     type: Date,

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
 import {
   MicOff,
@@ -22,10 +22,13 @@ import {
   Radio,
   Square,
   Play,
+  SkipForward,
+  Send,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -43,6 +46,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import StartInterviewScreen from "@/components/start-interview-screen";
+import { Circle } from "lucide-react";
+import { CircleCheck } from "lucide-react";
 
 /* -------------------------------------------------------------------------- */
 /*                          Speech Recognition Data                           */
@@ -57,50 +62,187 @@ function useInterviewSpeechRecognition(questions = []) {
   const questionList = Array.isArray(questions) ? questions : [];
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechError, setSpeechError] = useState(null);
   const [transcriptMessages, setTranscriptMessages] = useState(initialTranscriptData);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [lastAskedQuestionIndex, setLastAskedQuestionIndex] = useState(-1);
   const [currentTranscript, setCurrentTranscript] = useState("");
   const [hasStarted, setHasStarted] = useState(false);
+  const transcriptRef = useRef("");
+  const currentTranscriptRef = useRef("");
   useEffect(() => {
     if (!hasStarted) {
       setCurrentQuestionIndex(0);
+      setLastAskedQuestionIndex(-1);
       setTranscriptMessages(initialTranscriptData);
     }
   }, [hasStarted, questionList]);
 
   useEffect(() => {
     setCurrentTranscript(transcript);
+    transcriptRef.current = transcript;
   }, [transcript]);
 
+  useEffect(() => {
+    currentTranscriptRef.current = currentTranscript;
+  }, [currentTranscript]);
+
+  const getQuestionMeta = useCallback((index) => {
+    const item = questionList[index];
+    if (!item) {
+      return null;
+    }
+
+    if (typeof item === "string") {
+      return { questionId: String(index + 1), text: item };
+    }
+
+    const questionId =
+      item?.questionId != null
+        ? String(item.questionId)
+        : item?._id != null
+          ? String(item._id)
+          : String(index + 1);
+
+    const text = typeof item?.text === "string" ? item.text : "";
+    return { questionId, text };
+  }, [questionList]);
+
   const startListening = () => {
-    SpeechRecognition.startListening({ continuous: true, language: "en-IN" });
-    setIsListening(true);
+    if (!browserSupportsSpeechRecognition) {
+      setIsListening(false);
+      return;
+    }
+
+    setSpeechError(null);
+    Promise.resolve(
+      SpeechRecognition.startListening({ continuous: true, language: "en-US", interimResults: true })
+    )
+      .then(() => {
+        setIsListening(true);
+      })
+      .catch((error) => {
+        console.error("Speech recognition start failed:", error);
+        setIsListening(false);
+        setSpeechError("Speech-to-text could not start. Check mic permission and browser settings.");
+      });
   };
 
+  const setAnswerForLastPendingQuestion = useCallback((answerText, status = "answered") => {
+    const normalizedAnswer = String(answerText || "").trim();
+    setTranscriptMessages((prev) => {
+      let targetIndex = -1;
+
+      for (let i = prev.length - 1; i >= 0; i -= 1) {
+        if (!prev[i]?.answer) {
+          targetIndex = i;
+          break;
+        }
+      }
+
+      if (targetIndex === -1) {
+        return prev;
+      }
+
+      const updated = [...prev];
+      updated[targetIndex] = {
+        ...updated[targetIndex],
+        answer: normalizedAnswer,
+        status,
+        answeredAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      return updated;
+    });
+  }, []);
+
   const stopListening = () => {
+    if (!browserSupportsSpeechRecognition) {
+      return;
+    }
+
     SpeechRecognition.stopListening();
     setIsListening(false);
 
-    // Save the current transcript as a message
-    if (transcript.trim()) {
-      addTranscriptMessage("candidate", transcript);
+    // Allow STT engine to flush final transcript chunk before reading.
+    setTimeout(() => {
+      const transcriptToSave = (transcriptRef.current || currentTranscriptRef.current || "").trim();
+
+      if (!transcriptToSave) {
+        return;
+      }
+
+      setAnswerForLastPendingQuestion(transcriptToSave, "answered");
       resetTranscript();
       setCurrentTranscript("");
+      transcriptRef.current = "";
+      currentTranscriptRef.current = "";
 
-      // Automatically trigger next AI question after a delay
+      const nextQuestionIndex = Math.max(currentQuestionIndex, lastAskedQuestionIndex + 1);
       setTimeout(() => {
-        if (currentQuestionIndex < questionList.length) {
-          speakNextQuestion();
+        if (nextQuestionIndex < questionList.length) {
+          speakNextQuestion(nextQuestionIndex);
         }
-      }, 2000);
-    }
+      }, 500);
+    }, 300);
   };
 
   const toggleListening = () => {
+    if (!browserSupportsSpeechRecognition) {
+      return;
+    }
+
     if (isListening) {
       stopListening();
     } else {
       startListening();
+    }
+  };
+
+  const submitManualAnswer = useCallback((answerText) => {
+    const cleanedAnswer = String(answerText || "").trim();
+    if (!cleanedAnswer) {
+      return false;
+    }
+
+    const lastMessage = transcriptMessages[transcriptMessages.length - 1];
+    if (!lastMessage || lastMessage.answer) {
+      return false;
+    }
+
+    setAnswerForLastPendingQuestion(cleanedAnswer, "answered");
+
+    const nextQuestionIndex = Math.max(currentQuestionIndex, lastAskedQuestionIndex + 1);
+    setTimeout(() => {
+      if (nextQuestionIndex < questionList.length) {
+        speakNextQuestion(nextQuestionIndex);
+      }
+    }, 500);
+
+    return true;
+  }, [currentQuestionIndex, lastAskedQuestionIndex, questionList.length, transcriptMessages, setAnswerForLastPendingQuestion]);
+
+  const skipCurrentQuestion = () => {
+    if (!hasStarted || isSpeaking) {
+      return;
+    }
+
+    const lastMessage = transcriptMessages[transcriptMessages.length - 1];
+    if (!lastMessage || lastMessage.answer) {
+      return;
+    }
+
+    SpeechRecognition.stopListening();
+    setIsListening(false);
+    resetTranscript();
+    setCurrentTranscript("");
+
+    setAnswerForLastPendingQuestion("[Unanswered - Skipped]", "unanswered");
+
+    const nextQuestionIndex = Math.max(currentQuestionIndex, lastAskedQuestionIndex + 1);
+    if (nextQuestionIndex < questionList.length) {
+      setTimeout(() => {
+        speakNextQuestion(nextQuestionIndex);
+      }, 500);
     }
   };
 
@@ -114,45 +256,84 @@ function useInterviewSpeechRecognition(questions = []) {
     }, 1000);
   };
 
-  const speakNextQuestion = () => {
-    if (currentQuestionIndex < questionList.length) {
-      const question = questionList[currentQuestionIndex];
+  const speakNextQuestion = (indexOverride) => {
+    const questionIndex = Number.isInteger(indexOverride) ? indexOverride : currentQuestionIndex;
 
-      // Add AI message to transcript
-      addTranscriptMessage("AI Interviewer", question);
+    if (questionIndex < questionList.length) {
+      const questionMeta = getQuestionMeta(questionIndex);
+      if (!questionMeta || !questionMeta.text) {
+        return;
+      }
 
-      // Speak the question
-      const speech = new SpeechSynthesisUtterance(question);
-      speech.lang = "en-IN";
-      speech.rate = 1.0;
-      speech.pitch = 1.0;
+      setTranscriptMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          questionId: questionMeta.questionId,
+          questionText: questionMeta.text,
+          answer: "",
+          status: "asked",
+          askedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+      setLastAskedQuestionIndex(questionIndex);
 
-      speech.onstart = () => setIsSpeaking(true);
-      speech.onend = () => {
-        setIsSpeaking(false);
-        setCurrentQuestionIndex(prev => prev + 1);
-        // Automatically start listening for user's response
-        if (hasStarted) {
-          setTimeout(() => {
-            startListening();
-          }, 500);
+      if (typeof window === "undefined" || !window.speechSynthesis) {
+        setSpeechError("Text-to-speech is unavailable in this browser.");
+        setCurrentQuestionIndex(prev => Math.max(prev, questionIndex + 1));
+        return;
+      }
+
+      const availableVoices = window.speechSynthesis.getVoices();
+      const preferredVoice =
+        availableVoices.find((voice) => voice.lang === "en-US") ||
+        availableVoices.find((voice) => voice.lang?.startsWith("en")) ||
+        null;
+
+      const speakAttempt = (isRetry = false) => {
+        const speech = new SpeechSynthesisUtterance(questionMeta.text);
+        speech.lang = "en-US";
+        speech.rate = 1.0;
+        speech.pitch = 1.0;
+        if (preferredVoice && !isRetry) {
+          speech.voice = preferredVoice;
         }
+
+        speech.onerror = (event) => {
+          const errorCode = event?.error || "unknown";
+          if (!isRetry && errorCode === "synthesis-failed") {
+            window.speechSynthesis.cancel();
+            setTimeout(() => {
+              speakAttempt(true);
+            }, 250);
+            return;
+          }
+
+          console.warn("Speech synthesis failed:", errorCode);
+          setIsSpeaking(false);
+          setSpeechError("Text-to-speech failed. Please check browser sound/autoplay permissions.");
+          setCurrentQuestionIndex(prev => Math.max(prev, questionIndex + 1));
+        };
+
+        speech.onstart = () => {
+          setSpeechError(null);
+          setIsSpeaking(true);
+        };
+        speech.onend = () => {
+          setIsSpeaking(false);
+          setCurrentQuestionIndex(prev => Math.max(prev, questionIndex + 1));
+          // Automatically start listening for user's response
+          if (hasStarted && browserSupportsSpeechRecognition) {
+            setTimeout(() => {
+              startListening();
+            }, 500);
+          }
+        };
+
+        window.speechSynthesis.speak(speech);
       };
 
-      window.speechSynthesis.speak(speech);
-    }
-  };
-
-  const addTranscriptMessage = (speaker, message) => {
-    if (message.trim()) {
-      const newMessage = {
-        id: Date.now(),
-        speaker,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        message: message.trim(),
-        isAI: speaker === "AI Interviewer",
-      };
-      setTranscriptMessages(prev => [...prev, newMessage]);
+      speakAttempt(false);
     }
   };
 
@@ -161,15 +342,23 @@ function useInterviewSpeechRecognition(questions = []) {
     transcriptMessages,
     isListening,
     isSpeaking,
+    speechError,
     hasStarted,
     browserSupportsSpeechRecognition,
     startListening,
     stopListening,
     toggleListening,
+    submitManualAnswer,
+    skipCurrentQuestion,
     startInterview,
-    addTranscriptMessage,
     currentQuestionIndex,
     hasMoreQuestions: currentQuestionIndex < questionList.length,
+    supportsSpeechRecognition: browserSupportsSpeechRecognition,
+    canSkipCurrentQuestion:
+      hasStarted &&
+      !isSpeaking &&
+      transcriptMessages.length > 0 &&
+      !Boolean(transcriptMessages[transcriptMessages.length - 1]?.answer),
   };
 }
 
@@ -391,7 +580,16 @@ function VideoCard({
 /*                              Transcript Panel                              */
 /* -------------------------------------------------------------------------- */
 
-function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentTranscript }) {
+function TranscriptPanel({
+  transcriptMessages,
+  isSpeaking,
+  isListening,
+  currentTranscript,
+  supportsSpeechRecognition,
+  manualAnswer,
+  onManualAnswerChange,
+  onManualAnswerSubmit,
+}) {
   const [autoScroll, setAutoScroll] = useState(true);
   const scrollAreaRef = useRef(null);
 
@@ -404,14 +602,38 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
     }
   }, [transcriptMessages, currentTranscript, autoScroll]);
 
-  const allMessages = [...transcriptMessages];
+  const allMessages = transcriptMessages.flatMap((entry, index) => {
+    const items = [
+      {
+        id: `${entry.id || index}-q`,
+        speaker: "AI Interviewer",
+        timestamp: entry.askedAt || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        message: entry.questionText || "Question",
+        isAI: true,
+        isLive: false,
+      },
+    ];
+
+    if (entry.answer) {
+      items.push({
+        id: `${entry.id || index}-a`,
+        speaker: "You",
+        timestamp: entry.answeredAt || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        message: entry.answer,
+        isAI: false,
+        isLive: false,
+      });
+    }
+
+    return items;
+  });
 
   // Add current speech recognition if available
   if (currentTranscript && currentTranscript.trim()) {
     allMessages.push({
       id: Date.now(),
       speaker: "You",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       message: currentTranscript,
       isAI: false,
       isLive: true,
@@ -451,8 +673,8 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
         </Button>
       </div>
 
-      <CardContent className="flex-1 p-0 overflow-hidden">
-        <ScrollArea className="h-full" ref={scrollAreaRef}>
+      <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
+        <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
           <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
             {allMessages.map((msg) => (
               <div
@@ -505,6 +727,28 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
             )}
           </div>
         </ScrollArea>
+        <div className="border-t p-3 space-y-2 shrink-0">
+          <p className="text-xs text-muted-foreground">
+            {supportsSpeechRecognition
+              ? "Optional: type and submit your answer manually."
+              : "Speech-to-text is unavailable. Type your answer and submit."}
+          </p>
+          <Textarea
+            value={manualAnswer}
+            onChange={(event) => onManualAnswerChange(event.target.value)}
+            rows={2}
+            placeholder="Type your answer here..."
+            disabled={isSpeaking}
+          />
+          <Button
+            onClick={onManualAnswerSubmit}
+            disabled={isSpeaking || !String(manualAnswer || "").trim()}
+            className="w-full sm:w-auto"
+          >
+            <Send className="h-4 w-4 mr-2" />
+            Submit Answer
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -513,12 +757,16 @@ function TranscriptPanel({ transcriptMessages, isSpeaking, isListening, currentT
 /*                                Control Bar                                 */
 function ControlBar({
   onEndInterview,
+  isEndingInterview,
   hasStream,
   isListening,
   onToggleListening,
+  onSkipQuestion,
+  canSkipQuestion,
   isSpeaking,
   hasStarted,
   onStartInterview,
+  supportsSpeechRecognition,
 }) {
   const [volume, setVolume] = useState(80);
 
@@ -582,13 +830,27 @@ function ControlBar({
                 onClick={onToggleListening}
                 className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full"
                 aria-label={isListening ? "Stop transcription" : "Start transcription"}
-                disabled={!hasStream}
+                disabled={!hasStream || !supportsSpeechRecognition}
               >
                 {isListening ? (
                   <Square className="h-3 w-3 sm:h-4 sm:w-4" />
                 ) : (
                   <Radio className="h-3 w-3 sm:h-4 sm:w-4" />
                 )}
+              </Button>
+            )}
+
+            {hasStarted && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 sm:h-9 md:h-10 px-3 sm:px-4 rounded-full text-xs sm:text-sm"
+                onClick={onSkipQuestion}
+                disabled={!canSkipQuestion}
+                aria-label="Skip question"
+              >
+                <SkipForward className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Skip</span>
               </Button>
             )}
 
@@ -614,8 +876,12 @@ function ControlBar({
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={onEndInterview} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    End Interview
+                  <AlertDialogAction
+                    onClick={onEndInterview}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    disabled={isEndingInterview}
+                  >
+                    {isEndingInterview ? "Ending..." : "End Interview"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -633,22 +899,41 @@ function ControlBar({
 
 export default function InterviewLayout() {
   const params = useParams();
-  const searchParams = useSearchParams();
+  const router = useRouter();
   const interviewId = params?.id;
-  const jobIdFromQuery = searchParams?.get("jobId");
+  const jobIdFromQuery = useSearchParams()?.get("jobId");
   const [questions, setQuestions] = useState([]);
   const [candidate, setCandidate] = useState(null);
   const [transcript, setTranscript] = useState([]);
   const [isLoadingInterview, setIsLoadingInterview] = useState(true);
   const [interviewError, setInterviewError] = useState(null);
+  const [isStartingInterview, setIsStartingInterview] = useState(false);
+  const [isEndingInterview, setIsEndingInterview] = useState(false);
 
-  const questionPrompts = useMemo(() => {
+  const questionItems = useMemo(() => {
     if (!Array.isArray(questions)) {
       return [];
     }
     return questions
-      .map((question) => (typeof question === "string" ? question : question?.text))
-      .filter(Boolean);
+      .map((question, index) => {
+        if (typeof question === "string") {
+          return {
+            questionId: String(index + 1),
+            text: question,
+          };
+        }
+
+        return {
+          questionId:
+            question?.questionId != null
+              ? String(question.questionId)
+              : question?._id != null
+                ? String(question._id)
+                : String(index + 1),
+          text: typeof question?.text === "string" ? question.text : "",
+        };
+      })
+      .filter((question) => Boolean(question.text));
   }, [questions]);
 
   useEffect(() => {
@@ -730,75 +1015,230 @@ export default function InterviewLayout() {
     transcriptMessages,
     isListening,
     isSpeaking,
+    speechError,
     hasStarted,
     browserSupportsSpeechRecognition,
     toggleListening,
+    submitManualAnswer,
+    skipCurrentQuestion,
     startInterview,
-  } = useInterviewSpeechRecognition(questionPrompts);
-
-  // Check browser support
-  if (!browserSupportsSpeechRecognition) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <Card className="max-w-md">
-          <CardContent className="p-6 text-center">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">Browser Not Supported</h2>
-            <p className="text-muted-foreground mb-4">
-              Your browser doesn't support speech recognition. Please use Chrome, Edge, or Safari.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+    canSkipCurrentQuestion,
+    supportsSpeechRecognition,
+  } = useInterviewSpeechRecognition(questionItems);
 
   const [fullscreenMode, setFullscreenMode] = useState(null);
   const [interviewStarted, setInterviewStarted] = useState(false);
+  const [manualAnswer, setManualAnswer] = useState("");
+
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (interviewStarted && !isEndingInterview) {
+        event.preventDefault();
+        event.returnValue = ''; // Standard for browser to show a confirmation dialog
+        return ''; // For some older browsers
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [interviewStarted, isEndingInterview]);
+
+  useEffect(() => {
+    const handleDisableActions = (event) => {
+      if (interviewStarted) { // Only disable if interview has started
+        if (event.type === 'contextmenu') {
+          event.preventDefault();
+        } else if (event.type === 'keydown') {
+          // Disable Ctrl+C, Ctrl+V, Cmd+C, Cmd+V
+          const isCtrlC = (event.ctrlKey || event.metaKey) && event.key === 'c';
+          const isCtrlV = (event.ctrlKey || event.metaKey) && event.key === 'v';
+          if (isCtrlC || isCtrlV) {
+            event.preventDefault();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('contextmenu', handleDisableActions);
+    window.addEventListener('keydown', handleDisableActions);
+
+    return () => {
+      window.removeEventListener('contextmenu', handleDisableActions);
+      window.removeEventListener('keydown', handleDisableActions);
+    };
+  }, [interviewStarted]);
 
   const handleStartInterview = async () => {
-    if (isLoadingInterview || questionPrompts.length === 0 || interviewError) {
+    if (isStartingInterview || isLoadingInterview || questionItems.length === 0 || interviewError) {
       return;
     }
-    await initializeStream();
-    setInterviewStarted(true);
-    startInterview();
+    setIsStartingInterview(true);
+
+    try {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.resume();
+      }
+
+      setInterviewStarted(true);
+      startInterview();
+      await initializeStream();
+    } finally {
+      setIsStartingInterview(false);
+    }
   };
 
   const handleEndInterview = async () => {
+    setIsEndingInterview(true);
     cleanup();
     SpeechRecognition.stopListening();
     window.speechSynthesis.cancel();
 
-    const finalTranscript = [
-      ...transcriptMessages,
-      ...(currentTranscript && currentTranscript.trim()
-        ? [{
-            id: Date.now(),
-            speaker: "candidate",
-            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            message: currentTranscript.trim(),
-            isAI: false,
-          }]
-        : []),
-    ];
+    const liveAnswer = (currentTranscript || "").trim();
+    const finalTranscript = transcriptMessages.map((entry, index, arr) => {
+      const isLastPending = !entry.answer && index === arr.length - 1;
+      if (isLastPending && liveAnswer) {
+        return {
+          ...entry,
+          answer: liveAnswer,
+          status: "answered",
+          answeredAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        };
+      }
+      if (isLastPending && !liveAnswer && entry.status === "asked") {
+        return {
+          ...entry,
+          status: "unanswered",
+        };
+      }
+      return entry;
+    });
 
-    setTranscript(finalTranscript);
+    const transcriptByQuestionId = new Map(
+      finalTranscript
+        .filter((entry) => entry?.questionId != null)
+        .map((entry) => [String(entry.questionId), entry])
+    );
+
+    const storageTranscript = questionItems.map((question) => {
+      const questionId = String(question.questionId);
+      const entry = transcriptByQuestionId.get(questionId);
+
+      if (!entry) {
+        return {
+          questionId,
+          answer: "",
+          status: "unanswered",
+          askedAt: null,
+          answeredAt: null,
+        };
+      }
+
+      return {
+        questionId,
+        answer: entry.answer || "",
+        status: entry.status || (entry.answer ? "answered" : "unanswered"),
+        askedAt: entry.askedAt || null,
+        answeredAt: entry.answeredAt || null,
+      };
+    });
+
+    setTranscript(storageTranscript);
 
     try {
       await axios.post(`/api/interview/${interviewId}/transcript`, {
-        transcript: finalTranscript,
+        transcript: storageTranscript,
       });
       setInterviewStarted(false);
       setFullscreenMode(null);
+      router.push("/candidate/dashboard"); // Redirect to candidate dashboard
     } catch (error) {
       console.error("Failed to save transcript:", error);
+      // Optionally, show an error message to the user
+    } finally {
+      setIsEndingInterview(false);
     }
   };
 
   const handleToggleFullscreen = (mode) => {
     setFullscreenMode(fullscreenMode === mode ? null : mode);
   };
+
+  const handleSubmitManualAnswer = () => {
+    const didSubmit = submitManualAnswer(manualAnswer);
+    if (didSubmit) {
+      setManualAnswer("");
+    }
+  };
+
+  useEffect(() => {
+    const handlePushToTalkShortcut = (event) => {
+      const isSpace = event.code === "Space" || event.key === " ";
+      const isWindowsLinuxShortcut = event.ctrlKey && event.altKey;
+      const isMacShortcut = event.metaKey && event.altKey;
+
+      if (!isSpace || (!isWindowsLinuxShortcut && !isMacShortcut)) {
+        return;
+      }
+
+      const target = event.target;
+      const tagName = target?.tagName?.toLowerCase();
+      const isTypingContext =
+        tagName === "input" ||
+        tagName === "textarea" ||
+        target?.isContentEditable;
+
+      if (isTypingContext) {
+        return;
+      }
+
+      if (!interviewStarted || !hasStarted || !supportsSpeechRecognition || !candidateStream) {
+        return;
+      }
+
+      event.preventDefault();
+      toggleListening();
+    };
+
+    window.addEventListener("keydown", handlePushToTalkShortcut);
+    return () => {
+      window.removeEventListener("keydown", handlePushToTalkShortcut);
+    };
+  }, [
+    interviewStarted,
+    hasStarted,
+    supportsSpeechRecognition,
+    candidateStream,
+    toggleListening,
+  ]);
+
+  if (isEndingInterview) {
+    return (
+      <div className="flex items-center justify-center h-full m-auto px-4">
+        <div className="flex flex-col items-center text-center space-y-4 bg-background border rounded-2xl shadow-sm p-8 max-w-md w-full">
+
+          {/* Status Icon */}
+          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-100 text-green-600">
+            <CircleCheck className="w-7 h-7" />
+          </div>
+
+          {/* Title */}
+          <h2 className="text-xl font-semibold tracking-tight">
+            Interview Completed
+          </h2>
+
+          {/* Description */}
+          <p className="text-sm text-muted-foreground">
+            Thank you for participating. Your responses have been successfully submitted.
+          </p>
+
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
@@ -824,7 +1264,7 @@ export default function InterviewLayout() {
                     <div className="h-2 w-2 rounded-full bg-primary mr-1"></div>
                     <span className="hidden sm:inline">Recording</span>
                   </Badge>
-                  {isListening && (
+                  {isListening && supportsSpeechRecognition && (
                     <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
                       <div className="h-2 w-2 rounded-full bg-green-500 mr-1 animate-pulse"></div>
                       <span className="hidden sm:inline">Transcribing</span>
@@ -837,6 +1277,17 @@ export default function InterviewLayout() {
         </div>
       </header>
 
+      {!browserSupportsSpeechRecognition && (
+        <div className="px-3 sm:px-4 py-2">
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Speech-to-text is not supported in this browser. You can continue the interview by typing answers.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
       {interviewError && (
         <div className="px-3 sm:px-4 py-2">
           <Alert variant="destructive">
@@ -845,12 +1296,21 @@ export default function InterviewLayout() {
           </Alert>
         </div>
       )}
+      {speechError && (
+        <div className="px-3 sm:px-4 py-2">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{speechError}</AlertDescription>
+          </Alert>
+        </div>
+      )}
 
       <main className="flex-1 overflow-hidden p-2 sm:p-3 md:p-4 ">
         {!interviewStarted ? (
           <StartInterviewScreen
             onStartInterview={handleStartInterview}
-            isInitializing={isInitializing || isLoadingInterview}
+            isInitializing={isStartingInterview || isInitializing || isLoadingInterview}
+            isReadyToStart={!isLoadingInterview && !interviewError && questionItems.length > 0}
             permissionError={permissionError}
           />
         ):(
@@ -891,6 +1351,10 @@ export default function InterviewLayout() {
                   isSpeaking={isSpeaking}
                   isListening={isListening}
                   currentTranscript={currentTranscript}
+                  supportsSpeechRecognition={supportsSpeechRecognition}
+                  manualAnswer={manualAnswer}
+                  onManualAnswerChange={setManualAnswer}
+                  onManualAnswerSubmit={handleSubmitManualAnswer}
                 />
               </div>
             </div>
@@ -935,6 +1399,10 @@ export default function InterviewLayout() {
                   isSpeaking={isSpeaking}
                   isListening={isListening}
                   currentTranscript={currentTranscript}
+                  supportsSpeechRecognition={supportsSpeechRecognition}
+                  manualAnswer={manualAnswer}
+                  onManualAnswerChange={setManualAnswer}
+                  onManualAnswerSubmit={handleSubmitManualAnswer}
                 />
               </div>
             </div>
@@ -975,6 +1443,10 @@ export default function InterviewLayout() {
                   isSpeaking={isSpeaking}
                   isListening={isListening}
                   currentTranscript={currentTranscript}
+                  supportsSpeechRecognition={supportsSpeechRecognition}
+                  manualAnswer={manualAnswer}
+                  onManualAnswerChange={setManualAnswer}
+                  onManualAnswerSubmit={handleSubmitManualAnswer}
                 />
               </div>
             </div>
@@ -985,12 +1457,16 @@ export default function InterviewLayout() {
       {interviewStarted && (
         <ControlBar
           onEndInterview={handleEndInterview}
+          isEndingInterview={isEndingInterview}
           hasStream={!!candidateStream}
           isListening={isListening}
           onToggleListening={toggleListening}
+          onSkipQuestion={skipCurrentQuestion}
+          canSkipQuestion={canSkipCurrentQuestion}
           isSpeaking={isSpeaking}
           hasStarted={hasStarted}
           onStartInterview={startInterview}
+          supportsSpeechRecognition={supportsSpeechRecognition}
         />
       )}
     </div>

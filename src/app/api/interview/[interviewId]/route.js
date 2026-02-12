@@ -17,31 +17,49 @@ export async function GET(request, { params }) {
     );
   }
 
-  await connect();
   const { interviewId } = await params;
 
-  const interview = await Interview.findOne({ _id: interviewId, candidateId: authResult.userId})
-    .populate("assessmentId");
-
-  const candidate = await Candidate.findOne({ userId: authResult.userId });
-
-  if (!interview) {
+  if (!interviewId) {
     return NextResponse.json(
-      { error: "Interview not found." },
-      { status: 404 }
+      { error: "Missing interviewId." },
+      { status: 400 }
     );
   }
 
-  return NextResponse.json(
-    {
-      jobId: interview.jobId,
-      candidate,
-      questions: interview.assessmentId?.questions,
-      status: interview.status,
-      startAt: interview.startAt,
-      endAt: interview.endAt,
-      duration: interview.duration
-    },
-    { status: 200 }
-  );
+  try {
+    await connect();
+
+    const interview = await Interview.findOne({
+      _id: interviewId,
+      "candidates.candidateId": authResult.userId,
+    }).populate("assessmentId");
+
+    const candidate = await Candidate.findOne({ userId: authResult.userId });
+
+    if (!interview) {
+      return NextResponse.json(
+        { error: "Interview not found." },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        jobId: interview.jobId,
+        candidate,
+        questions: interview.assessmentId?.questions,
+        status: interview.status,
+        startAt: interview.startAt,
+        endAt: interview.endAt,
+        duration: interview.duration,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error fetching interview details:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error", details: error.message },
+      { status: 500 }
+    );
+  }
 }
