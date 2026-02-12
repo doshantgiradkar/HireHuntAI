@@ -227,6 +227,15 @@ export async function POST(request, { params }) {
       }
     );
 
+    // Update candidate status to 'completed'
+    await Interview.updateOne(
+      { _id: interviewId },
+      { $set: { "candidates.$[cand].status": "completed" } },
+      {
+        arrayFilters: [{ "cand.candidateId": authResult.userId }],
+      }
+    );
+
     if (!scoreUpdateResult?.matchedCount) {
       return NextResponse.json(
         { error: "Interview found but score update target was not matched." },

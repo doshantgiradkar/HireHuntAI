@@ -39,7 +39,12 @@ const candidateSubSchema = new mongoose.Schema({
   matchScore: { type: Number, default: 0 },
   feedback: { type: String },
   interviewScore: { type: Number, default: 0, min: 0, max: 100 },
-  transcript: { type: [transcriptMessageSchema], default: [] }
+  transcript: { type: [transcriptMessageSchema], default: [] },
+  status: {
+    type: String,
+    enum: ['scheduled', 'in-progress', 'completed'],
+    default: 'scheduled'
+  },
 }, { _id: false });
 
 const interviewSessionSchema = new mongoose.Schema({
@@ -58,11 +63,6 @@ const interviewSessionSchema = new mongoose.Schema({
   candidates: {
     type: [candidateSubSchema],
     required: true
-  },
-  status: {
-    type: String,
-    enum: ['scheduled', 'in-progress', 'completed'],
-    default: 'scheduled'
   },
   startAt: {
     type: Date,

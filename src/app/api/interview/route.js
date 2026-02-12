@@ -25,9 +25,25 @@ export async function GET() {
           "candidates.candidateId": authResult.userId,
         },
       },
+
+      // keep only the matched candidate inside candidates array
+      {
+        $addFields: {
+          candidates: {
+            $filter: {
+              input: "$candidates",
+              as: "candidate",
+              cond: {
+                $eq: ["$$candidate.candidateId", authResult.userId],
+              },
+            },
+          },
+        },
+      },
+
       {
         $lookup: {
-          from: "jobs",          // collection name (NOT model name)
+          from: "jobs",
           localField: "jobId",
           foreignField: "_id",
           as: "job",

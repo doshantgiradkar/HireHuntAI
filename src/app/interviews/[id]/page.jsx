@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
 import {
   MicOff,
@@ -46,6 +46,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import StartInterviewScreen from "@/components/start-interview-screen";
+import { Circle } from "lucide-react";
+import { CircleCheck } from "lucide-react";
 
 /* -------------------------------------------------------------------------- */
 /*                          Speech Recognition Data                           */
@@ -755,6 +757,7 @@ function TranscriptPanel({
 /*                                Control Bar                                 */
 function ControlBar({
   onEndInterview,
+  isEndingInterview,
   hasStream,
   isListening,
   onToggleListening,
@@ -873,8 +876,12 @@ function ControlBar({
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={onEndInterview} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    End Interview
+                  <AlertDialogAction
+                    onClick={onEndInterview}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    disabled={isEndingInterview}
+                  >
+                    {isEndingInterview ? "Ending..." : "End Interview"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -892,15 +899,16 @@ function ControlBar({
 
 export default function InterviewLayout() {
   const params = useParams();
-  const searchParams = useSearchParams();
+  const router = useRouter();
   const interviewId = params?.id;
-  const jobIdFromQuery = searchParams?.get("jobId");
+  const jobIdFromQuery = useSearchParams()?.get("jobId");
   const [questions, setQuestions] = useState([]);
   const [candidate, setCandidate] = useState(null);
   const [transcript, setTranscript] = useState([]);
   const [isLoadingInterview, setIsLoadingInterview] = useState(true);
   const [interviewError, setInterviewError] = useState(null);
   const [isStartingInterview, setIsStartingInterview] = useState(false);
+  const [isEndingInterview, setIsEndingInterview] = useState(false);
 
   const questionItems = useMemo(() => {
     if (!Array.isArray(questions)) {
@@ -1022,6 +1030,47 @@ export default function InterviewLayout() {
   const [interviewStarted, setInterviewStarted] = useState(false);
   const [manualAnswer, setManualAnswer] = useState("");
 
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (interviewStarted && !isEndingInterview) {
+        event.preventDefault();
+        event.returnValue = ''; // Standard for browser to show a confirmation dialog
+        return ''; // For some older browsers
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [interviewStarted, isEndingInterview]);
+
+  useEffect(() => {
+    const handleDisableActions = (event) => {
+      if (interviewStarted) { // Only disable if interview has started
+        if (event.type === 'contextmenu') {
+          event.preventDefault();
+        } else if (event.type === 'keydown') {
+          // Disable Ctrl+C, Ctrl+V, Cmd+C, Cmd+V
+          const isCtrlC = (event.ctrlKey || event.metaKey) && event.key === 'c';
+          const isCtrlV = (event.ctrlKey || event.metaKey) && event.key === 'v';
+          if (isCtrlC || isCtrlV) {
+            event.preventDefault();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('contextmenu', handleDisableActions);
+    window.addEventListener('keydown', handleDisableActions);
+
+    return () => {
+      window.removeEventListener('contextmenu', handleDisableActions);
+      window.removeEventListener('keydown', handleDisableActions);
+    };
+  }, [interviewStarted]);
+
   const handleStartInterview = async () => {
     if (isStartingInterview || isLoadingInterview || questionItems.length === 0 || interviewError) {
       return;
@@ -1043,6 +1092,7 @@ export default function InterviewLayout() {
   };
 
   const handleEndInterview = async () => {
+    setIsEndingInterview(true);
     cleanup();
     SpeechRecognition.stopListening();
     window.speechSynthesis.cancel();
@@ -1104,8 +1154,12 @@ export default function InterviewLayout() {
       });
       setInterviewStarted(false);
       setFullscreenMode(null);
+      router.push("/candidate/dashboard"); // Redirect to candidate dashboard
     } catch (error) {
       console.error("Failed to save transcript:", error);
+      // Optionally, show an error message to the user
+    } finally {
+      setIsEndingInterview(false);
     }
   };
 
@@ -1160,6 +1214,31 @@ export default function InterviewLayout() {
     candidateStream,
     toggleListening,
   ]);
+
+  if (isEndingInterview) {
+    return (
+      <div className="flex items-center justify-center h-full m-auto px-4">
+        <div className="flex flex-col items-center text-center space-y-4 bg-background border rounded-2xl shadow-sm p-8 max-w-md w-full">
+
+          {/* Status Icon */}
+          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-100 text-green-600">
+            <CircleCheck className="w-7 h-7" />
+          </div>
+
+          {/* Title */}
+          <h2 className="text-xl font-semibold tracking-tight">
+            Interview Completed
+          </h2>
+
+          {/* Description */}
+          <p className="text-sm text-muted-foreground">
+            Thank you for participating. Your responses have been successfully submitted.
+          </p>
+
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
@@ -1378,6 +1457,7 @@ export default function InterviewLayout() {
       {interviewStarted && (
         <ControlBar
           onEndInterview={handleEndInterview}
+          isEndingInterview={isEndingInterview}
           hasStream={!!candidateStream}
           isListening={isListening}
           onToggleListening={toggleListening}
