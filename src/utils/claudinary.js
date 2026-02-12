@@ -84,3 +84,56 @@ export const uploadLogo = async (filePath) =>
 
 export const deleteLogo = async (url) =>
   deleteFromCloudinary(url, "image");
+
+
+export const uploadOfferLetter = async (
+  pdfBuffer,
+  { folder = "offer_letters", resource_type = "raw" } = {}
+) => {
+  if (!pdfBuffer || !Buffer.isBuffer(pdfBuffer)) {
+    throw new Error("A valid PDF buffer is required");
+  }
+
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: `hirehuntai/${folder}`,
+        resource_type,
+        use_filename: true,
+        unique_filename: true,
+        timeout: 120000,
+      },
+      (error, result) => {
+        if (error) {
+          console.error("Cloudinary Offer Letter Upload Failed:", error);
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+    uploadStream.end(pdfBuffer);
+  });
+};
+
+
+export const deleteOfferLetter = async (url) => {
+  if (!url) return null;
+
+  try {
+    // Extract public ID from URL (same logic as deleteResume)
+    const parts = url.split("/");
+    const uploadIndex = parts.findIndex((p) => p === "upload");
+    const publicIdWithExt = parts
+      .slice(uploadIndex + 2)
+      .join("/")
+      .split(".")[0];
+
+    return await cloudinary.uploader.destroy(publicIdWithExt, {
+      resource_type: "raw",
+    });
+  } catch (error) {
+    console.error("Cloudinary Offer Letter Delete Error:", error);
+    throw error;
+  }
+};
