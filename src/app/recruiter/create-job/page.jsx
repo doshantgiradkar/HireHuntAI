@@ -30,6 +30,8 @@ import { Separator } from "@/components/ui/separator";
 import {
   CalendarDays,
   X,
+  Check,
+  ChevronsUpDown,
   Briefcase,
   MapPin,
   DollarSign,
@@ -43,6 +45,10 @@ export default function CreateJobPost() {
   const setTitle = useHeader((s) => s.setTitle);
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [skillInput, setSkillInput] = useState("");
+  const [skillOptions, setSkillOptions] = useState([]);
+  const [isSkillsLoading, setIsSkillsLoading] = useState(false);
+  const [showSkillOptions, setShowSkillOptions] = useState(false);
+  const [highlightedSkillIndex, setHighlightedSkillIndex] = useState(0);
   const [date, setDate] = useState(null);
   const [formData, setFormData] = useState({
     jobTitle: "",
@@ -63,23 +69,106 @@ export default function CreateJobPost() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const addSkill = () => {
-    if (skillInput.trim() && !selectedSkills.includes(skillInput.trim())) {
-      setSelectedSkills([...selectedSkills, skillInput.trim()]);
-      setSkillInput("");
-    }
+  const addSkill = (skillLabel) => {
+    const normalizedLabel = (skillLabel || "").trim();
+    if (!normalizedLabel) return;
+
+    setSelectedSkills((prev) => {
+      const alreadySelected = prev.some(
+        (skill) => skill.toLowerCase() === normalizedLabel.toLowerCase(),
+      );
+      if (alreadySelected) return prev;
+      return [...prev, normalizedLabel];
+    });
+
+    setSkillInput("");
+    setSkillOptions([]);
+    setShowSkillOptions(false);
+    setHighlightedSkillIndex(0);
   };
 
   const removeSkill = (skillToRemove) => {
     setSelectedSkills(
-      selectedSkills.filter((skill) => skill !== skillToRemove)
+      selectedSkills.filter((skill) => skill !== skillToRemove),
     );
   };
 
+  const isSkillAlreadySelected = (label) =>
+    selectedSkills.some(
+      (skill) => skill.toLowerCase() === String(label).toLowerCase(),
+    );
+
+  useEffect(() => {
+    const q = skillInput.trim();
+    if (!q) {
+      setSkillOptions([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        setIsSkillsLoading(true);
+        const res = await axios.get("/api/skills", {
+          params: { q, limit: 5 },
+          withCredentials: true,
+          signal: controller.signal,
+        });
+        setSkillOptions(Array.isArray(res.data) ? res.data : []);
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setSkillOptions([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsSkillsLoading(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [skillInput]);
+
+  useEffect(() => {
+    setHighlightedSkillIndex(0);
+  }, [skillOptions, showSkillOptions]);
+
+  const addFirstSkillFromList = () => {
+    if (skillOptions.length === 0) return;
+    addSkill(skillOptions[0]?.label);
+  };
+
   const handleKeyDown = (e) => {
+    if (e.key === "Escape") {
+      setShowSkillOptions(false);
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (!showSkillOptions) {
+        setShowSkillOptions(true);
+        return;
+      }
+      setHighlightedSkillIndex((prev) =>
+        Math.min(prev + 1, Math.max(skillOptions.length - 1, 0)),
+      );
+      return;
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedSkillIndex((prev) => Math.max(prev - 1, 0));
+      return;
+    }
+
     if (e.key === "Enter") {
       e.preventDefault();
-      addSkill();
+      if (!showSkillOptions || skillOptions.length === 0) return;
+      addFirstSkillFromList();
     }
   };
 
@@ -101,12 +190,12 @@ export default function CreateJobPost() {
         applicationDeadline: date ? date.toISOString() : null,
         status: "Open",
       };
-      console.log(payload)
+      console.log(payload);
       const res = await axios.post("/api/job", payload, {
         withCredentials: true,
       });
 
-      window.location.href = '/recruiter/jobs'
+      window.location.href = "/recruiter/jobs";
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("Publish error:", {
@@ -370,18 +459,85 @@ export default function CreateJobPost() {
                 <Label htmlFor="skills">
                   Required Skills <span className="text-destructive">*</span>
                 </Label>
-                <div className="flex gap-2">
+                <div className="relative">
                   <Input
                     id="skills"
-                    placeholder="Type a skill and press Enter"
+                    placeholder="Search and select required skills"
                     value={skillInput}
-                    onChange={(e) => setSkillInput(e.target.value)}
+                    onChange={(e) => {
+                      setSkillInput(e.target.value);
+                      setShowSkillOptions(true);
+                    }}
+                    onFocus={() => setShowSkillOptions(true)}
+                    onBlur={() => {
+                      setTimeout(() => setShowSkillOptions(false), 120);
+                    }}
                     onKeyDown={handleKeyDown}
                     className="flex-1"
                   />
-                  <Button type="button" onClick={addSkill} variant="secondary">
-                    Add
-                  </Button>
+                  <ChevronsUpDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                  {showSkillOptions && skillInput.trim() && (
+                    <div className="absolute z-20 mt-1 w-full rounded-md border border-border bg-popover text-popover-foreground shadow-md">
+                      {isSkillsLoading && (
+                        <p className="px-3 py-2 text-sm text-muted-foreground">
+                          Searching...
+                        </p>
+                      )}
+
+                      {!isSkillsLoading && skillOptions.length === 0 && (
+                        <p className="px-3 py-2 text-sm text-muted-foreground">
+                          No matching skills found
+                        </p>
+                      )}
+
+                      {!isSkillsLoading &&
+                        skillOptions.map((skillOption, index) => {
+                          const alreadySelected = isSkillAlreadySelected(
+                            skillOption.label,
+                          );
+                          const isHighlighted = highlightedSkillIndex === index;
+
+                          return (
+                            <button
+                              key={skillOption.key}
+                              type="button"
+                              className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors ${
+                                isHighlighted
+                                  ? "bg-accent text-accent-foreground"
+                                  : ""
+                              } ${
+                                alreadySelected
+                                  ? "opacity-60 cursor-not-allowed"
+                                  : "hover:bg-accent hover:text-accent-foreground"
+                              }`}
+                              onMouseDown={(e) => e.preventDefault()}
+                              onMouseEnter={() =>
+                                setHighlightedSkillIndex(index)
+                              }
+                              onClick={() => {
+                                if (alreadySelected) return;
+                                addSkill(skillOption.label);
+                              }}
+                              aria-disabled={alreadySelected}
+                            >
+                              <span>{skillOption.label}</span>
+                              {alreadySelected && (
+                                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Check className="h-3 w-3" />
+                                  Added
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      {!isSkillsLoading && skillOptions.length > 0 && (
+                        <p className="border-t px-3 py-2 text-xs text-muted-foreground">
+                          Press Enter to select first suggestion
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
                 {selectedSkills.length > 0 && (
                   <div className="flex flex-wrap gap-2 pt-2">

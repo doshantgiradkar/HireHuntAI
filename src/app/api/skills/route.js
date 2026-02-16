@@ -8,6 +8,17 @@ function escapeRegex(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function normalizeKey(value = "") {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\+/g, "p")
+    .replace(/#/g, "sharp")
+    .replace(/&/g, "and")
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-");
+}
+
 export async function GET(req) {
   const authResult = await checkAuth({
     allowedRoles: ["recruiter", "candidate"],
@@ -27,11 +38,18 @@ export async function GET(req) {
 
     const { searchParams } = new URL(req.url);
     const rawQuery = (searchParams.get("q") || "").trim();
+    const parsedLimit = Number.parseInt(searchParams.get("limit") || "", 10);
+    const limit = Number.isFinite(parsedLimit)
+      ? Math.min(Math.max(parsedLimit, 1), 20)
+      : rawQuery
+        ? 5
+        : 20;
+
     if (!rawQuery) {
-      // return first 20 skills if no query
+      // return first skills if no query
       const allSkills = await skillsModel
         .find()
-        .limit(20)
+        .limit(limit)
         .select("key label -_id")
         .lean();
       return NextResponse.json(allSkills);
@@ -82,8 +100,10 @@ export async function GET(req) {
     // Sort descending by relevance score
     scoredSkills.sort((a, b) => b.score - a.score);
 
-    // Return top 20 matches, remove score from response
-    const topSkills = scoredSkills.slice(0, 20).map(({ score, ...rest }) => rest);
+    // Return top matches, remove score from response
+    const topSkills = scoredSkills
+      .slice(0, limit)
+      .map(({ score, ...rest }) => rest);
 
     return NextResponse.json(topSkills);
   } catch (error) {
@@ -94,7 +114,6 @@ export async function GET(req) {
     );
   }
 }
-
 
 export async function POST(req) {
   const authResult = await checkAuth({
@@ -127,10 +146,7 @@ export async function POST(req) {
 
     // Check if skill already exists by key or aliases
     const existingSkill = await skillsModel.findOne({
-      $or: [
-        { key },
-        { aliases: { $in: [key] } },
-      ],
+      $or: [{ key }, { aliases: { $in: [key] } }],
     });
 
     if (existingSkill) {
