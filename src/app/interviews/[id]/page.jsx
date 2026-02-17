@@ -1,11 +1,10 @@
 "use client"
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import SpeechRecognition, {
-  useSpeechRecognition,
-} from "react-speech-recognition";
+import { useSpeech } from "@/hooks/useSpeech";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
 import {
+  Mic,
   MicOff,
   VideoOff,
   PhoneOff,
@@ -24,6 +23,7 @@ import {
   Play,
   SkipForward,
   Send,
+  RotateCcw,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,16 +34,16 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import StartInterviewScreen from "@/components/start-interview-screen";
 import { Circle } from "lucide-react";
@@ -55,99 +55,116 @@ import { CircleCheck } from "lucide-react";
 
 const initialTranscriptData = [];
 
-/*                          Speech Recognition Hook                           */
-function useInterviewSpeechRecognition(questions = []) {
-  const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
+/* -------------------------------------------------------------------------- */
+/*                    Interview Speech Recognition Hook                       */
+/* -------------------------------------------------------------------------- */
+/*
+ * State machine:
+ *   IDLE  -->  SPEAKING_QUESTION  -->  LISTENING_ANSWER  -->  SPEAKING_QUESTION ...
+ *
+ * - SPEAKING_QUESTION: AI reads the question aloud (mic is OFF).
+ * - LISTENING_ANSWER:  Mic is ON, user speaks. Transcript accumulates.
+ *   The user clicks "Submit" / "Skip" to finalise and advance.
+ *   The toggle button only pauses/resumes the mic; it does NOT advance.
+ */
+function useInterviewSpeechRecognition(questions = [], onAllQuestionsCompleted = null) {
+  const {
+    isListening,
+    isSpeaking,
+    transcript,
+    sttSupported,
+    ttsSupported,
+    error: speechError,
+    startListening,
+    stopListening,
+    resetTranscript,
+    speak,
+    cancelSpeech,
+    warmup,
+  } = useSpeech();
 
   const questionList = Array.isArray(questions) ? questions : [];
-  const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [speechError, setSpeechError] = useState(null);
-  const [transcriptMessages, setTranscriptMessages] = useState(initialTranscriptData);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [lastAskedQuestionIndex, setLastAskedQuestionIndex] = useState(-1);
-  const [currentTranscript, setCurrentTranscript] = useState("");
-  const [hasStarted, setHasStarted] = useState(false);
-  const transcriptRef = useRef("");
-  const currentTranscriptRef = useRef("");
-  useEffect(() => {
-    if (!hasStarted) {
-      setCurrentQuestionIndex(0);
-      setLastAskedQuestionIndex(-1);
-      setTranscriptMessages(initialTranscriptData);
-    }
-  }, [hasStarted, questionList]);
 
+  /* ---- state ---- */
+  const [transcriptMessages, setTranscriptMessages] = useState(initialTranscriptData);
+  const [hasStarted, setHasStarted] = useState(false);
+  const [currentTranscript, setCurrentTranscript] = useState("");
+
+  /* ---- refs for values accessed inside async/callbacks ---- */
+  const questionIndexRef = useRef(0);           // next question to ask
+  const isBusySpeakingRef = useRef(false);       // true while AI is speaking
+  const hasStartedRef = useRef(false);
+
+  /* sync transcript from hook into local state */
   useEffect(() => {
     setCurrentTranscript(transcript);
-    transcriptRef.current = transcript;
   }, [transcript]);
 
-  useEffect(() => {
-    currentTranscriptRef.current = currentTranscript;
-  }, [currentTranscript]);
-
+  /* ---- helpers ---- */
   const getQuestionMeta = useCallback((index) => {
     const item = questionList[index];
-    if (!item) {
-      return null;
-    }
-
+    if (!item) return null;
     if (typeof item === "string") {
       return { questionId: String(index + 1), text: item };
     }
-
     const questionId =
-      item?.questionId != null
-        ? String(item.questionId)
-        : item?._id != null
-          ? String(item._id)
-          : String(index + 1);
-
+      item?.questionId != null ? String(item.questionId) :
+      item?._id != null        ? String(item._id) :
+      String(index + 1);
     const text = typeof item?.text === "string" ? item.text : "";
     return { questionId, text };
   }, [questionList]);
 
-  const startListening = () => {
-    if (!browserSupportsSpeechRecognition) {
-      setIsListening(false);
-      return;
+  /* ---- core: speak a question, await it, then open the mic ---- */
+  const askQuestion = useCallback(async (index) => {
+    if (index >= questionList.length) return;
+    const meta = getQuestionMeta(index);
+    if (!meta?.text) return;
+
+    // 1. Stop mic while AI speaks
+    stopListening();
+
+    // 2. Add question to transcript panel
+    setTranscriptMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        questionId: meta.questionId,
+        questionText: meta.text,
+        answer: "",
+        status: "asked",
+        askedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      },
+    ]);
+
+    // 3. Speak the question and WAIT for it to finish
+    isBusySpeakingRef.current = true;
+    await speak(meta.text);
+    isBusySpeakingRef.current = false;
+
+    // 4. Advance index
+    questionIndexRef.current = index + 1;
+
+    // 5. Clear previous answer transcript and open mic
+    resetTranscript();
+    if (hasStartedRef.current && sttSupported) {
+      startListening();
     }
+  }, [questionList, getQuestionMeta, speak, stopListening, startListening, resetTranscript, sttSupported]);
 
-    setSpeechError(null);
-    Promise.resolve(
-      SpeechRecognition.startListening({ continuous: true, language: "en-US", interimResults: true })
-    )
-      .then(() => {
-        setIsListening(true);
-      })
-      .catch((error) => {
-        console.error("Speech recognition start failed:", error);
-        setIsListening(false);
-        setSpeechError("Speech-to-text could not start. Check mic permission and browser settings.");
-      });
-  };
-
-  const setAnswerForLastPendingQuestion = useCallback((answerText, status = "answered") => {
-    const normalizedAnswer = String(answerText || "").trim();
+  /* ---- set answer on last pending question ---- */
+  const setAnswerForLastPending = useCallback((answerText, status = "answered") => {
+    const normalised = String(answerText || "").trim();
     setTranscriptMessages((prev) => {
-      let targetIndex = -1;
-
-      for (let i = prev.length - 1; i >= 0; i -= 1) {
-        if (!prev[i]?.answer) {
-          targetIndex = i;
-          break;
-        }
+      let idx = -1;
+      for (let i = prev.length - 1; i >= 0; i--) {
+        if (!prev[i]?.answer) { idx = i; break; }
       }
-
-      if (targetIndex === -1) {
-        return prev;
-      }
-
+      if (idx === -1) return prev;
       const updated = [...prev];
-      updated[targetIndex] = {
-        ...updated[targetIndex],
-        answer: normalizedAnswer,
+      updated[idx] = {
+        ...updated[idx],
+        answer: normalised,
         status,
         answeredAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
@@ -155,187 +172,110 @@ function useInterviewSpeechRecognition(questions = []) {
     });
   }, []);
 
-  const stopListening = () => {
-    if (!browserSupportsSpeechRecognition) {
-      return;
-    }
+  /* ---- public API ---- */
 
-    SpeechRecognition.stopListening();
-    setIsListening(false);
+  const startInterview = useCallback(() => {
+    setHasStarted(true);
+    hasStartedRef.current = true;
+    questionIndexRef.current = 0;
 
-    // Allow STT engine to flush final transcript chunk before reading.
+    // MUST be called synchronously inside the click handler
+    // to unlock the audio context in Chromium browsers.
+    warmup();
+
+    // Small delay, then ask the first question
     setTimeout(() => {
-      const transcriptToSave = (transcriptRef.current || currentTranscriptRef.current || "").trim();
+      askQuestion(0);
+    }, 600);
+  }, [askQuestion, warmup]);
 
-      if (!transcriptToSave) {
-        return;
+  const submitAnswer = useCallback((answerText) => {
+    const cleaned = String(answerText || "").trim();
+    if (!cleaned) return false;
+
+    const last = transcriptMessages[transcriptMessages.length - 1];
+    if (!last || last.answer) return false;
+
+    // Stop mic & save
+    stopListening();
+    setAnswerForLastPending(cleaned, "answered");
+    resetTranscript();
+
+    // Ask next question after a beat
+    const nextIdx = questionIndexRef.current;
+    if (nextIdx < questionList.length) {
+      setTimeout(() => askQuestion(nextIdx), 600);
+    } else {
+      // AUTO SUBMIT: Current question was the last one
+      if (onAllQuestionsCompleted) {
+        setTimeout(() => onAllQuestionsCompleted(), 1000);
       }
-
-      setAnswerForLastPendingQuestion(transcriptToSave, "answered");
-      resetTranscript();
-      setCurrentTranscript("");
-      transcriptRef.current = "";
-      currentTranscriptRef.current = "";
-
-      const nextQuestionIndex = Math.max(currentQuestionIndex, lastAskedQuestionIndex + 1);
-      setTimeout(() => {
-        if (nextQuestionIndex < questionList.length) {
-          speakNextQuestion(nextQuestionIndex);
-        }
-      }, 500);
-    }, 300);
-  };
-
-  const toggleListening = () => {
-    if (!browserSupportsSpeechRecognition) {
-      return;
     }
+  }, [transcriptMessages, stopListening, resetTranscript, setAnswerForLastPending, questionList.length, askQuestion, onAllQuestionsCompleted]);
 
+  const skipCurrentQuestion = useCallback(() => {
+    if (!hasStartedRef.current || isBusySpeakingRef.current) return;
+    const last = transcriptMessages[transcriptMessages.length - 1];
+    if (!last || last.answer) return;
+
+    stopListening();
+    resetTranscript();
+    setAnswerForLastPending("[Unanswered - Skipped]", "unanswered");
+
+    const nextIdx = questionIndexRef.current;
+    if (nextIdx < questionList.length) {
+      setTimeout(() => askQuestion(nextIdx), 600);
+    } else {
+      // AUTO SUBMIT: Skipped the last question
+      if (onAllQuestionsCompleted) {
+        setTimeout(() => onAllQuestionsCompleted(), 1000);
+      }
+    }
+  }, [transcriptMessages, stopListening, resetTranscript, setAnswerForLastPending, questionList.length, askQuestion, onAllQuestionsCompleted]);
+
+  /**
+   * Toggle only pauses/resumes the mic.
+   * It does NOT submit the answer or advance the question.
+   */
+  const toggleListening = useCallback(() => {
+    if (!sttSupported) return;
     if (isListening) {
       stopListening();
     } else {
       startListening();
     }
-  };
+  }, [sttSupported, isListening, stopListening, startListening]);
 
-  const submitManualAnswer = useCallback((answerText) => {
-    const cleanedAnswer = String(answerText || "").trim();
-    if (!cleanedAnswer) {
-      return false;
-    }
+  /**
+   * "Submit current voice answer" — reads whatever has been
+   * accumulated in the transcript, saves it, moves on.
+   */
+  const submitVoiceAnswer = useCallback(() => {
+    const answer = transcript.trim();
+    if (!answer) return false;
+    return submitAnswer(answer);
+  }, [transcript, submitAnswer]);
 
-    const lastMessage = transcriptMessages[transcriptMessages.length - 1];
-    if (!lastMessage || lastMessage.answer) {
-      return false;
-    }
-
-    setAnswerForLastPendingQuestion(cleanedAnswer, "answered");
-
-    const nextQuestionIndex = Math.max(currentQuestionIndex, lastAskedQuestionIndex + 1);
-    setTimeout(() => {
-      if (nextQuestionIndex < questionList.length) {
-        speakNextQuestion(nextQuestionIndex);
-      }
-    }, 500);
-
-    return true;
-  }, [currentQuestionIndex, lastAskedQuestionIndex, questionList.length, transcriptMessages, setAnswerForLastPendingQuestion]);
-
-  const skipCurrentQuestion = () => {
-    if (!hasStarted || isSpeaking) {
-      return;
-    }
-
-    const lastMessage = transcriptMessages[transcriptMessages.length - 1];
-    if (!lastMessage || lastMessage.answer) {
-      return;
-    }
-
-    SpeechRecognition.stopListening();
-    setIsListening(false);
+  /**
+   * Restart listening — clears the accumulated transcript
+   * and re-opens the mic from scratch for the current question.
+   */
+  const restartListening = useCallback(() => {
+    if (!sttSupported) return;
+    stopListening();
     resetTranscript();
-    setCurrentTranscript("");
-
-    setAnswerForLastPendingQuestion("[Unanswered - Skipped]", "unanswered");
-
-    const nextQuestionIndex = Math.max(currentQuestionIndex, lastAskedQuestionIndex + 1);
-    if (nextQuestionIndex < questionList.length) {
-      setTimeout(() => {
-        speakNextQuestion(nextQuestionIndex);
-      }, 500);
-    }
-  };
-
-  const startInterview = () => {
-    setHasStarted(true);
-    // Start listening immediately
-    startListening();
-    // Ask first question after a short delay
+    // Small delay to let the browser release the mic
     setTimeout(() => {
-      speakNextQuestion();
-    }, 1000);
-  };
+      startListening();
+    }, 200);
+  }, [sttSupported, stopListening, resetTranscript, startListening]);
 
-  const speakNextQuestion = (indexOverride) => {
-    const questionIndex = Number.isInteger(indexOverride) ? indexOverride : currentQuestionIndex;
-
-    if (questionIndex < questionList.length) {
-      const questionMeta = getQuestionMeta(questionIndex);
-      if (!questionMeta || !questionMeta.text) {
-        return;
-      }
-
-      setTranscriptMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          questionId: questionMeta.questionId,
-          questionText: questionMeta.text,
-          answer: "",
-          status: "asked",
-          askedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
-      setLastAskedQuestionIndex(questionIndex);
-
-      if (typeof window === "undefined" || !window.speechSynthesis) {
-        setSpeechError("Text-to-speech is unavailable in this browser.");
-        setCurrentQuestionIndex(prev => Math.max(prev, questionIndex + 1));
-        return;
-      }
-
-      const availableVoices = window.speechSynthesis.getVoices();
-      const preferredVoice =
-        availableVoices.find((voice) => voice.lang === "en-US") ||
-        availableVoices.find((voice) => voice.lang?.startsWith("en")) ||
-        null;
-
-      const speakAttempt = (isRetry = false) => {
-        const speech = new SpeechSynthesisUtterance(questionMeta.text);
-        speech.lang = "en-US";
-        speech.rate = 1.0;
-        speech.pitch = 1.0;
-        if (preferredVoice && !isRetry) {
-          speech.voice = preferredVoice;
-        }
-
-        speech.onerror = (event) => {
-          const errorCode = event?.error || "unknown";
-          if (!isRetry && errorCode === "synthesis-failed") {
-            window.speechSynthesis.cancel();
-            setTimeout(() => {
-              speakAttempt(true);
-            }, 250);
-            return;
-          }
-
-          console.warn("Speech synthesis failed:", errorCode);
-          setIsSpeaking(false);
-          setSpeechError("Text-to-speech failed. Please check browser sound/autoplay permissions.");
-          setCurrentQuestionIndex(prev => Math.max(prev, questionIndex + 1));
-        };
-
-        speech.onstart = () => {
-          setSpeechError(null);
-          setIsSpeaking(true);
-        };
-        speech.onend = () => {
-          setIsSpeaking(false);
-          setCurrentQuestionIndex(prev => Math.max(prev, questionIndex + 1));
-          // Automatically start listening for user's response
-          if (hasStarted && browserSupportsSpeechRecognition) {
-            setTimeout(() => {
-              startListening();
-            }, 500);
-          }
-        };
-
-        window.speechSynthesis.speak(speech);
-      };
-
-      speakAttempt(false);
-    }
-  };
+  const canSkip =
+    hasStarted &&
+    !isBusySpeakingRef.current &&
+    !isSpeaking &&
+    transcriptMessages.length > 0 &&
+    !transcriptMessages[transcriptMessages.length - 1]?.answer;
 
   return {
     currentTranscript,
@@ -344,21 +284,20 @@ function useInterviewSpeechRecognition(questions = []) {
     isSpeaking,
     speechError,
     hasStarted,
-    browserSupportsSpeechRecognition,
-    startListening,
-    stopListening,
+    browserSupportsSpeechRecognition: sttSupported,
+    supportsSpeechRecognition: sttSupported,
     toggleListening,
-    submitManualAnswer,
+    stopListening,
+    startListening,
+    submitManualAnswer: submitAnswer,
+    submitVoiceAnswer,
     skipCurrentQuestion,
     startInterview,
-    currentQuestionIndex,
-    hasMoreQuestions: currentQuestionIndex < questionList.length,
-    supportsSpeechRecognition: browserSupportsSpeechRecognition,
-    canSkipCurrentQuestion:
-      hasStarted &&
-      !isSpeaking &&
-      transcriptMessages.length > 0 &&
-      !Boolean(transcriptMessages[transcriptMessages.length - 1]?.answer),
+    cancelSpeech,
+    restartListening,
+    currentQuestionIndex: questionIndexRef.current,
+    hasMoreQuestions: questionIndexRef.current < questionList.length,
+    canSkipCurrentQuestion: canSkip,
   };
 }
 
@@ -589,6 +528,8 @@ function TranscriptPanel({
   manualAnswer,
   onManualAnswerChange,
   onManualAnswerSubmit,
+  onSubmitVoiceAnswer,
+  onRestartListening,
 }) {
   const [autoScroll, setAutoScroll] = useState(true);
   const scrollAreaRef = useRef(null);
@@ -628,10 +569,10 @@ function TranscriptPanel({
     return items;
   });
 
-  // Add current speech recognition if available
+  // Show live transcript (what the user is currently saying)
   if (currentTranscript && currentTranscript.trim()) {
     allMessages.push({
-      id: Date.now(),
+      id: "live-transcript",
       speaker: "You",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       message: currentTranscript,
@@ -730,9 +671,35 @@ function TranscriptPanel({
         <div className="border-t p-3 space-y-2 shrink-0">
           <p className="text-xs text-muted-foreground">
             {supportsSpeechRecognition
-              ? "Optional: type and submit your answer manually."
+              ? "Speak your answer or type below. Click 'Submit Voice Answer' when done."
               : "Speech-to-text is unavailable. Type your answer and submit."}
           </p>
+
+          {/* Submit voice answer + Restart buttons */}
+          {supportsSpeechRecognition && (
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={onSubmitVoiceAnswer}
+                disabled={isSpeaking || !currentTranscript?.trim()}
+                variant="default"
+                className="flex-1"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Submit Voice Answer
+              </Button>
+              <Button
+                onClick={onRestartListening}
+                disabled={isSpeaking}
+                variant="outline"
+                size="icon"
+                className="shrink-0"
+                aria-label="Restart listening"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
           <Textarea
             value={manualAnswer}
             onChange={(event) => onManualAnswerChange(event.target.value)}
@@ -822,20 +789,20 @@ function ControlBar({
               </Button>
             )}
 
-            {/* Speech Transcription Button - Different icon to distinguish */}
-            {hasStarted && (
+            {/* Mic toggle - only pauses/resumes mic, does NOT advance question */}
+            {hasStarted && supportsSpeechRecognition && (
               <Button
-                variant={isListening ? "destructive" : "secondary"}
+                variant={isListening ? "default" : "secondary"}
                 size="icon"
                 onClick={onToggleListening}
-                className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full"
-                aria-label={isListening ? "Stop transcription" : "Start transcription"}
-                disabled={!hasStream || !supportsSpeechRecognition}
+                className={`h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full`}
+                aria-label={isListening ? "Mute microphone" : "Unmute microphone"}
+                disabled={isSpeaking}
               >
                 {isListening ? (
-                  <Square className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <Mic className="h-3 w-3 sm:h-4 sm:w-4" />
                 ) : (
-                  <Radio className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <MicOff className="h-3 w-3 sm:h-4 sm:w-4" />
                 )}
               </Button>
             )}
@@ -855,8 +822,8 @@ function ControlBar({
             )}
 
             {/* End Interview Button */}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
+            <Dialog>
+              <DialogTrigger asChild>
                 <Button
                   variant="destructive"
                   size="sm"
@@ -865,27 +832,29 @@ function ControlBar({
                   <PhoneOff className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">End Interview</span>
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>End Interview Session?</AlertDialogTitle>
-                  <AlertDialogDescription>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>End Interview Session?</DialogTitle>
+                  <DialogDescription>
                     This will end the current interview. Your progress and transcript will be saved.
                     Are you sure you want to end the interview?
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button
                     onClick={onEndInterview}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    variant="destructive"
                     disabled={isEndingInterview}
                   >
                     {isEndingInterview ? "Ending..." : "End Interview"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
@@ -1019,12 +988,19 @@ export default function InterviewLayout() {
     hasStarted,
     browserSupportsSpeechRecognition,
     toggleListening,
+    stopListening,
     submitManualAnswer,
+    submitVoiceAnswer,
     skipCurrentQuestion,
     startInterview,
     canSkipCurrentQuestion,
     supportsSpeechRecognition,
-  } = useInterviewSpeechRecognition(questionItems);
+    cancelSpeech,
+    restartListening,
+  } = useInterviewSpeechRecognition(questionItems, () => {
+    // This callback handles the auto-submit
+    handleEndInterview();
+  });
 
   const [fullscreenMode, setFullscreenMode] = useState(null);
   const [interviewStarted, setInterviewStarted] = useState(false);
@@ -1034,8 +1010,8 @@ export default function InterviewLayout() {
     const handleBeforeUnload = (event) => {
       if (interviewStarted && !isEndingInterview) {
         event.preventDefault();
-        event.returnValue = ''; // Standard for browser to show a confirmation dialog
-        return ''; // For some older browsers
+        event.returnValue = '';
+        return '';
       }
     };
 
@@ -1048,11 +1024,10 @@ export default function InterviewLayout() {
 
   useEffect(() => {
     const handleDisableActions = (event) => {
-      if (interviewStarted) { // Only disable if interview has started
+      if (interviewStarted) {
         if (event.type === 'contextmenu') {
           event.preventDefault();
         } else if (event.type === 'keydown') {
-          // Disable Ctrl+C, Ctrl+V, Cmd+C, Cmd+V
           const isCtrlC = (event.ctrlKey || event.metaKey) && event.key === 'c';
           const isCtrlV = (event.ctrlKey || event.metaKey) && event.key === 'v';
           if (isCtrlC || isCtrlV) {
@@ -1078,11 +1053,6 @@ export default function InterviewLayout() {
     setIsStartingInterview(true);
 
     try {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.resume();
-      }
-
       setInterviewStarted(true);
       startInterview();
       await initializeStream();
@@ -1093,9 +1063,9 @@ export default function InterviewLayout() {
 
   const handleEndInterview = async () => {
     setIsEndingInterview(true);
+    stopListening();
+    cancelSpeech();
     cleanup();
-    SpeechRecognition.stopListening();
-    window.speechSynthesis.cancel();
 
     const liveAnswer = (currentTranscript || "").trim();
     const finalTranscript = transcriptMessages.map((entry, index, arr) => {
@@ -1154,10 +1124,9 @@ export default function InterviewLayout() {
       });
       setInterviewStarted(false);
       setFullscreenMode(null);
-      router.push("/candidate/dashboard"); // Redirect to candidate dashboard
+      router.push("/candidate/dashboard");
     } catch (error) {
       console.error("Failed to save transcript:", error);
-      // Optionally, show an error message to the user
     } finally {
       setIsEndingInterview(false);
     }
@@ -1174,46 +1143,9 @@ export default function InterviewLayout() {
     }
   };
 
-  useEffect(() => {
-    const handlePushToTalkShortcut = (event) => {
-      const isSpace = event.code === "Space" || event.key === " ";
-      const isWindowsLinuxShortcut = event.ctrlKey && event.altKey;
-      const isMacShortcut = event.metaKey && event.altKey;
-
-      if (!isSpace || (!isWindowsLinuxShortcut && !isMacShortcut)) {
-        return;
-      }
-
-      const target = event.target;
-      const tagName = target?.tagName?.toLowerCase();
-      const isTypingContext =
-        tagName === "input" ||
-        tagName === "textarea" ||
-        target?.isContentEditable;
-
-      if (isTypingContext) {
-        return;
-      }
-
-      if (!interviewStarted || !hasStarted || !supportsSpeechRecognition || !candidateStream) {
-        return;
-      }
-
-      event.preventDefault();
-      toggleListening();
-    };
-
-    window.addEventListener("keydown", handlePushToTalkShortcut);
-    return () => {
-      window.removeEventListener("keydown", handlePushToTalkShortcut);
-    };
-  }, [
-    interviewStarted,
-    hasStarted,
-    supportsSpeechRecognition,
-    candidateStream,
-    toggleListening,
-  ]);
+  const handleSubmitVoiceAnswer = () => {
+    submitVoiceAnswer();
+  };
 
   if (isEndingInterview) {
     return (
@@ -1242,6 +1174,21 @@ export default function InterviewLayout() {
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
+      {/* Submission Overlay */}
+      <Dialog open={isEndingInterview}>
+        <DialogContent className="sm:max-w-md text-center py-10" showCloseButton={false}>
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <DialogHeader>
+              <DialogTitle className="text-xl">Processing Interview</DialogTitle>
+              <DialogDescription className="text-base pt-2">
+                We're saving your transcript and generating your evaluation results. Please don't close this window.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <header className="border-b bg-card/80 backdrop-blur-sm shrink-0">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1279,10 +1226,10 @@ export default function InterviewLayout() {
 
       {!browserSupportsSpeechRecognition && (
         <div className="px-3 sm:px-4 py-2">
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Speech-to-text is not supported in this browser. You can continue the interview by typing answers.
+          <Alert variant="warning" className="bg-yellow-50 border-yellow-200">
+            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-800">
+              Note: Speech-to-text is not supported by your browser (e.g. Firefox). Please use Chrome, Edge or Thorium for the best experience, or continue by typing.
             </AlertDescription>
           </Alert>
         </div>
@@ -1355,6 +1302,8 @@ export default function InterviewLayout() {
                   manualAnswer={manualAnswer}
                   onManualAnswerChange={setManualAnswer}
                   onManualAnswerSubmit={handleSubmitManualAnswer}
+                  onSubmitVoiceAnswer={handleSubmitVoiceAnswer}
+                  onRestartListening={restartListening}
                 />
               </div>
             </div>
@@ -1403,6 +1352,8 @@ export default function InterviewLayout() {
                   manualAnswer={manualAnswer}
                   onManualAnswerChange={setManualAnswer}
                   onManualAnswerSubmit={handleSubmitManualAnswer}
+                  onSubmitVoiceAnswer={handleSubmitVoiceAnswer}
+                  onRestartListening={restartListening}
                 />
               </div>
             </div>
@@ -1447,6 +1398,8 @@ export default function InterviewLayout() {
                   manualAnswer={manualAnswer}
                   onManualAnswerChange={setManualAnswer}
                   onManualAnswerSubmit={handleSubmitManualAnswer}
+                  onSubmitVoiceAnswer={handleSubmitVoiceAnswer}
+                  onRestartListening={restartListening}
                 />
               </div>
             </div>

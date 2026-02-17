@@ -211,7 +211,7 @@ export async function POST(request, { params }) {
         ? Number(scoreSummary.normalizedScore)
         : Number.isFinite(Number(scoreSummary?.percentage))
           ? Number(scoreSummary.percentage)
-          : 18;
+          : 0;
     const interviewFeedback = buildInterviewFeedback(scoreSummary);
 
     const scoreUpdateResult = await Interview.updateOne(

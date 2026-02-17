@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
-const SCORE_MODEL = "gemini-2.5-flash";
+const SCORE_MODEL = "gemini-1.5-flash";
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
@@ -31,17 +31,19 @@ Return ONLY valid JSON in this exact format:
   ]
 }
 
-Grading rules:
-- For each question, score from 0 to maxScore (inclusive).
-- The modelAnswer is only a reference for expected concepts and correctness.
-- Compare candidateAnswer against modelAnswer semantics, completeness, and technical correctness.
-- feedback must be plain text string (not numeric rating), concise, and actionable.
-- Keep questionId unchanged from input.
+CRITICAL rules:
+- Return one entry per question in the SAME ORDER as the input array.
+- "index" and "questionId" MUST be copied EXACTLY from the input — do NOT modify, truncate, or reformat them.
+- For each question, "awardedScore" must be an integer from 0 to maxScore (inclusive).
+- Compare candidateAnswer against modelAnswer for semantics, completeness, and technical correctness.
+- "feedback" must be a concise, actionable plain text string.
+- Be fair and objective. Award partial credit for partially correct answers.
+- Award 0 only if the answer is completely wrong, irrelevant, or empty.
 
-Assessment Model Object:
+Assessment context:
 ${JSON.stringify(assessment)}
 
-Candidate Answers To Evaluate:
+Questions and answers to evaluate (grade each one):
 ${JSON.stringify(evaluations)}
 `;
 
@@ -190,13 +192,12 @@ export async function calculateInterviewScore({ assessment = null, questions = [
   const totalScore = perQuestion.reduce((sum, row) => sum + row.awardedScore, 0);
   const maxScore = perQuestion.reduce((sum, row) => sum + row.maxScore, 0);
   const percentage = maxScore > 0 ? Number(((totalScore / maxScore) * 100).toFixed(2)) : 0;
-  const normalizedScore = Number((18 + (percentage / 100) * 82).toFixed(2));
 
   return {
     totalScore: Number(totalScore.toFixed(2)),
     maxScore,
     percentage,
-    normalizedScore,
+    normalizedScore: percentage,
     perQuestion,
     engine: scored.engine,
     disqualified: false,
