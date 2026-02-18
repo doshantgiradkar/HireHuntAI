@@ -22,14 +22,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
-import {
-  Loader2,
-  MapPin,
-  Briefcase,
-  DollarSign,
-  Users,
-  X,
-} from "lucide-react";
+import { Loader2, MapPin, Briefcase, DollarSign, Users } from "lucide-react";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { useHeader } from "@/store/user.store";
 import { format } from "date-fns";
@@ -39,7 +32,7 @@ export default function JobApplicationForm({ params }) {
   const { user } = useUser();
   const router = useRouter();
   const jobId = React.use(params).id;
-  const setTitle = useHeader(state => state.setTitle);
+  const setTitle = useHeader((state) => state.setTitle);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [candidate, setCandidate] = useState(null);
@@ -54,10 +47,9 @@ export default function JobApplicationForm({ params }) {
     whyInterested: "",
     availabilityDate: null,
   });
-  const [skillInput, setSkillInput] = useState("");
 
   useEffect(() => {
-    setTitle("Apply For Job")
+    setTitle("Apply For Job");
   });
 
   useEffect(() => {
@@ -101,26 +93,6 @@ export default function JobApplicationForm({ params }) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleAddSkill = (e) => {
-    if (e.key === "Enter" && skillInput.trim()) {
-      e.preventDefault();
-      if (!formData.skills.includes(skillInput.trim())) {
-        setFormData((prev) => ({
-          ...prev,
-          skills: [...prev.skills, skillInput.trim()],
-        }));
-      }
-      setSkillInput("");
-    }
-  };
-
-  const handleRemoveSkill = (skillToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      skills: prev.skills.filter((skill) => skill !== skillToRemove),
-    }));
-  };
-
   const isFormValid = () => {
     return (
       formData.fullName.trim() &&
@@ -158,14 +130,14 @@ export default function JobApplicationForm({ params }) {
           whyInterested: formData.whyInterested,
           availabilityDate: formData.availabilityDate,
         },
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       toast.success("Application submitted successfully!");
       router.push("/candidate/applications");
     } catch (error) {
       toast.error(
-        error?.response?.data?.message || "Failed to submit application"
+        error?.response?.data?.message || "Failed to submit application",
       );
     } finally {
       setSubmitting(false);
@@ -286,7 +258,10 @@ export default function JobApplicationForm({ params }) {
                   <Label>Availability Date</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                      >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {formData.availabilityDate
                           ? format(formData.availabilityDate, "PPP")
@@ -323,22 +298,11 @@ export default function JobApplicationForm({ params }) {
 
             <div className="space-y-2">
               <Label htmlFor="skills">Skills *</Label>
-              <Input
-                id="skills"
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyDown={handleAddSkill}
-                placeholder="Type a skill and press Enter"
-              />
               {formData.skills.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {formData.skills.map((skill, index) => (
                     <Badge key={index} variant="secondary">
                       {skill}
-                      <X
-                        className="h-3 w-3 ml-1 cursor-pointer"
-                        onClick={() => handleRemoveSkill(skill)}
-                      />
                     </Badge>
                   ))}
                 </div>

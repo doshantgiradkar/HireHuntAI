@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Video,
   CheckCircle2,
@@ -20,54 +20,41 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 function StartInterviewScreen({
   onStartInterview,
   isInitializing,
+  isReadyToStart,
   permissionError,
 }) {
   const [systemChecks, setSystemChecks] = useState({
     camera: "checking",
     microphone: "checking",
   });
-  
-  const [timeLeft, setTimeLeft] = useState(5); // 5 seconds countdown
-  const [isCountingDown, setIsCountingDown] = useState(false);
-  const [canStartInterview, setCanStartInterview] = useState(false);
-  const timerRef = useRef(null);
 
   useEffect(() => {
-    const checkSequence = async () => {
-      setTimeout(() => {
-        setSystemChecks((prev) => ({ ...prev, camera: "success" }));
-      }, 1000);
-
-      setTimeout(() => {
-        setSystemChecks((prev) => ({ ...prev, microphone: "success" }));
-        // Start countdown when all checks are done
-        setIsCountingDown(true);
-      }, 2000);
-    };
-
-    checkSequence();
-  }, []);
-
-  // Countdown timer effect
-  useEffect(() => {
-    if (isCountingDown && timeLeft > 0) {
-      timerRef.current = setTimeout(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && isCountingDown) {
-      // Enable the button when countdown reaches 0
-      setCanStartInterview(true);
-      setIsCountingDown(false);
+    if (permissionError) {
+      setSystemChecks({
+        camera: "error",
+        microphone: "error",
+      });
+      return;
     }
 
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [isCountingDown, timeLeft]);
+    if (isReadyToStart) {
+      setSystemChecks({
+        camera: "success",
+        microphone: "success",
+      });
+      return;
+    }
+
+    setSystemChecks({
+      camera: "checking",
+      microphone: "checking",
+    });
+  }, [isReadyToStart, permissionError]);
 
   const getStatusIcon = (status) => {
+    if (status === "error") {
+      return <AlertTriangle className="w-4 h-4 text-destructive" />;
+    }
     if (status === "success")
       return <CheckCircle2 className="w-4 h-4 text-green-600" />;
     return (
@@ -76,6 +63,7 @@ function StartInterviewScreen({
   };
 
   const getStatusColor = (status) => {
+    if (status === "error") return "text-destructive";
     if (status === "success") return "text-green-600";
     return "text-muted-foreground";
   };
@@ -85,32 +73,16 @@ function StartInterviewScreen({
       <Card className="w-full max-w-md mx-auto border-2 shadow-2xl">
         <CardContent className="p-6">
           <div className="text-center space-y-4">
-            {/* Header with Counter */}
             <div className="space-y-2">
               <div className="relative mx-auto w-16 h-16">
                 <Video className="h-16 w-16 text-primary" />
                 <div className="absolute inset-0 bg-primary/10 blur-xl rounded-full"></div>
               </div>
-              
-              {/* Dynamic Header - Counter or Start Interview */}
               <div className="h-16 flex flex-col items-center justify-center">
-                {isCountingDown ? (
-                  <>
-                    <div className="text-5xl font-bold text-primary animate-pulse">
-                      {timeLeft}
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Starting in...
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <h2 className="text-2xl font-bold">Start Interview</h2>
-                    <p className="text-sm text-muted-foreground">
-                      AI-powered technical interview with real-time transcription
-                    </p>
-                  </>
-                )}
+                <h2 className="text-2xl font-bold">Start Interview</h2>
+                <p className="text-sm text-muted-foreground">
+                  AI-powered technical interview with real-time transcription
+                </p>
               </div>
             </div>
 
@@ -165,7 +137,7 @@ function StartInterviewScreen({
             <div className="pt-4">
               <Button
                 onClick={onStartInterview}
-                disabled={isInitializing || !canStartInterview}
+                disabled={isInitializing || !isReadyToStart || Boolean(permissionError)}
                 size="lg"
                 className="w-full"
               >
@@ -177,7 +149,7 @@ function StartInterviewScreen({
                 ) : (
                   <>
                     <Video className="h-5 w-5 mr-2" />
-                    {!canStartInterview ? (
+                    {!isReadyToStart ? (
                       <span>Preparing Interview...</span>
                     ) : (
                       <span>Start Interview Now</span>
@@ -185,13 +157,10 @@ function StartInterviewScreen({
                   </>
                 )}
               </Button>
-              
-              {/* Helper text */}
-              {!canStartInterview && !isInitializing && (
+
+              {!isReadyToStart && !isInitializing && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  {isCountingDown 
-                    ? `Starting automatically in ${timeLeft} seconds...` 
-                    : 'Please wait for system checks to complete'}
+                  Please wait while interview details are loading.
                 </p>
               )}
             </div>

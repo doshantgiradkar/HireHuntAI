@@ -25,9 +25,25 @@ export async function GET() {
           "candidates.candidateId": authResult.userId,
         },
       },
+
+      // keep only the matched candidate inside candidates array
+      {
+        $addFields: {
+          candidates: {
+            $filter: {
+              input: "$candidates",
+              as: "candidate",
+              cond: {
+                $eq: ["$$candidate.candidateId", authResult.userId],
+              },
+            },
+          },
+        },
+      },
+
       {
         $lookup: {
-          from: "jobs",          // collection name (NOT model name)
+          from: "jobs",
           localField: "jobId",
           foreignField: "_id",
           as: "job",
@@ -95,9 +111,8 @@ export async function POST(request) {
     const candidateList = topCandidates.map(app => ({
       candidateId: app.candidateClerkId,
       matchScore: app.eligibility?.matchScore || 0,
-      feedback: 0,
+      feedback: "",
       interviewScore: 0,
-      answers: []
     }));
 
     // If no candidates qualify (edge case), you might want to handle it

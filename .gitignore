@@ -16,6 +16,7 @@ test/
 .venv/
 docs/
 public/tts/glow-tts/build/
+justfile
 
 # temp folder
 tmp/

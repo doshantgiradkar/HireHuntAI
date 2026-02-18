@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +11,8 @@ import { Separator } from "@/components/ui/separator";
 import {
   Plus,
   X,
+  Check,
+  ChevronsUpDown,
   FileText,
   Link2,
   GraduationCap,
@@ -25,7 +22,13 @@ import {
 } from "lucide-react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import axios from "axios";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function EditCandidateProfileForm({ initialData, onSubmit }) {
   const [formData, setFormData] = useState({
@@ -51,7 +54,11 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
     },
   });
 
-  const [newSkill, setNewSkill] = useState("");
+  const [skillQuery, setSkillQuery] = useState("");
+  const [skillOptions, setSkillOptions] = useState([]);
+  const [isSkillsLoading, setIsSkillsLoading] = useState(false);
+  const [showSkillOptions, setShowSkillOptions] = useState(false);
+  const [highlightedSkillIndex, setHighlightedSkillIndex] = useState(0);
   const [newSocial, setNewSocial] = useState({ name: "", url: "" });
   const { isSignedIn, user } = useUser();
   const { getToken } = useAuth();
@@ -71,18 +78,73 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
     }));
   };
 
-  const addSkill = (e) => {
-    e.preventDefault();
-    if (!newSkill.trim()) return;
-    setFormData((prev) => ({
-      ...prev,
-      resume: {
-        ...prev.resume,
-        skills: [...prev.resume.skills, newSkill.trim()],
-      },
-    }));
-    setNewSkill("");
+  const addSkill = (skillLabel) => {
+    const normalizedLabel = (skillLabel || "").trim();
+    if (!normalizedLabel) return;
+
+    setFormData((prev) => {
+      const alreadyAdded = prev.resume.skills.some(
+        (skill) => skill.toLowerCase() === normalizedLabel.toLowerCase(),
+      );
+      if (alreadyAdded) return prev;
+
+      return {
+        ...prev,
+        resume: {
+          ...prev.resume,
+          skills: [...prev.resume.skills, normalizedLabel],
+        },
+      };
+    });
+
+    setSkillQuery("");
+    setSkillOptions([]);
+    setShowSkillOptions(false);
+    setHighlightedSkillIndex(0);
   };
+
+  const isSkillAlreadySelected = (label) =>
+    formData.resume.skills.some(
+      (skill) => skill.toLowerCase() === String(label).toLowerCase(),
+    );
+
+  useEffect(() => {
+    const q = skillQuery.trim();
+    if (!q) {
+      setSkillOptions([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        setIsSkillsLoading(true);
+        const res = await axios.get("/api/skills", {
+          params: { q, limit: 5 },
+          withCredentials: true,
+          signal: controller.signal,
+        });
+        setSkillOptions(Array.isArray(res.data) ? res.data : []);
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setSkillOptions([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsSkillsLoading(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [skillQuery]);
+
+  useEffect(() => {
+    setHighlightedSkillIndex(0);
+  }, [skillOptions, showSkillOptions]);
 
   const removeSkill = (skill) => {
     setFormData((prev) => ({
@@ -105,7 +167,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
   const removeSocial = (index) => {
     updateResume(
       "socials",
-      formData.resume.socials.filter((_, i) => i !== index)
+      formData.resume.socials.filter((_, i) => i !== index),
     );
   };
 
@@ -153,11 +215,11 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
     <form
       onSubmit={async (e) => {
         e.preventDefault();
-        const res = await axios.put('/api/candidate', formData, {
-          withCredentials: true
+        const res = await axios.put("/api/candidate", formData, {
+          withCredentials: true,
         });
         if (res.status == 200) {
-          window.location.href = '/candidate/profile'
+          window.location.href = "/candidate/profile";
         }
       }}
       className="container mx-auto px-4 py-8 max-w-6xl"
@@ -358,10 +420,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label>Resume URL</Label>
-            <Input
-              value={formData.resume.resumeUrl}
-              disabled={true}
-            />
+            <Input value={formData.resume.resumeUrl} disabled={true} />
           </div>
 
           <Separator />
@@ -369,16 +428,107 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
           {/* -------- SKILLS -------- */}
           <div className="space-y-3">
             <Label>Skills</Label>
-            <div className="flex gap-2">
+            <div className="relative">
               <Input
-                placeholder="Add skill"
-                value={newSkill}
-                onChange={(e) => setNewSkill(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addSkill(e)}
+                placeholder="Search and select a skill"
+                value={skillQuery}
+                onChange={(e) => {
+                  setSkillQuery(e.target.value);
+                  setShowSkillOptions(true);
+                }}
+                onFocus={() => setShowSkillOptions(true)}
+                onBlur={() => {
+                  setTimeout(() => setShowSkillOptions(false), 120);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setShowSkillOptions(false);
+                    return;
+                  }
+
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    if (!showSkillOptions) {
+                      setShowSkillOptions(true);
+                      return;
+                    }
+                    setHighlightedSkillIndex((prev) =>
+                      Math.min(prev + 1, Math.max(skillOptions.length - 1, 0)),
+                    );
+                    return;
+                  }
+
+                  if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setHighlightedSkillIndex((prev) => Math.max(prev - 1, 0));
+                    return;
+                  }
+
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (!showSkillOptions || skillOptions.length === 0) return;
+                    const optionToSelect = skillOptions[0];
+                    addSkill(optionToSelect?.label);
+                  }
+                }}
               />
-              <Button type="button" size="icon" onClick={addSkill}>
-                <Plus className="h-4 w-4" />
-              </Button>
+              <ChevronsUpDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+              {showSkillOptions && skillQuery.trim() && (
+                <div className="absolute z-20 mt-1 w-full rounded-md border border-border bg-popover text-popover-foreground shadow-md">
+                  {isSkillsLoading && (
+                    <p className="px-3 py-2 text-sm text-muted-foreground">
+                      Searching...
+                    </p>
+                  )}
+
+                  {!isSkillsLoading && skillOptions.length === 0 && (
+                    <p className="px-3 py-2 text-sm text-muted-foreground">
+                      No matching skills found
+                    </p>
+                  )}
+
+                  {!isSkillsLoading &&
+                    skillOptions.map((skillOption, index) => {
+                      const alreadySelected = isSkillAlreadySelected(
+                        skillOption.label,
+                      );
+                      const isHighlighted = highlightedSkillIndex === index;
+
+                      return (
+                        <button
+                          key={skillOption.key}
+                          type="button"
+                          className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors ${
+                            isHighlighted
+                              ? "bg-accent text-accent-foreground"
+                              : ""
+                          } ${alreadySelected ? "opacity-60 cursor-not-allowed" : "hover:bg-accent hover:text-accent-foreground"}`}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onMouseEnter={() => setHighlightedSkillIndex(index)}
+                          onClick={() => {
+                            if (alreadySelected) return;
+                            addSkill(skillOption.label);
+                          }}
+                          aria-disabled={alreadySelected}
+                        >
+                          <span>{skillOption.label}</span>
+                          {alreadySelected && (
+                            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                              <Check className="h-3 w-3" />
+                              Added
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  {!isSkillsLoading && skillOptions.length > 0 && (
+                    <p className="border-t px-3 py-2 text-xs text-muted-foreground">
+                      Press Enter to select, Arrow keys to navigate
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -462,7 +612,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
                     onClick={() =>
                       updateResume(
                         "education",
-                        formData.resume.education.filter((_, i) => i !== index)
+                        formData.resume.education.filter((_, i) => i !== index),
                       )
                     }
                   >
@@ -567,10 +717,9 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
                   key={index}
                   className="relative space-y-4 border rounded-md p-4"
                 >
-
                   <div className="flex flex-1 gap-4">
                     <Input
-                    className={"grow"}
+                      className={"grow"}
                       placeholder="Job Title"
                       value={exp.jobTitle}
                       onChange={(e) => {
@@ -581,7 +730,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
                     />
 
                     <Input
-                    className={"w-36"}
+                      className={"w-36"}
                       placeholder="months"
                       type={"number"}
                       required={true}
@@ -601,7 +750,9 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
                       onClick={() =>
                         updateResume(
                           "experience",
-                          formData.resume.experience.filter((_, i) => i !== index)
+                          formData.resume.experience.filter(
+                            (_, i) => i !== index,
+                          ),
                         )
                       }
                     >
@@ -680,8 +831,8 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
                         updateResume(
                           "certifications",
                           formData.resume.certifications.filter(
-                            (_, i) => i !== index
-                          )
+                            (_, i) => i !== index,
+                          ),
                         )
                       }
                     >

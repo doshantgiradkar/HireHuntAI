@@ -62,8 +62,8 @@ export default function InterviewsPage() {
   }, [])
 
   // Logic to separate interviews based on your enum: ['scheduled', 'in-progress', 'completed']
-  const upcomingInterviews = interviews.filter(i => i.status !== "completed")
-  const completedInterviews = interviews.filter(i => i.status === "completed")
+  const upcomingInterviews = interviews.filter(i => i.candidates[0].status !== "completed")
+  const completedInterviews = interviews.filter(i => i.candidates[0].status === "completed")
 
   // Get the most recent upcoming interview for the sidebar
   const nextInterview = upcomingInterviews.length > 0 ? upcomingInterviews[0] : null
