@@ -12,6 +12,7 @@ node_modules/*
 !.yarn/versions
 test.js
 test/
+src/test/
 .node*
 .venv/
 docs/
