@@ -114,10 +114,10 @@ export class Resume {
       ❌ Exclude projects, hackathons, academics
 
       Skills
-
-      Mongodb Array of strings
-
-      Normalize casing, remove duplicates
+      Extract a list of skills mentioned in the resume.
+      Ensure that the extracted skills closely match common professional skill labels (e.g., "JavaScript", "React", "Node.js", "Python", "SQL", "AWS").
+      The output should be an array of strings.
+      Normalize casing (e.g., capitalize the first letter of each word or use common conventions like "JavaScript" instead of "javascript") and remove duplicates.
 
       totalExperienceDuration → years (number), else 0
 
