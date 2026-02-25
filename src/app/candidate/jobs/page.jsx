@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -41,6 +41,34 @@ import axios from "axios";
 import { useHeader } from "@/store/user.store";
 
 export default function JobSearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <Skeleton className="h-10 sm:h-12 w-48 sm:w-64 mb-6 sm:mb-8" />
+          <Skeleton className="h-10 sm:h-12 w-full mb-6 sm:mb-8" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-20 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      }
+    >
+      <JobSearchContent />
+    </Suspense>
+  );
+}
+
+function JobSearchContent() {
   const [jobs, setJobs] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);

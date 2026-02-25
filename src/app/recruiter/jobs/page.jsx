@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import {
   Search,
   MapPin,
@@ -37,6 +37,44 @@ import { useUser } from "@clerk/nextjs";
 import { useHeader } from "@/store/user.store";
 
 export default function JobSearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
+          <div className="space-y-8">
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-64" />
+              <Skeleton className="h-5 w-96" />
+            </div>
+            <Skeleton className="h-12 w-full max-w-2xl" />
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <CardHeader className="space-y-3">
+                    <div className="flex items-start gap-4">
+                      <Skeleton className="h-12 w-12 rounded-lg" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-20 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <JobSearchContent />
+    </Suspense>
+  );
+}
+
+function JobSearchContent() {
   const router = useRouter();
   const setTitle = useHeader((state) => state.setTitle);
   const { userId, isLoaded } = useUser();

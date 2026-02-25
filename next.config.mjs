@@ -1,14 +1,11 @@
 import "./src/server-shim.js";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // This tells Next.js to use the Node.js version of these packages
-    experimental: {
-      serverComponentsExternalPackages: ["pdfjs-dist", "pdf-parse"],
-    },
+    // Next.js 15+: moved out of experimental
+    serverExternalPackages: ["pdfjs-dist", "pdf-parse"],
 
     webpack: (config) => {
-        // This ignores the 'canvas' dependency which is often optional
-        // but causes warnings/errors in server environments
+        // Ignore the optional 'canvas' dependency to prevent build warnings
         config.resolve.alias.canvas = false;
 
         return config;
