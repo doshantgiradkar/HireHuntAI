@@ -68,7 +68,8 @@ const Page = () => {
   const handleWithdraw = async (applicationId) => {
     try {
       const response = await axios.delete(`/api/application/${applicationId}`);
-      if (response.status !== 200) throw new Error("Failed to withdraw application");
+      if (response.status !== 200)
+        throw new Error("Failed to withdraw application");
       window.location.reload();
     } catch (err) {
       console.error("Error withdrawing application:", err);
@@ -137,7 +138,9 @@ const Page = () => {
             return (
               <Card key={index} className="hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    {stat.title}
+                  </CardTitle>
                   <Icon className={`h-4 w-4 ${stat.color}`} />
                 </CardHeader>
                 <CardContent>
@@ -150,7 +153,9 @@ const Page = () => {
 
         {/* Search Section */}
         <div className="w-full space-y-2">
-          <h2 className="text-lg sm:text-xl font-semibold">Find Your Next Opportunity</h2>
+          <h2 className="text-lg sm:text-xl font-semibold">
+            Find Your Next Opportunity
+          </h2>
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -163,21 +168,34 @@ const Page = () => {
                 className="pl-10 h-10 sm:h-12 w-full"
               />
             </div>
-            <Button onClick={handleSearchClick} className="h-10 sm:h-12 w-full sm:w-auto sm:px-8">
+            <Button
+              onClick={handleSearchClick}
+              className="h-10 sm:h-12 w-full sm:w-auto sm:px-8"
+            >
               Search
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">Press Enter or click Search to find jobs</p>
+          <p className="text-xs text-muted-foreground">
+            Press Enter or click Search to find jobs
+          </p>
         </div>
 
         {/* Top Matching Jobs */}
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">Top Jobs For You</h2>
-              <p className="text-xs sm:text-sm text-muted-foreground">Based on your profile and preferences</p>
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
+                Top Jobs For You
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Based on your profile and preferences
+              </p>
             </div>
-            <Button variant="outline" onClick={() => router.push("/candidate/jobs")} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => router.push("/candidate/jobs")}
+              className="w-full sm:w-auto"
+            >
               View All Jobs
             </Button>
           </div>
@@ -199,7 +217,10 @@ const Page = () => {
           ) : topJobs && topJobs.length > 0 ? (
             <div className="grid gap-4">
               {topJobs.map((job) => (
-                <Card key={job._id} className="hover:shadow-md transition-shadow">
+                <Card
+                  key={job._id}
+                  className="hover:shadow-md transition-shadow"
+                >
                   <CardContent className="p-4 sm:p-6">
                     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
                       {/* Left Content */}
@@ -207,7 +228,9 @@ const Page = () => {
                         {/* Job Header */}
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-lg sm:text-xl font-semibold mb-2 wrap-break-words">{job.title}</h3>
+                            <h3 className="text-lg sm:text-xl font-semibold mb-2 wrap-break-words">
+                              {job.title}
+                            </h3>
                             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Building2 className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
@@ -226,7 +249,8 @@ const Page = () => {
                           <span className="flex items-center gap-1 text-muted-foreground">
                             <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
                             <span className="truncate">
-                              {job.salaryRange.currency} {job.salaryRange.min} - {job.salaryRange.max}
+                              {job.salaryRange.currency} {job.salaryRange.min} -{" "}
+                              {job.salaryRange.max}
                             </span>
                           </span>
                           <Badge variant="outline" className="w-fit inline">
@@ -264,7 +288,11 @@ const Page = () => {
                         {/* Skills */}
                         <div className="flex flex-wrap gap-2">
                           {job.skills.slice(0, 5).map((skill) => (
-                            <Badge key={skill} variant="secondary" className="text-xs">
+                            <Badge
+                              key={skill}
+                              variant="secondary"
+                              className="text-xs"
+                            >
                               {skill}
                             </Badge>
                           ))}
@@ -290,16 +318,21 @@ const Page = () => {
 
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
+                                  <AlertDialogTitle>
+                                    Withdraw Application?
+                                  </AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    This action cannot be undone. Your application will be permanently withdrawn.
+                                    This action cannot be undone. Your
+                                    application will be permanently withdrawn.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
 
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => handleWithdraw(job.applicationId)}
+                                    onClick={() =>
+                                      handleWithdraw(job.applicationId)
+                                    }
                                     className="bg-red-500 hover:bg-red-600"
                                   >
                                     Yes, Withdraw
@@ -310,9 +343,14 @@ const Page = () => {
                           ) : (
                             <Button
                               onClick={() => {
-                                router.push(`/candidate/jobs/${job._id}/apply`);
+                                if (job.matchScore.isEligible) {
+                                  router.push(
+                                    `/candidate/jobs/${job._id}/apply`,
+                                  );
+                                }
                               }}
                               className="grow"
+                              disabled={!job.matchScore.isEligible}
                             >
                               Apply Now
                             </Button>
@@ -346,16 +384,21 @@ const Page = () => {
 
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
+                                  <AlertDialogTitle>
+                                    Withdraw Application?
+                                  </AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    This action cannot be undone. Your application will be permanently withdrawn.
+                                    This action cannot be undone. Your
+                                    application will be permanently withdrawn.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
 
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => handleWithdraw(job.applicationId)}
+                                    onClick={() =>
+                                      handleWithdraw(job.applicationId)
+                                    }
                                     className="bg-red-500 hover:bg-red-600"
                                   >
                                     Yes, Withdraw
@@ -366,9 +409,14 @@ const Page = () => {
                           ) : (
                             <Button
                               onClick={() => {
-                                router.push(`/candidate/jobs/${job._id}/apply`);
+                                if (job.matchScore.isEligible) {
+                                  router.push(
+                                    `/candidate/jobs/${job._id}/apply`,
+                                  );
+                                }
                               }}
                               className="flex-1"
+                              disabled={!job.matchScore.isEligible}
                             >
                               Apply Now
                             </Button>
@@ -392,7 +440,8 @@ const Page = () => {
           ) : (
             <Alert>
               <AlertDescription>
-                No matching jobs found. Try adjusting your profile or check back later for new opportunities.
+                No matching jobs found. Try adjusting your profile or check back
+                later for new opportunities.
               </AlertDescription>
             </Alert>
           )}

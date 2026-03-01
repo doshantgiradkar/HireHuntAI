@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-// ── Skeleton loader shown while fetching ──────────────────────────────────────
 function DashboardSkeleton() {
   return (
     <div className="flex flex-col gap-6 py-4 md:gap-6 md:py-6">
@@ -41,7 +40,6 @@ function DashboardSkeleton() {
   );
 }
 
-// ── Top-performing jobs panel ─────────────────────────────────────────────────
 function TopJobsPanel({ jobs = [] }) {
   if (!jobs.length) return null;
   return (
@@ -49,7 +47,9 @@ function TopJobsPanel({ jobs = [] }) {
       <Card>
         <CardHeader>
           <CardTitle>Top Performing Jobs</CardTitle>
-          <CardDescription>Jobs ranked by total applications received</CardDescription>
+          <CardDescription>
+            Jobs ranked by total applications received
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -83,7 +83,6 @@ function TopJobsPanel({ jobs = [] }) {
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
 export default function RecruiterDashboardPage() {
   const setTitle = useHeader((state) => state.setTitle);
 
@@ -97,7 +96,6 @@ export default function RecruiterDashboardPage() {
     fetchDashboardData();
   }, []);
 
-  // ── Loading ──
   if (dashboardLoading) {
     return (
       <div className="flex flex-1 flex-col">
@@ -108,7 +106,6 @@ export default function RecruiterDashboardPage() {
     );
   }
 
-  // ── Error ──
   if (dashboardError) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-8">
@@ -117,11 +114,7 @@ export default function RecruiterDashboardPage() {
           <AlertTitle>Failed to load dashboard</AlertTitle>
           <AlertDescription className="mt-1">{dashboardError}</AlertDescription>
         </Alert>
-        <Button
-          variant="outline"
-          className="mt-4"
-          onClick={fetchDashboardData}
-        >
+        <Button variant="outline" className="mt-4" onClick={fetchDashboardData}>
           <RefreshCw className="mr-2 h-4 w-4" />
           Retry
         </Button>
@@ -129,13 +122,11 @@ export default function RecruiterDashboardPage() {
     );
   }
 
-  // ── Data ready ──
   const summaryCards = dashboardData?.summaryCards ?? {};
   const applicationTrend = dashboardData?.applicationTrend ?? [];
   const recentJobs = dashboardData?.recentJobs ?? [];
   const topJobs = dashboardData?.topJobs ?? [];
 
-  // Shape recentJobs into the format DataTable expects
   const tableData = recentJobs.map((job, i) => ({
     id: i + 1,
     header: job.title ?? "—",
