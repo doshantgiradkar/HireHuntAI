@@ -17,10 +17,8 @@ import {
 import {
   Search,
   Briefcase,
-  Calendar,
   CheckCircle,
   Clock,
-  TrendingUp,
   MapPin,
   Building2,
   DollarSign,
@@ -33,7 +31,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import axios from "axios";
 import { useMemo } from "react";
 import { Users } from "lucide-react";
-import { XCircle } from "lucide-react";
 
 const Page = () => {
   const setTitle = useHeader((state) => state.setTitle);
