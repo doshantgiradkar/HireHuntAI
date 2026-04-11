@@ -2,17 +2,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { useHeader } from "@/store/user.store";
-import { Upload, FileText, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Upload, FileText, X, ChevronDown } from "lucide-react";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
-import dynamic from "next/dynamic";
-
-const PDFViewer = dynamic(() => import("@/components/pdf-renderer"), {
-  ssr: false,
-  loading: () => <p>Loading PDF Viewer...</p>,
-});
 
 const ResumeViewerPage = () => {
   const [resumeFile, setResumeFile] = useState(null);
@@ -92,7 +92,9 @@ const ResumeViewerPage = () => {
                     <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                   </div>
                 </div>
-                <CardTitle className="text-center text-lg sm:text-xl">Upload Your Resume</CardTitle>
+                <CardTitle className="text-center text-lg sm:text-xl">
+                  Upload Your Resume
+                </CardTitle>
                 <CardDescription className="text-center text-sm sm:text-base px-2">
                   Support for PDF, DOC, and DOCX files
                 </CardDescription>
@@ -110,7 +112,12 @@ const ResumeViewerPage = () => {
                   </label>
 
                   {isLoading ? (
-                    <Button onClick={handleUpload} disabled={true} size="lg" className="h-11 sm:h-12 whitespace-nowrap">
+                    <Button
+                      onClick={handleUpload}
+                      disabled={true}
+                      size="lg"
+                      className="h-11 sm:h-12 whitespace-nowrap"
+                    >
                       <Loader2 className="h-8 w-8 animate-spin" />
                     </Button>
                   ) : (
@@ -163,13 +170,22 @@ const ResumeViewerPage = () => {
                 <div className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-primary" />
                   <div>
-                    <h3 className="text-lg sm:text-xl font-semibold">Current Resume</h3>
+                    <h3 className="text-lg sm:text-xl font-semibold">
+                      Current Resume
+                    </h3>
                     <p className="text-sm text-muted-foreground">
-                      {showResume ? "Your uploaded resume is displayed below" : "Click to preview your current resume"}
+                      {showResume
+                        ? "Your uploaded resume is displayed below"
+                        : "Click to preview your current resume"}
                     </p>
                   </div>
                 </div>
-                <div className="transition-transform duration-300" style={{ transform: showResume ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                <div
+                  className="transition-transform duration-300"
+                  style={{
+                    transform: showResume ? "rotate(180deg)" : "rotate(0deg)",
+                  }}
+                >
                   <ChevronDown className="w-5 h-5 text-muted-foreground" />
                 </div>
               </div>
@@ -178,12 +194,20 @@ const ResumeViewerPage = () => {
             <div
               className="overflow-hidden transition-all duration-500 ease-in-out"
               style={{
-                maxHeight: showResume ? '2000px' : '0px',
-                opacity: showResume ? 1 : 0
+                maxHeight: showResume ? "2000px" : "0px",
+                opacity: showResume ? 1 : 0,
               }}
             >
               <div className="mt-4">
-                <PDFViewer fileUrl={resumeUrl} />
+                <Card>
+                  <CardContent className="p-0">
+                    <iframe
+                      src={resumeUrl}
+                      title="Resume Preview"
+                      className="w-full h-175 rounded-md border-0"
+                    />
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>

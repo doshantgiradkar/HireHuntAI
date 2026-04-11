@@ -121,7 +121,8 @@ function JobSearchContent() {
   const handleWithdraw = async (applicationId) => {
     try {
       const response = await axios.delete(`/api/application/${applicationId}`);
-      if (response.status !== 200) throw new Error("Failed to withdraw application");
+      if (response.status !== 200)
+        throw new Error("Failed to withdraw application");
       window.location.reload();
     } catch (err) {
       console.error("Error withdrawing application:", err);
@@ -376,11 +377,17 @@ function JobSearchContent() {
                       )}
                     </div>
                   )}
-                    {job.matchScore.isEligible ? ("") : (
-                      <div className={"rounded-sm px-2 bg-black text-sm w-fit text-red-400 mx-auto mt-2"}>
-                        {job.matchScore.reason}
-                      </div>
-                    )}
+                  {job.matchScore.isEligible ? (
+                    ""
+                  ) : (
+                    <div
+                      className={
+                        "rounded-sm px-2 bg-black text-sm w-fit text-red-400 mx-auto mt-2"
+                      }
+                    >
+                      {job.matchScore.reason}
+                    </div>
+                  )}
                 </CardContent>
 
                 <CardFooter className="flex flex-col xl:flex-row gap-2 p-4 sm:p-6 pt-0">
@@ -398,9 +405,7 @@ function JobSearchContent() {
                         <Button
                           className="flex-1 w-full xl:w-auto text-sm p-2 text-red-400 bg-red-50"
                           size="lg"
-                          disabled={
-                            job.status !== "Open"
-                          }
+                          disabled={job.status !== "Open"}
                         >
                           Withdraw Application
                         </Button>
@@ -408,9 +413,12 @@ function JobSearchContent() {
 
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
+                          <AlertDialogTitle>
+                            Withdraw Application?
+                          </AlertDialogTitle>
                           <AlertDialogDescription>
-                            This action cannot be undone. Your application will be permanently withdrawn.
+                            This action cannot be undone. Your application will
+                            be permanently withdrawn.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
 
@@ -429,9 +437,11 @@ function JobSearchContent() {
                     <Button
                       variant="outline"
                       className="flex-1 w-full xl:w-auto text-sm"
-                      onClick={() =>
-                        (window.location.href = `/candidate/jobs/${job._id}/apply`)
-                      }
+                      onClick={() => {
+                        if (job.matchScore.isEligible) {
+                          window.location.href = `/candidate/jobs/${job._id}/apply`;
+                        }
+                      }}
                       disabled={!job.matchScore.isEligible}
                     >
                       Apply Now
