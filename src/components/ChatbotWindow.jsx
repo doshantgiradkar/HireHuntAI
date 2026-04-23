@@ -5,6 +5,29 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Sparkles, X, ArrowUpRight } from "lucide-react";
 
+const renderFormattedText = (text) => {
+  const lines = String(text ?? "").split("\n");
+
+  return lines.map((line, lineIndex) => {
+    const parts = line.split(/(\*\*[^*]+\*\*)/g);
+
+    return (
+      <React.Fragment key={`line-${lineIndex}`}>
+        {parts.map((part, partIndex) => {
+          const isBold = part.startsWith("**") && part.endsWith("**") && part.length > 4;
+
+          if (isBold) {
+            return <strong key={`part-${lineIndex}-${partIndex}`}>{part.slice(2, -2)}</strong>;
+          }
+
+          return <React.Fragment key={`part-${lineIndex}-${partIndex}`}>{part}</React.Fragment>;
+        })}
+        {lineIndex < lines.length - 1 && <br />}
+      </React.Fragment>
+    );
+  });
+};
+
 const ChatbotWindow = ({ isOpen, onClose, onSendMessage }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -134,7 +157,7 @@ const ChatbotWindow = ({ isOpen, onClose, onSendMessage }) => {
                       : "bg-muted text-foreground"
                   }`}
                 >
-                  {message.text}
+                  {renderFormattedText(message.text)}
                 </div>
               </div>
             ))}
