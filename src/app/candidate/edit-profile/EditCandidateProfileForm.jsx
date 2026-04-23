@@ -19,6 +19,7 @@ import {
   Briefcase,
   Award,
   Building,
+  FolderKanban,
 } from "lucide-react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import axios from "axios";
@@ -50,6 +51,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
       socials: [],
       education: [],
       experience: [],
+      projects: [],
       certifications: [],
     },
   });
@@ -204,6 +206,7 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
           socials: initialData.resume?.socials || [],
           education: initialData.resume?.education || [],
           experience: initialData.resume?.experience || [],
+          projects: initialData.resume?.projects || [],
           certifications: initialData.resume?.certifications || [],
         },
       });
@@ -767,6 +770,115 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
                       const updated = [...formData.resume.experience];
                       updated[index].jobDesc = e.target.value;
                       updateResume("experience", updated);
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ================= PROJECTS ================= */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FolderKanban className="h-5 w-5" />
+            Projects
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          <div className="flex gap-2">
+            <p className="text-sm text-muted-foreground flex-1">
+              Add a new project
+            </p>
+
+            <Button
+              type="button"
+              size="icon"
+              onClick={() =>
+                updateResume("projects", [
+                  ...(formData.resume.projects || []),
+                  { title: "", description: "", url: "", technologies: [] },
+                ])
+              }
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-3">
+            <Label>Saved Projects</Label>
+
+            <div className="space-y-4">
+              {!formData.resume.projects?.length && (
+                <p className="text-sm text-muted-foreground">
+                  No projects added yet
+                </p>
+              )}
+
+              {(formData.resume.projects || []).map((project, index) => (
+                <div key={index} className="relative space-y-4 border rounded-md p-4">
+                  <div className="flex gap-4">
+                    <Input
+                      className="grow"
+                      placeholder="Project Title"
+                      value={project.title || ""}
+                      onChange={(e) => {
+                        const updated = [...(formData.resume.projects || [])];
+                        updated[index].title = e.target.value;
+                        updateResume("projects", updated);
+                      }}
+                    />
+
+                    <Button
+                      type="button"
+                      size="icon"
+                      className="outline-1 text-black outline-gray-400 hover:bg-gray-400"
+                      onClick={() =>
+                        updateResume(
+                          "projects",
+                          (formData.resume.projects || []).filter((_, i) => i !== index),
+                        )
+                      }
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <Input
+                    placeholder="Project URL"
+                    value={project.url || ""}
+                    onChange={(e) => {
+                      const updated = [...(formData.resume.projects || [])];
+                      updated[index].url = e.target.value;
+                      updateResume("projects", updated);
+                    }}
+                  />
+
+                  <Input
+                    placeholder="Technologies (comma separated)"
+                    value={(project.technologies || []).join(", ")}
+                    onChange={(e) => {
+                      const updated = [...(formData.resume.projects || [])];
+                      updated[index].technologies = e.target.value
+                        .split(",")
+                        .map((tech) => tech.trim())
+                        .filter(Boolean);
+                      updateResume("projects", updated);
+                    }}
+                  />
+
+                  <Textarea
+                    placeholder="Project Description"
+                    value={project.description || ""}
+                    onChange={(e) => {
+                      const updated = [...(formData.resume.projects || [])];
+                      updated[index].description = e.target.value;
+                      updateResume("projects", updated);
                     }}
                   />
                 </div>

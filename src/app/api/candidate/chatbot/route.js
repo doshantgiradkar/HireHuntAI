@@ -30,6 +30,22 @@ function buildCandidateContext(candidate) {
     segments.push(`Experience: ${topExperience}.`);
   }
 
+  if (resume.projects?.length) {
+    const topProjects = resume.projects
+      .slice(0, 4)
+      .map((project) => {
+        const technologies = Array.isArray(project.technologies)
+          ? project.technologies.filter(Boolean).join(", ")
+          : "";
+        const desc = project.description ? ` - ${project.description}` : "";
+        const techText = technologies ? ` [Tech: ${technologies}]` : "";
+        const urlText = project.url ? ` (${project.url})` : "";
+        return `${project.title || "Untitled project"}${techText}${urlText}${desc}`;
+      })
+      .join(" | ");
+    segments.push(`Projects: ${topProjects}.`);
+  }
+
   if (typeof totalExperienceDuration === "number") {
     segments.push(`Total experience: ${totalExperienceDuration} years.`);
   }
