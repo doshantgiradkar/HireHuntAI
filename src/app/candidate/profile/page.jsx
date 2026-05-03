@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Mail,
   Phone,
+  FolderKanban,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -460,6 +461,57 @@ export default function CandidateProfile() {
                           </p>
                         </div>
                       </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Projects */}
+            {candidate.resume?.projects?.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <FolderKanban className="h-5 w-5" />
+                    Projects
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {candidate.resume.projects.map((project, index) => (
+                    <div
+                      key={index}
+                      className={index > 0 ? "pt-4 border-t" : ""}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <h3 className="font-semibold text-base">{project.title}</h3>
+                        {project.url && (
+                          <a
+                            href={project.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline inline-flex items-center gap-1 shrink-0"
+                          >
+                            View Project
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                      </div>
+
+                      {project.technologies?.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {project.technologies.map((tech, techIndex) => (
+                            <Badge key={techIndex} variant="outline">
+                              {tech}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      {project.description && (
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {project.description}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </CardContent>

@@ -30,8 +30,24 @@ function buildCandidateContext(candidate) {
     segments.push(`Experience: ${topExperience}.`);
   }
 
+  if (resume.projects?.length) {
+    const topProjects = resume.projects
+      .slice(0, 4)
+      .map((project) => {
+        const technologies = Array.isArray(project.technologies)
+          ? project.technologies.filter(Boolean).join(", ")
+          : "";
+        const desc = project.description ? ` - ${project.description}` : "";
+        const techText = technologies ? ` [Tech: ${technologies}]` : "";
+        const urlText = project.url ? ` (${project.url})` : "";
+        return `${project.title || "Untitled project"}${techText}${urlText}${desc}`;
+      })
+      .join(" | ");
+    segments.push(`Projects: ${topProjects}.`);
+  }
+
   if (typeof totalExperienceDuration === "number") {
-    segments.push(`Total experience: ${totalExperienceDuration} months.`);
+    segments.push(`Total experience: ${totalExperienceDuration} years.`);
   }
 
   if (resume.education?.length) {
@@ -147,7 +163,6 @@ export async function POST(request) {
           parts: [{ text: systemPrompt }],
         },
         temperature: 0.7,
-        maxOutputTokens: 256,
       },
     });
 
@@ -158,12 +173,7 @@ export async function POST(request) {
       throw new Error("Gemini response did not include output text");
     }
 
-    const limitedReply =
-      reply.length > MAX_REPLY_CHAR
-        ? reply.slice(0, MAX_REPLY_CHAR).trimEnd()
-        : reply;
-
-    return NextResponse.json({ reply: limitedReply });
+    return NextResponse.json({ reply });
   } catch (error) {
     console.error("Candidate chatbot Gemini error:", error);
 

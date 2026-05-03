@@ -53,16 +53,24 @@ export class Resume {
               "months": 0
             }
           ],
+          "projects": [
+            {
+              "title": "",
+              "description": "",
+              "url": "",
+              "technologies": [""]
+            }
+          ],
           "atsScore": 0,
           "skills": [""]
         },
-        "address": [
+        "address": {
           "line": "",
           "city": "",
           "state": "",
           "pinCode": "",
-          "country": "",
-        ],
+          "country": ""
+        },
         "dateOfBirth": "",
         "totalExperienceDuration": 0
       }
@@ -112,6 +120,18 @@ export class Resume {
       Only professional jobs
 
       ❌ Exclude projects, hackathons, academics
+
+      Projects
+
+      Extract personal, academic, open-source, freelance, and professional projects into resume.projects
+
+      title is required for each project; if title is missing, skip that project
+
+      description should summarize what was built and impact/responsibility in 1-3 lines
+
+      technologies should be an array of normalized skill/tool names with duplicates removed
+
+      If the url contains scheme of the protocol (eg. 'http://', 'https://') remove that from the actual url string
 
       Skills
       Extract a list of skills mentioned in the resume.
