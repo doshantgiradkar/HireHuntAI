@@ -149,7 +149,7 @@ export function AppSidebar({
             >
               <a href="/">
                 <SparklesIcon className="size-5!" />
-                <span className="text-base font-semibold">HireHunt AI</span>
+                <span className="text-base font-semibold">{dashboardType === "recruiter" ? "RecruitQuest" : "CareerQuest AI"}</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
