@@ -53,16 +53,24 @@ export class Resume {
               "months": 0
             }
           ],
+          "projects": [
+            {
+              "title": "",
+              "description": "",
+              "url": "",
+              "technologies": [""]
+            }
+          ],
           "atsScore": 0,
           "skills": [""]
         },
-        "address": [
+        "address": {
           "line": "",
           "city": "",
           "state": "",
           "pinCode": "",
-          "country": "",
-        ],
+          "country": ""
+        },
         "dateOfBirth": "",
         "totalExperienceDuration": 0
       }
@@ -113,11 +121,23 @@ export class Resume {
 
       ❌ Exclude projects, hackathons, academics
 
+      Projects
+
+      Extract personal, academic, open-source, freelance, and professional projects into resume.projects
+
+      title is required for each project; if title is missing, skip that project
+
+      description should summarize what was built and impact/responsibility in 1-3 lines
+
+      technologies should be an array of normalized skill/tool names with duplicates removed
+
+      If the url contains scheme of the protocol (eg. 'http://', 'https://') remove that from the actual url string
+
       Skills
-
-      Mongodb Array of strings
-
-      Normalize casing, remove duplicates
+      Extract a list of skills mentioned in the resume.
+      Ensure that the extracted skills closely match common professional skill labels (e.g., "JavaScript", "React", "Node.js", "Python", "SQL", "AWS").
+      The output should be an array of strings.
+      Normalize casing (e.g., capitalize the first letter of each word or use common conventions like "JavaScript" instead of "javascript") and remove duplicates.
 
       totalExperienceDuration → years (number), else 0
 

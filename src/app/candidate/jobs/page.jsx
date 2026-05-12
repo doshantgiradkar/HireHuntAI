@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -41,6 +41,34 @@ import axios from "axios";
 import { useHeader } from "@/store/user.store";
 
 export default function JobSearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <Skeleton className="h-10 sm:h-12 w-48 sm:w-64 mb-6 sm:mb-8" />
+          <Skeleton className="h-10 sm:h-12 w-full mb-6 sm:mb-8" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-20 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      }
+    >
+      <JobSearchContent />
+    </Suspense>
+  );
+}
+
+function JobSearchContent() {
   const [jobs, setJobs] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -93,7 +121,8 @@ export default function JobSearchPage() {
   const handleWithdraw = async (applicationId) => {
     try {
       const response = await axios.delete(`/api/application/${applicationId}`);
-      if (response.status !== 200) throw new Error("Failed to withdraw application");
+      if (response.status !== 200)
+        throw new Error("Failed to withdraw application");
       window.location.reload();
     } catch (err) {
       console.error("Error withdrawing application:", err);
@@ -348,11 +377,17 @@ export default function JobSearchPage() {
                       )}
                     </div>
                   )}
-                    {job.matchScore.isEligible ? ("") : (
-                      <div className={"rounded-sm px-2 bg-black text-sm w-fit text-red-400 mx-auto mt-2"}>
-                        {job.matchScore.reason}
-                      </div>
-                    )}
+                  {job.matchScore.isEligible ? (
+                    ""
+                  ) : (
+                    <div
+                      className={
+                        "rounded-sm px-2 bg-black text-sm w-fit text-red-400 mx-auto mt-2"
+                      }
+                    >
+                      {job.matchScore.reason}
+                    </div>
+                  )}
                 </CardContent>
 
                 <CardFooter className="flex flex-col xl:flex-row gap-2 p-4 sm:p-6 pt-0">
@@ -370,9 +405,7 @@ export default function JobSearchPage() {
                         <Button
                           className="flex-1 w-full xl:w-auto text-sm p-2 text-red-400 bg-red-50"
                           size="lg"
-                          disabled={
-                            job.status !== "Open"
-                          }
+                          disabled={job.status !== "Open"}
                         >
                           Withdraw Application
                         </Button>
@@ -380,9 +413,12 @@ export default function JobSearchPage() {
 
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
+                          <AlertDialogTitle>
+                            Withdraw Application?
+                          </AlertDialogTitle>
                           <AlertDialogDescription>
-                            This action cannot be undone. Your application will be permanently withdrawn.
+                            This action cannot be undone. Your application will
+                            be permanently withdrawn.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
 
@@ -401,9 +437,11 @@ export default function JobSearchPage() {
                     <Button
                       variant="outline"
                       className="flex-1 w-full xl:w-auto text-sm"
-                      onClick={() =>
-                        (window.location.href = `/candidate/jobs/${job._id}/apply`)
-                      }
+                      onClick={() => {
+                        if (job.matchScore.isEligible) {
+                          window.location.href = `/candidate/jobs/${job._id}/apply`;
+                        }
+                      }}
                       disabled={!job.matchScore.isEligible}
                     >
                       Apply Now

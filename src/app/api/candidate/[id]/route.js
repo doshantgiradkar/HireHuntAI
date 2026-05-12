@@ -132,6 +132,7 @@ export async function PUT(req, { params }) {
         certifications:
           body.resume.certifications ?? existing.resume.certifications,
         experience: body.resume.experience ?? existing.resume.experience,
+        projects: body.resume.projects ?? existing.resume.projects,
       };
     }
 

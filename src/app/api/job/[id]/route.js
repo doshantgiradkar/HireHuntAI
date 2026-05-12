@@ -26,6 +26,16 @@ export async function GET(req, { params }) {
     }
 
     const job = await jobModel.findById(id);
+
+    if (!job) {
+      return NextResponse.json({ message: "Job not found" }, { status: 404 });
+    }
+
+    // Recruiters don't have candidate profiles, so skip match score and application lookup
+    if (authResult.role === "recruiter") {
+      return NextResponse.json({ job: job.toObject() }, { status: 200 });
+    }
+
     const application = await ApplicationModel.findOne({
       jobId: id,
       candidateClerkId: authResult.userId,
@@ -40,10 +50,6 @@ export async function GET(req, { params }) {
     } else {
       hasApplied = false;
       applicationStatus = 'open';
-    }
-
-    if (!job) {
-      return NextResponse.json({ message: "Job not found" }, { status: 404 });
     }
 
     const matchScore = await calculateMatchScore(authResult.userId, job._id);

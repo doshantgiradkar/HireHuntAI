@@ -35,12 +35,20 @@ const certificateSchema = new mongoose.Schema({
   yearOfComp: { type: Number },
 });
 
+const projectSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String },
+  url: { type: String },
+  technologies: [{ type: String }],
+});
+
 const resumeSchema = new mongoose.Schema({
   resumeUrl: { type: String, required: true },
   socials: [socialSchema],
   education: [educationSchema],
   certifications: [certificateSchema],
   experience: [experienceSchema],
+  projects: [projectSchema],
   atsScore: { type: Number },
   skills: [{ type: String }],
 });

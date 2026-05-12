@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -32,19 +32,26 @@ import {
   AlertCircle,
   FileText,
   BarChart3,
-  PieChart as PieChartIcon,
   Activity,
   CheckCircle,
   XCircle,
   MinusCircle,
+  RefreshCw,
 } from "lucide-react";
 
-// Shadcn UI Components
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -69,91 +76,120 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Mock Data - Replace with actual API calls
-const hiringFunnelData = [
-  { stage: "Applied", count: 1247, conversion: 100 },
-  { stage: "Screened", count: 892, conversion: 71.5 },
-  { stage: "AI Interview", count: 634, conversion: 50.8 },
-  { stage: "Technical", count: 423, conversion: 33.9 },
-  { stage: "Final", count: 187, conversion: 15.0 },
-  { stage: "Offered", count: 94, conversion: 7.5 },
-  { stage: "Hired", count: 76, conversion: 6.1 },
+import { useHeader } from "@/store/user.store";
+import { useRecruiterStore } from "@/store/recruiter.store";
+
+// Chart colour palette that respects shadcn CSS variables
+const COLORS = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
 ];
 
-const timeToHireData = [
-  { month: "Aug", avgDays: 42, target: 30 },
-  { month: "Sep", avgDays: 38, target: 30 },
-  { month: "Oct", avgDays: 35, target: 30 },
-  { month: "Nov", avgDays: 32, target: 30 },
-  { month: "Dec", avgDays: 29, target: 30 },
-  { month: "Jan", avgDays: 28, target: 30 },
-];
+// Themed tooltip styles — overrides recharts' default white box
+const tooltipStyle = {
+  contentStyle: {
+    backgroundColor: "hsl(var(--popover))",
+    border: "1px solid hsl(var(--border))",
+    borderRadius: "var(--radius)",
+    color: "hsl(var(--popover-foreground))",
+    fontSize: "12px",
+    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+    padding: "8px 12px",
+  },
+  itemStyle: {
+    color: "hsl(var(--popover-foreground))",
+  },
+  labelStyle: {
+    color: "hsl(var(--muted-foreground))",
+    fontWeight: 500,
+    marginBottom: 4,
+  },
+  cursor: { fill: "hsl(var(--muted))", opacity: 0.5 },
+};
 
-const sourcePerformanceData = [
-  { name: "LinkedIn", candidates: 487, hired: 32, cost: 12400 },
-  { name: "Indeed", candidates: 356, hired: 24, cost: 8900 },
-  { name: "Referrals", candidates: 234, hired: 28, cost: 3500 },
-  { name: "Company Site", candidates: 170, hired: 19, cost: 0 },
-  { name: "Agencies", candidates: 89, hired: 12, cost: 24000 },
-];
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+function AnalyticsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-28 rounded-xl" />
+        ))}
+      </div>
+      <Skeleton className="h-10 w-full max-w-lg rounded-xl" />
+      <Skeleton className="h-80 w-full rounded-xl" />
+    </div>
+  );
+}
 
-const skillGapData = [
-  { skill: "React/Next.js", required: 45, available: 28, gap: 17 },
-  { skill: "Python/ML", required: 32, available: 19, gap: 13 },
-  { skill: "DevOps", required: 28, available: 18, gap: 10 },
-  { skill: "Product Management", required: 15, available: 8, gap: 7 },
-  { skill: "Data Engineering", required: 22, available: 16, gap: 6 },
-];
-
-const recruiterPerformanceData = [
-  { name: "Sarah Chen", jobsClosed: 24, candidates: 156, avgScore: 8.7, timeToHire: 26 },
-  { name: "Mike Johnson", jobsClosed: 21, candidates: 142, avgScore: 8.4, timeToHire: 28 },
-  { name: "Emma Davis", jobsClosed: 19, candidates: 134, avgScore: 8.8, timeToHire: 25 },
-  { name: "Alex Kumar", jobsClosed: 17, candidates: 128, avgScore: 8.2, timeToHire: 31 },
-  { name: "Lisa Wang", jobsClosed: 16, candidates: 119, avgScore: 8.5, timeToHire: 27 },
-];
-
-const aiScoreDistribution = [
-  { range: "90-100", count: 87 },
-  { range: "80-89", count: 234 },
-  { range: "70-79", count: 412 },
-  { range: "60-69", count: 298 },
-  { range: "50-59", count: 156 },
-  { range: "0-49", count: 60 },
-];
-
-const candidateFlowTrend = [
-  { week: "Week 1", applied: 312, screened: 224, interviewed: 156, hired: 18 },
-  { week: "Week 2", applied: 289, screened: 203, interviewed: 142, hired: 15 },
-  { week: "Week 3", applied: 334, screened: 245, interviewed: 167, hired: 21 },
-  { week: "Week 4", applied: 298, screened: 218, interviewed: 151, hired: 19 },
-];
-
-const interviewSuccessRate = [
-  { type: "AI Interview", passed: 634, failed: 258, pending: 0 },
-  { type: "Technical", passed: 423, failed: 211, pending: 34 },
-  { type: "Behavioral", passed: 387, failed: 156, pending: 28 },
-  { type: "Final Round", passed: 187, failed: 98, pending: 12 },
-];
-
-const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
-
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function AnalyticsReportsPage() {
-  const [dateRange, setDateRange] = useState("last-6-months");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [locationFilter, setLocationFilter] = useState("all");
+  const setTitle = useHeader((state) => state.setTitle);
 
-  const handleExport = (reportType) => {
-    // Implement export logic
-    console.log(`Exporting ${reportType} report...`);
-  };
+  const analyticsData = useRecruiterStore((s) => s.analyticsData);
+  const analyticsLoading = useRecruiterStore((s) => s.analyticsLoading);
+  const analyticsError = useRecruiterStore((s) => s.analyticsError);
+  const analyticsFilters = useRecruiterStore((s) => s.analyticsFilters);
+  const setAnalyticsFilters = useRecruiterStore((s) => s.setAnalyticsFilters);
+  const fetchAnalyticsData = useRecruiterStore((s) => s.fetchAnalyticsData);
+  const exportAnalyticsReport = useRecruiterStore(
+    (s) => s.exportAnalyticsReport,
+  );
+
+  useEffect(() => {
+    setTitle("Analytics & Reports");
+    fetchAnalyticsData();
+  }, []);
+
+  // ── Destructure API data with safe defaults ────────────────────────────────
+  const keyMetrics = analyticsData?.keyMetrics ?? {};
+  const hiringFunnel = analyticsData?.hiringFunnel ?? [];
+  const candidateFlowTrend = analyticsData?.candidateFlowTrend ?? [];
+  const timeToHireData = analyticsData?.timeToHireData ?? [];
+  const sourcePerformance = analyticsData?.sourcePerformance ?? [];
+  const aiScoreDistribution = analyticsData?.aiScoreDistribution ?? [];
+  const interviewSuccessRate = analyticsData?.interviewSuccessRate ?? [];
+  const recruiterPerformance = analyticsData?.recruiterPerformance ?? [];
+  const skillGap = analyticsData?.skillGap ?? [];
+  const topJobs = analyticsData?.topJobs ?? [];
+
+  // ── Loading ────────────────────────────────────────────────────────────────
+  if (analyticsLoading) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <AnalyticsSkeleton />
+      </div>
+    );
+  }
+
+  // ── Error ──────────────────────────────────────────────────────────────────
+  if (analyticsError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8">
+        <Alert variant="destructive" className="max-w-lg">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Failed to load analytics</AlertTitle>
+          <AlertDescription>{analyticsError}</AlertDescription>
+        </Alert>
+        <Button variant="outline" onClick={() => fetchAnalyticsData()}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-6 space-y-6">
-      {/* Header */}
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Analytics & Reports</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Analytics &amp; Reports
+          </h1>
           <p className="text-muted-foreground mt-1">
             Deep insights into recruitment performance, trends, and metrics
           </p>
@@ -168,19 +204,21 @@ export default function AnalyticsReportsPage() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Export Options</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleExport("full")}>
+            <DropdownMenuItem onClick={() => exportAnalyticsReport("full")}>
               <FileText className="mr-2 h-4 w-4" />
-              Full Analytics Report (PDF)
+              Full Analytics Report (CSV)
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleExport("funnel")}>
+            <DropdownMenuItem onClick={() => exportAnalyticsReport("funnel")}>
               <BarChart3 className="mr-2 h-4 w-4" />
               Hiring Funnel Data (CSV)
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleExport("recruiter")}>
+            <DropdownMenuItem
+              onClick={() => exportAnalyticsReport("recruiter")}
+            >
               <Users className="mr-2 h-4 w-4" />
-              Recruiter Performance (Excel)
+              Job Performance (CSV)
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleExport("skills")}>
+            <DropdownMenuItem onClick={() => exportAnalyticsReport("skills")}>
               <Award className="mr-2 h-4 w-4" />
               Skill Gap Analysis (CSV)
             </DropdownMenuItem>
@@ -188,7 +226,7 @@ export default function AnalyticsReportsPage() {
         </DropdownMenu>
       </div>
 
-      {/* Filters */}
+      {/* ── Filters ────────────────────────────────────────────────────────── */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center">
@@ -198,9 +236,13 @@ export default function AnalyticsReportsPage() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
+            {/* Date range */}
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <Select value={dateRange} onValueChange={setDateRange}>
+              <Select
+                value={analyticsFilters.dateRange}
+                onValueChange={(v) => setAnalyticsFilters({ dateRange: v })}
+              >
                 <SelectTrigger className="w-45">
                   <SelectValue />
                 </SelectTrigger>
@@ -210,12 +252,15 @@ export default function AnalyticsReportsPage() {
                   <SelectItem value="last-3-months">Last 3 Months</SelectItem>
                   <SelectItem value="last-6-months">Last 6 Months</SelectItem>
                   <SelectItem value="last-year">Last Year</SelectItem>
-                  <SelectItem value="custom">Custom Range</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+            {/* Department / title filter */}
+            <Select
+              value={analyticsFilters.department}
+              onValueChange={(v) => setAnalyticsFilters({ department: v })}
+            >
               <SelectTrigger className="w-45">
                 <SelectValue placeholder="Department" />
               </SelectTrigger>
@@ -229,40 +274,53 @@ export default function AnalyticsReportsPage() {
               </SelectContent>
             </Select>
 
-            <Select value={locationFilter} onValueChange={setLocationFilter}>
+            {/* Location filter */}
+            <Select
+              value={analyticsFilters.location}
+              onValueChange={(v) => setAnalyticsFilters({ location: v })}
+            >
               <SelectTrigger className="w-45">
                 <SelectValue placeholder="Location" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Locations</SelectItem>
-                <SelectItem value="us">United States</SelectItem>
-                <SelectItem value="uk">United Kingdom</SelectItem>
-                <SelectItem value="india">India</SelectItem>
                 <SelectItem value="remote">Remote</SelectItem>
+                <SelectItem value="onsite">Onsite</SelectItem>
+                <SelectItem value="hybrid">Hybrid</SelectItem>
               </SelectContent>
             </Select>
 
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              More Filters
+            <Button
+              variant="outline"
+              onClick={() => fetchAnalyticsData()}
+              disabled={analyticsLoading}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Key Metrics Overview */}
+      {/* ── Key Metrics Overview ────────────────────────────────────────────── */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Candidates</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Candidates
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,247</div>
+            <div className="text-2xl font-bold">
+              {(keyMetrics.totalCandidates ?? 0).toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
               <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
-              <span className="text-green-600">+12.3%</span>
-              <span className="ml-1">vs last period</span>
+              <span className="text-green-600">
+                {keyMetrics.hiredInPeriod ?? 0} hired
+              </span>
+              <span className="ml-1">this period</span>
             </p>
           </CardContent>
         </Card>
@@ -273,72 +331,96 @@ export default function AnalyticsReportsPage() {
             <Briefcase className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">47</div>
+            <div className="text-2xl font-bold">
+              {keyMetrics.activeJobs ?? 0}
+            </div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
-              <TrendingDown className="h-3 w-3 mr-1 text-red-600" />
-              <span className="text-red-600">-8.2%</span>
-              <span className="ml-1">vs last period</span>
+              <Activity className="h-3 w-3 mr-1" />
+              <span>Currently open</span>
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Time to Hire</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Avg Time to Hire
+            </CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">28 days</div>
+            <div className="text-2xl font-bold">
+              {keyMetrics.avgTimeToHire ?? "—"}{" "}
+              {keyMetrics.avgTimeToHire ? "days" : ""}
+            </div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
-              <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
-              <span className="text-green-600">6.7% faster</span>
-              <span className="ml-1">vs target (30d)</span>
+              {(keyMetrics.avgTimeToHire ?? 30) <= 30 ? (
+                <>
+                  <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
+                  <span className="text-green-600">Within target</span>
+                </>
+              ) : (
+                <>
+                  <TrendingDown className="h-3 w-3 mr-1 text-red-600" />
+                  <span className="text-red-600">Above 30-day target</span>
+                </>
+              )}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Conversion Rate
+            </CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">6.1%</div>
+            <div className="text-2xl font-bold">
+              {keyMetrics.conversionRate ?? 0}%
+            </div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
               <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
-              <span className="text-green-600">+0.8%</span>
-              <span className="ml-1">vs last period</span>
+              <span className="text-green-600">Applied → Hired</span>
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Analytics Tabs */}
+      {/* ── Tabs ───────────────────────────────────────────────────────────── */}
       <Tabs defaultValue="funnel" className="space-y-4">
         <TabsList>
           <TabsTrigger value="funnel">Hiring Funnel</TabsTrigger>
           <TabsTrigger value="sources">Source Attribution</TabsTrigger>
           <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
-          <TabsTrigger value="recruiters">Recruiter Performance</TabsTrigger>
+          <TabsTrigger value="jobs">Job Performance</TabsTrigger>
           <TabsTrigger value="skills">Skill Analysis</TabsTrigger>
-          <TabsTrigger value="trends">Trends & Forecasts</TabsTrigger>
+          <TabsTrigger value="trends">Trends</TabsTrigger>
         </TabsList>
 
-        {/* Hiring Funnel Tab */}
+        {/* ── Hiring Funnel ──────────────────────────────────────────────── */}
         <TabsContent value="funnel" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Hiring Funnel Overview</CardTitle>
-                <CardDescription>Candidate progression through hiring stages</CardDescription>
+                <CardDescription>
+                  Candidate progression through hiring stages
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={hiringFunnelData}>
+                  <BarChart data={hiringFunnel}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="stage" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip
+                      contentStyle={tooltipStyle.contentStyle}
+                      itemStyle={tooltipStyle.itemStyle}
+                      labelStyle={tooltipStyle.labelStyle}
+                      cursor={tooltipStyle.cursor}
+                    />
                     <Bar dataKey="count" fill="hsl(var(--primary))" />
                   </BarChart>
                 </ResponsiveContainer>
@@ -348,74 +430,99 @@ export default function AnalyticsReportsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Stage Conversion Rates</CardTitle>
-                <CardDescription>Percentage of candidates advancing per stage</CardDescription>
+                <CardDescription>
+                  Percentage of candidates advancing per stage
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {hiringFunnelData.map((stage, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{stage.stage}</span>
-                      <span className="text-muted-foreground">
-                        {stage.conversion}% ({stage.count})
-                      </span>
+                {hiringFunnel.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No data available for this period.
+                  </p>
+                ) : (
+                  hiringFunnel.map((stage, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium">{stage.stage}</span>
+                        <span className="text-muted-foreground">
+                          {stage.conversion}% ({stage.count})
+                        </span>
+                      </div>
+                      <Progress value={stage.conversion} />
                     </div>
-                    <Progress value={stage.conversion} />
-                  </div>
-                ))}
+                  ))
+                )}
               </CardContent>
             </Card>
           </div>
 
+          {/* Candidate flow trend */}
           <Card>
             <CardHeader>
               <CardTitle>Candidate Flow Over Time</CardTitle>
-              <CardDescription>Weekly progression through hiring stages</CardDescription>
+              <CardDescription>
+                Weekly progression through hiring stages
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={candidateFlowTrend}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="week" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Area
-                    type="monotone"
-                    dataKey="applied"
-                    stackId="1"
-                    stroke="hsl(var(--chart-1))"
-                    fill="hsl(var(--chart-1))"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="screened"
-                    stackId="1"
-                    stroke="hsl(var(--chart-2))"
-                    fill="hsl(var(--chart-2))"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="interviewed"
-                    stackId="1"
-                    stroke="hsl(var(--chart-3))"
-                    fill="hsl(var(--chart-3))"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="hired"
-                    stackId="1"
-                    stroke="hsl(var(--chart-4))"
-                    fill="hsl(var(--chart-4))"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {candidateFlowTrend.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-12">
+                  No weekly data available for this period.
+                </p>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={candidateFlowTrend}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="week" />
+                    <YAxis />
+                    <Tooltip
+                      contentStyle={tooltipStyle.contentStyle}
+                      itemStyle={tooltipStyle.itemStyle}
+                      labelStyle={tooltipStyle.labelStyle}
+                      cursor={tooltipStyle.cursor}
+                    />
+                    <Legend />
+                    <Area
+                      type="monotone"
+                      dataKey="applied"
+                      stackId="1"
+                      stroke={COLORS[0]}
+                      fill={COLORS[0]}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="shortlisted"
+                      stackId="1"
+                      stroke={COLORS[1]}
+                      fill={COLORS[1]}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="interviewed"
+                      stackId="1"
+                      stroke={COLORS[2]}
+                      fill={COLORS[2]}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="hired"
+                      stackId="1"
+                      stroke={COLORS[3]}
+                      fill={COLORS[3]}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
 
+          {/* Interview success rates */}
           <Card>
             <CardHeader>
               <CardTitle>Interview Success Rates</CardTitle>
-              <CardDescription>Pass/fail breakdown by interview type</CardDescription>
+              <CardDescription>
+                Pass/fail breakdown by interview type
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -426,98 +533,131 @@ export default function AnalyticsReportsPage() {
                     <TableHead>Failed</TableHead>
                     <TableHead>Pending</TableHead>
                     <TableHead>Success Rate</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Progress</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {interviewSuccessRate.map((interview, index) => {
-                    const total = interview.passed + interview.failed;
-                    const rate = ((interview.passed / total) * 100).toFixed(1);
-                    return (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{interview.type}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                            {interview.passed}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <XCircle className="h-4 w-4 mr-2 text-red-600" />
-                            {interview.failed}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <MinusCircle className="h-4 w-4 mr-2 text-muted-foreground" />
-                            {interview.pending}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{rate}%</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Progress value={parseFloat(rate)} className="w-24" />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {interviewSuccessRate.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={6}
+                        className="text-center text-muted-foreground py-8"
+                      >
+                        No interview data available.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    interviewSuccessRate.map((interview, index) => {
+                      const total = interview.passed + interview.failed;
+                      const rate =
+                        total > 0
+                          ? ((interview.passed / total) * 100).toFixed(1)
+                          : "0.0";
+                      return (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">
+                            {interview.type}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                              {interview.passed}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <XCircle className="h-4 w-4 mr-2 text-red-600" />
+                              {interview.failed}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <MinusCircle className="h-4 w-4 mr-2 text-muted-foreground" />
+                              {interview.pending}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{rate}%</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Progress
+                              value={parseFloat(rate)}
+                              className="w-24"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Source Attribution Tab */}
+        {/* ── Source Attribution ─────────────────────────────────────────── */}
         <TabsContent value="sources" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Source Performance</CardTitle>
-                <CardDescription>Candidates and hires by source channel</CardDescription>
+                <CardDescription>
+                  Candidates and hires by work mode / source channel
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={sourcePerformanceData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="candidates" fill="hsl(var(--chart-1))" />
-                    <Bar dataKey="hired" fill="hsl(var(--chart-2))" />
-                  </BarChart>
-                </ResponsiveContainer>
+                {sourcePerformance.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-12">
+                    No source data available.
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={sourcePerformance}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip
+                        contentStyle={tooltipStyle.contentStyle}
+                        itemStyle={tooltipStyle.itemStyle}
+                        labelStyle={tooltipStyle.labelStyle}
+                        cursor={tooltipStyle.cursor}
+                      />
+                      <Legend />
+                      <Bar dataKey="candidates" fill={COLORS[0]} />
+                      <Bar dataKey="hired" fill={COLORS[1]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Cost Per Hire by Source</CardTitle>
-                <CardDescription>Recruitment cost efficiency analysis</CardDescription>
+                <CardTitle>Conversion by Source</CardTitle>
+                <CardDescription>
+                  Hire rate per candidate channel
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {sourcePerformanceData.map((source, index) => {
-                    const costPerHire = source.cost / source.hired;
-                    return (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">{source.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {source.hired} hires from {source.candidates} candidates
-                          </p>
+                  {sourcePerformance.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">
+                      No data.
+                    </p>
+                  ) : (
+                    sourcePerformance.map((source, index) => (
+                      <div key={index} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium">{source.name}</span>
+                          <span className="text-muted-foreground">
+                            {source.hired} / {source.candidates} (
+                            {source.conversionRate}%)
+                          </span>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold">
-                            ${costPerHire.toFixed(0)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">per hire</p>
-                        </div>
+                        <Progress value={source.conversionRate} />
                       </div>
-                    );
-                  })}
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -526,101 +666,140 @@ export default function AnalyticsReportsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Detailed Source Analytics</CardTitle>
-              <CardDescription>Complete breakdown of source performance metrics</CardDescription>
+              <CardDescription>
+                Complete breakdown of source performance metrics
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Source</TableHead>
+                    <TableHead>Source / Work Mode</TableHead>
                     <TableHead>Candidates</TableHead>
                     <TableHead>Hired</TableHead>
                     <TableHead>Conversion Rate</TableHead>
-                    <TableHead>Total Cost</TableHead>
-                    <TableHead>Cost/Hire</TableHead>
-                    <TableHead>ROI</TableHead>
+                    <TableHead>Quality</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sourcePerformanceData.map((source, index) => {
-                    const conversionRate = ((source.hired / source.candidates) * 100).toFixed(1);
-                    const costPerHire = source.cost / source.hired;
-                    return (
+                  {sourcePerformance.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="text-center text-muted-foreground py-8"
+                      >
+                        No source data for this period.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    sourcePerformance.map((source, index) => (
                       <TableRow key={index}>
-                        <TableCell className="font-medium">{source.name}</TableCell>
+                        <TableCell className="font-medium">
+                          {source.name}
+                        </TableCell>
                         <TableCell>{source.candidates}</TableCell>
                         <TableCell>{source.hired}</TableCell>
                         <TableCell>
-                          <Badge variant="outline">{conversionRate}%</Badge>
+                          <Badge variant="outline">
+                            {source.conversionRate}%
+                          </Badge>
                         </TableCell>
-                        <TableCell>${source.cost.toLocaleString()}</TableCell>
-                        <TableCell>${costPerHire.toFixed(0)}</TableCell>
                         <TableCell>
-                          {conversionRate > 10 ? (
+                          {source.conversionRate > 10 ? (
                             <Badge>Excellent</Badge>
-                          ) : conversionRate > 5 ? (
+                          ) : source.conversionRate > 5 ? (
                             <Badge variant="outline">Good</Badge>
                           ) : (
                             <Badge variant="secondary">Average</Badge>
                           )}
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* AI Insights Tab */}
+        {/* ── AI Insights ───────────────────────────────────────────────────── */}
         <TabsContent value="ai-insights" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>AI Score Distribution</CardTitle>
-                <CardDescription>Resume scoring breakdown across all candidates</CardDescription>
+                <CardDescription>
+                  Resume match score breakdown across all candidates
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={aiScoreDistribution}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="range" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="hsl(var(--primary))" />
-                  </BarChart>
-                </ResponsiveContainer>
+                {aiScoreDistribution.every((b) => b.count === 0) ? (
+                  <p className="text-sm text-muted-foreground text-center py-12">
+                    No AI score data available.
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={aiScoreDistribution}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="range" />
+                      <YAxis />
+                      <Tooltip
+                        contentStyle={tooltipStyle.contentStyle}
+                        itemStyle={tooltipStyle.itemStyle}
+                        labelStyle={tooltipStyle.labelStyle}
+                        cursor={tooltipStyle.cursor}
+                      />
+                      <Bar dataKey="count" fill="hsl(var(--primary))" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
                 <CardTitle>Score Distribution by Range</CardTitle>
-                <CardDescription>Percentage breakdown of AI scores</CardDescription>
+                <CardDescription>
+                  Percentage breakdown of AI match scores
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={aiScoreDistribution}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ range, percent }) =>
-                        `${range}: ${(percent * 100).toFixed(0)}%`
-                      }
-                      outerRadius={100}
-                      fill="hsl(var(--primary))"
-                      dataKey="count"
-                    >
-                      {aiScoreDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                {aiScoreDistribution.every((b) => b.count === 0) ? (
+                  <p className="text-sm text-muted-foreground text-center py-12">
+                    No data to visualise.
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={aiScoreDistribution.filter((b) => b.count > 0)}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ range, percent }) =>
+                          `${range}: ${(percent * 100).toFixed(0)}%`
+                        }
+                        outerRadius={100}
+                        dataKey="count"
+                      >
+                        {aiScoreDistribution
+                          .filter((b) => b.count > 0)
+                          .map((_, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={tooltipStyle.contentStyle}
+                        itemStyle={tooltipStyle.itemStyle}
+                        labelStyle={tooltipStyle.labelStyle}
+                        cursor={tooltipStyle.cursor}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -628,255 +807,210 @@ export default function AnalyticsReportsPage() {
           <Card>
             <CardHeader>
               <CardTitle>AI Interview Performance</CardTitle>
-              <CardDescription>Success metrics for AI-conducted interviews</CardDescription>
+              <CardDescription>
+                Success metrics for AI-conducted interviews
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Total AI Interviews</p>
-                  <p className="text-3xl font-bold">892</p>
-                  <Progress value={71} />
-                  <p className="text-xs text-muted-foreground">71% of screened candidates</p>
+                  <p className="text-sm text-muted-foreground">
+                    Total AI Interviews
+                  </p>
+                  <p className="text-3xl font-bold">
+                    {(
+                      keyMetrics.totalInterviewCandidates ?? 0
+                    ).toLocaleString()}
+                  </p>
+                  <Progress
+                    value={Math.min(
+                      ((keyMetrics.totalInterviewCandidates ?? 0) /
+                        Math.max(keyMetrics.totalCandidates ?? 1, 1)) *
+                        100,
+                      100,
+                    )}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Of all screened candidates
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Average Score</p>
-                  <p className="text-3xl font-bold">74.2</p>
-                  <Progress value={74} />
+                  <p className="text-sm text-muted-foreground">
+                    Average AI Score
+                  </p>
+                  <p className="text-3xl font-bold">
+                    {keyMetrics.avgAiScore ?? "—"}
+                  </p>
+                  <Progress value={keyMetrics.avgAiScore ?? 0} />
                   <p className="text-xs text-muted-foreground">Out of 100</p>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Pass Rate</p>
-                  <p className="text-3xl font-bold">71.1%</p>
-                  <Progress value={71} />
-                  <p className="text-xs text-muted-foreground">634 candidates advanced</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>AI Accuracy & Insights</CardTitle>
-              <CardDescription>How AI predictions correlate with final hiring outcomes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Prediction Accuracy</p>
-                    <p className="text-xs text-muted-foreground">
-                      AI scores vs final hire decisions
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold">87.3%</p>
-                    <Badge variant="outline" className="mt-1">
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      +2.1%
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">False Positive Rate</p>
-                    <p className="text-xs text-muted-foreground">
-                      High scores that didn't convert to hires
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold">8.7%</p>
-                    <Badge variant="outline" className="mt-1">
-                      <TrendingDown className="h-3 w-3 mr-1" />
-                      -1.3%
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Time Saved</p>
-                    <p className="text-xs text-muted-foreground">
-                      Recruiter hours saved by AI screening
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold">1,247h</p>
-                    <Badge variant="outline" className="mt-1">
-                      This period
-                    </Badge>
-                  </div>
+                  <p className="text-sm text-muted-foreground">AI Pass Rate</p>
+                  <p className="text-3xl font-bold">
+                    {keyMetrics.aiPassRate ?? 0}%
+                  </p>
+                  <Progress value={keyMetrics.aiPassRate ?? 0} />
+                  <p className="text-xs text-muted-foreground">
+                    Candidates advanced
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Recruiter Performance Tab */}
-        <TabsContent value="recruiters" className="space-y-4">
+        {/* ── Job Performance ───────────────────────────────────────────────── */}
+        <TabsContent value="jobs" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Recruiter Leaderboard</CardTitle>
-              <CardDescription>Performance metrics for all recruiters this period</CardDescription>
+              <CardTitle>Job Performance Leaderboard</CardTitle>
+              <CardDescription>
+                Performance metrics per job posting for this period
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Rank</TableHead>
-                    <TableHead>Recruiter</TableHead>
-                    <TableHead>Jobs Closed</TableHead>
-                    <TableHead>Candidates Managed</TableHead>
-                    <TableHead>Avg Score</TableHead>
-                    <TableHead>Avg Time to Hire</TableHead>
+                    <TableHead>Job Title</TableHead>
+                    <TableHead>Applications</TableHead>
+                    <TableHead>Hired</TableHead>
+                    <TableHead>Avg AI Score</TableHead>
+                    <TableHead>Conversion</TableHead>
                     <TableHead>Performance</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recruiterPerformanceData.map((recruiter, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <Badge variant={index === 0 ? "default" : "outline"}>
-                          #{index + 1}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">{recruiter.name}</TableCell>
-                      <TableCell>{recruiter.jobsClosed}</TableCell>
-                      <TableCell>{recruiter.candidates}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Award className="h-4 w-4 text-muted-foreground" />
-                          {recruiter.avgScore}/10
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          {recruiter.timeToHire}d
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {recruiter.avgScore >= 8.5 && recruiter.timeToHire <= 27 ? (
-                          <Badge>Excellent</Badge>
-                        ) : recruiter.avgScore >= 8.0 ? (
-                          <Badge variant="outline">Good</Badge>
-                        ) : (
-                          <Badge variant="secondary">Average</Badge>
-                        )}
+                  {recruiterPerformance.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={7}
+                        className="text-center text-muted-foreground py-8"
+                      >
+                        No job performance data for this period.
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    recruiterPerformance.map((job, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <Badge variant={index === 0 ? "default" : "outline"}>
+                            #{index + 1}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {job.jobTitle}
+                        </TableCell>
+                        <TableCell>{job.totalApps}</TableCell>
+                        <TableCell>{job.hired}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Award className="h-4 w-4 text-muted-foreground" />
+                            {job.avgScore}/100
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{job.conversionRate}%</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {job.conversionRate >= 10 ? (
+                            <Badge>Excellent</Badge>
+                          ) : job.conversionRate >= 5 ? (
+                            <Badge variant="outline">Good</Badge>
+                          ) : (
+                            <Badge variant="secondary">Average</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Top Performer</CardTitle>
-                <CardDescription>Best overall metrics this period</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Award className="h-5 w-5" />
-                    <p className="font-semibold">{recruiterPerformanceData[0].name}</p>
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <p className="text-muted-foreground">
-                      {recruiterPerformanceData[0].jobsClosed} jobs closed
-                    </p>
-                    <p className="text-muted-foreground">
-                      Score: {recruiterPerformanceData[0].avgScore}/10
-                    </p>
-                    <p className="text-muted-foreground">
-                      Avg: {recruiterPerformanceData[0].timeToHire} days
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Fastest Hires</CardTitle>
-                <CardDescription>Lowest average time to hire</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    <p className="font-semibold">{recruiterPerformanceData[2].name}</p>
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <p className="text-muted-foreground">
-                      {recruiterPerformanceData[2].timeToHire} days average
-                    </p>
-                    <p className="text-muted-foreground">
-                      {recruiterPerformanceData[2].jobsClosed} jobs closed
-                    </p>
-                    <Badge variant="outline">16% faster than target</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Highest Quality</CardTitle>
-                <CardDescription>Best candidate satisfaction score</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    <p className="font-semibold">{recruiterPerformanceData[2].name}</p>
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <p className="text-muted-foreground">
-                      {recruiterPerformanceData[2].avgScore}/10 rating
-                    </p>
-                    <p className="text-muted-foreground">
-                      {recruiterPerformanceData[2].candidates} candidates
-                    </p>
-                    <Badge variant="outline">Top rated</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Top Jobs summary cards */}
+          {topJobs.length > 0 && (
+            <div className="grid gap-4 md:grid-cols-3">
+              {topJobs.slice(0, 3).map((job, i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <CardTitle className="text-base">
+                      {i === 0
+                        ? "Most Applied"
+                        : i === 1
+                          ? "Runner-up"
+                          : "Third Place"}
+                    </CardTitle>
+                    <CardDescription>{job.title}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-1 text-sm">
+                      <p className="text-muted-foreground">
+                        {job.applicationsCount ?? 0} applications
+                      </p>
+                      <p className="text-muted-foreground">
+                        {job.hiredCount ?? 0} hired
+                      </p>
+                      <p className="text-muted-foreground">{job.location}</p>
+                      <Badge variant="outline" className="mt-1">
+                        {job.status}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
-        {/* Skill Analysis Tab */}
+        {/* ── Skill Analysis ─────────────────────────────────────────────────── */}
         <TabsContent value="skills" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Skill Gap Analysis</CardTitle>
               <CardDescription>
-                Current demand vs available talent pool
+                Required skills in job postings vs available in applications
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={skillGapData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="skill" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="required" fill="hsl(var(--chart-1))" name="Required" />
-                  <Bar dataKey="available" fill="hsl(var(--chart-2))" name="Available" />
-                  <Bar dataKey="gap" fill="hsl(var(--chart-3))" name="Gap" />
-                </BarChart>
-              </ResponsiveContainer>
+              {skillGap.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-12">
+                  No skill data available.
+                </p>
+              ) : (
+                <ResponsiveContainer width="100%" height={350}>
+                  <BarChart data={skillGap}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="skill" />
+                    <YAxis />
+                    <Tooltip
+                      contentStyle={tooltipStyle.contentStyle}
+                      itemStyle={tooltipStyle.itemStyle}
+                      labelStyle={tooltipStyle.labelStyle}
+                      cursor={tooltipStyle.cursor}
+                    />
+                    <Legend />
+                    <Bar dataKey="required" fill={COLORS[0]} name="Required" />
+                    <Bar
+                      dataKey="available"
+                      fill={COLORS[1]}
+                      name="Available"
+                    />
+                    <Bar dataKey="gap" fill={COLORS[2]} name="Gap" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
               <CardTitle>Detailed Skill Breakdown</CardTitle>
-              <CardDescription>Comprehensive analysis of skill availability</CardDescription>
+              <CardDescription>
+                Comprehensive analysis of skill availability
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -891,11 +1025,21 @@ export default function AnalyticsReportsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {skillGapData.map((skill, index) => {
-                    const fillRate = ((skill.available / skill.required) * 100).toFixed(0);
-                    return (
+                  {skillGap.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={6}
+                        className="text-center text-muted-foreground py-8"
+                      >
+                        No skill gap data for this period.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    skillGap.map((skill, index) => (
                       <TableRow key={index}>
-                        <TableCell className="font-medium">{skill.skill}</TableCell>
+                        <TableCell className="font-medium">
+                          {skill.skill}
+                        </TableCell>
                         <TableCell>{skill.required}</TableCell>
                         <TableCell>{skill.available}</TableCell>
                         <TableCell>
@@ -903,106 +1047,116 @@ export default function AnalyticsReportsPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Progress value={parseInt(fillRate)} className="w-24" />
-                            <span className="text-sm text-muted-foreground">{fillRate}%</span>
+                            <Progress value={skill.fillRate} className="w-24" />
+                            <span className="text-sm text-muted-foreground">
+                              {skill.fillRate}%
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell>
                           {skill.gap > 12 ? (
                             <Badge variant="destructive">Critical</Badge>
-                          ) : skill.gap > 8 ? (
+                          ) : skill.gap > 5 ? (
                             <Badge>High</Badge>
                           ) : (
                             <Badge variant="outline">Medium</Badge>
                           )}
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                <AlertCircle className="inline-block mr-2 h-5 w-5" />
-                Recommended Actions
-              </CardTitle>
-              <CardDescription>Strategies to address skill gaps</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 border rounded-lg">
-                  <Badge variant="destructive">Critical</Badge>
-                  <div className="space-y-1 flex-1">
-                    <p className="text-sm font-medium">
-                      Expand React/Next.js sourcing channels
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      17 positions unfilled - Consider bootcamp partnerships and remote hiring
-                    </p>
-                  </div>
+          {skillGap.filter((s) => s.gap > 5).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  <AlertCircle className="inline-block mr-2 h-5 w-5" />
+                  Recommended Actions
+                </CardTitle>
+                <CardDescription>
+                  Strategies to address critical skill gaps
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {skillGap
+                    .filter((s) => s.gap > 0)
+                    .slice(0, 4)
+                    .map((s, i) => (
+                      <div
+                        key={i}
+                        className="flex items-start gap-3 p-3 border rounded-lg"
+                      >
+                        <Badge variant={s.gap > 12 ? "destructive" : "default"}>
+                          {s.gap > 12 ? "Critical" : "High"}
+                        </Badge>
+                        <div className="space-y-1 flex-1">
+                          <p className="text-sm font-medium">
+                            Expand {s.skill} sourcing channels
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {s.gap} open position{s.gap > 1 ? "s" : ""} unfilled
+                            — consider widening the candidate pool or adjusting
+                            requirements.
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                 </div>
-
-                <div className="flex items-start gap-3 p-3 border rounded-lg">
-                  <Badge>High</Badge>
-                  <div className="space-y-1 flex-1">
-                    <p className="text-sm font-medium">
-                      Launch ML/Python talent pipeline
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      13 positions unfilled - Reach out to university programs
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-3 border rounded-lg">
-                  <Badge>High</Badge>
-                  <div className="space-y-1 flex-1">
-                    <p className="text-sm font-medium">Increase DevOps recruiting budget</p>
-                    <p className="text-xs text-muted-foreground">
-                      10 positions unfilled - Competitive market requires higher compensation
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
-        {/* Trends & Forecasts Tab */}
+        {/* ── Trends ────────────────────────────────────────────────────────── */}
         <TabsContent value="trends" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Time to Hire Trend</CardTitle>
-              <CardDescription>Average days from application to hire over time</CardDescription>
+              <CardDescription>
+                Average days from application to hire over time
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={timeToHireData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="avgDays"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    name="Actual"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="target"
-                    stroke="hsl(var(--muted-foreground))"
-                    strokeDasharray="5 5"
-                    name="Target"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {timeToHireData.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-12">
+                  No time-to-hire data available. Hire some candidates to see
+                  trends.
+                </p>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={timeToHireData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip
+                      contentStyle={tooltipStyle.contentStyle}
+                      itemStyle={tooltipStyle.itemStyle}
+                      labelStyle={tooltipStyle.labelStyle}
+                      cursor={tooltipStyle.cursor}
+                    />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="avgDays"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      name="Actual (days)"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="target"
+                      stroke="hsl(var(--muted-foreground))"
+                      strokeDasharray="5 5"
+                      name="Target (30d)"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
 
@@ -1010,20 +1164,28 @@ export default function AnalyticsReportsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Hiring Velocity</CardTitle>
-                <CardDescription>Positions filled per month trend</CardDescription>
+                <CardDescription>Candidates hired this period</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Current Month</span>
-                    <span className="text-2xl font-bold">24</span>
+                    <span className="text-sm text-muted-foreground">
+                      Hired this period
+                    </span>
+                    <span className="text-2xl font-bold">
+                      {keyMetrics.hiredInPeriod ?? 0}
+                    </span>
                   </div>
-                  <Progress value={80} />
+                  <Progress
+                    value={Math.min((keyMetrics.hiredInPeriod ?? 0) * 4, 100)}
+                  />
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Target: 30</span>
+                    <span>
+                      Total applications: {keyMetrics.totalApplications ?? 0}
+                    </span>
                     <span className="flex items-center">
                       <TrendingUp className="h-3 w-3 mr-1" />
-                      On track
+                      {keyMetrics.conversionRate ?? 0}% rate
                     </span>
                   </div>
                 </div>
@@ -1032,21 +1194,27 @@ export default function AnalyticsReportsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Quality of Hire Index</CardTitle>
-                <CardDescription>Composite score of hire quality metrics</CardDescription>
+                <CardTitle>AI Screening Quality</CardTitle>
+                <CardDescription>
+                  Average AI match score across all candidates
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Current Score</span>
-                    <span className="text-2xl font-bold">8.4/10</span>
+                    <span className="text-sm text-muted-foreground">
+                      Average Score
+                    </span>
+                    <span className="text-2xl font-bold">
+                      {keyMetrics.avgAiScore ?? "—"}/100
+                    </span>
                   </div>
-                  <Progress value={84} />
+                  <Progress value={keyMetrics.avgAiScore ?? 0} />
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Last period: 8.2</span>
+                    <span>AI pass rate: {keyMetrics.aiPassRate ?? 0}%</span>
                     <span className="flex items-center text-green-600">
                       <TrendingUp className="h-3 w-3 mr-1" />
-                      +2.4%
+                      AI-assisted screening
                     </span>
                   </div>
                 </div>
@@ -1054,34 +1222,34 @@ export default function AnalyticsReportsPage() {
             </Card>
           </div>
 
+          {/* Predictive insights */}
           <Card>
             <CardHeader>
               <CardTitle>
                 <Activity className="inline-block mr-2 h-5 w-5" />
-                Predictive Insights
+                Insights
               </CardTitle>
-              <CardDescription>AI-powered forecasts based on current trends</CardDescription>
+              <CardDescription>
+                Key observations based on current data
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-start gap-3 p-3 border rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-green-600 mt-0.5" />
+                  {(keyMetrics.avgTimeToHire ?? 30) <= 30 ? (
+                    <TrendingUp className="h-5 w-5 text-green-600 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  )}
                   <div className="space-y-1 flex-1">
                     <p className="text-sm font-medium">
-                      Time to hire trending down
+                      {(keyMetrics.avgTimeToHire ?? 30) <= 30
+                        ? "Time-to-hire within target"
+                        : "Time-to-hire above target"}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Based on current velocity, expect 25-day average by next month (17% improvement)
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-3 border rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                  <div className="space-y-1 flex-1">
-                    <p className="text-sm font-medium">Increased demand for Engineering roles</p>
-                    <p className="text-xs text-muted-foreground">
-                      Projected 35% increase in open positions next quarter - prepare sourcing strategy
+                      Current average: {keyMetrics.avgTimeToHire ?? "N/A"} days
+                      (target: 30 days)
                     </p>
                   </div>
                 </div>
@@ -1089,12 +1257,31 @@ export default function AnalyticsReportsPage() {
                 <div className="flex items-start gap-3 p-3 border rounded-lg">
                   <TrendingUp className="h-5 w-5 text-green-600 mt-0.5" />
                   <div className="space-y-1 flex-1">
-                    <p className="text-sm font-medium">LinkedIn source quality improving</p>
+                    <p className="text-sm font-medium">AI screening active</p>
                     <p className="text-xs text-muted-foreground">
-                      Conversion rate up 18% month-over-month - consider increasing investment
+                      {keyMetrics.totalInterviewCandidates ?? 0} candidates
+                      processed with an average score of{" "}
+                      {keyMetrics.avgAiScore ?? 0}/100.
                     </p>
                   </div>
                 </div>
+
+                {skillGap.filter((s) => s.gap > 5).length > 0 && (
+                  <div className="flex items-start gap-3 p-3 border rounded-lg">
+                    <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                    <div className="space-y-1 flex-1">
+                      <p className="text-sm font-medium">Skill gaps detected</p>
+                      <p className="text-xs text-muted-foreground">
+                        {skillGap.filter((s) => s.gap > 5).length} skill
+                        {skillGap.filter((s) => s.gap > 5).length > 1
+                          ? "s"
+                          : ""}{" "}
+                        have a significant supply gap — consider expanding
+                        sourcing channels.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

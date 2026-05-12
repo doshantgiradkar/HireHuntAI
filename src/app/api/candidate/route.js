@@ -49,6 +49,7 @@ export async function PUT(req) {
         education: body.resume.education ?? existing.resume.education,
         certifications: body.resume.certifications ?? existing.resume.certifications,
         experience: body.resume.experience ?? existing.resume.experience,
+        projects: body.resume.projects ?? existing.resume.projects,
       };
       updates.totalExperienceDuration = (totalExperienceDuration / 12.0).toFixed(2);
     }
@@ -154,6 +155,7 @@ export async function POST(req) {
         education: candidate.resume.education ?? [],
         certifications: candidate.resume.certifications ?? [],
         experience: candidate.resume.experience ?? [],
+        projects: candidate.resume.projects ?? [],
       },
       dateOfBirth: candidate.dateOfBirth ?? null,
       appliedJobs: candidate.appliedJobs ?? [],
