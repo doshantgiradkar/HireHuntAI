@@ -34,9 +34,12 @@ tmp/
 
 # misc
 .DS_Store
+.impeccable/*
 *.pem
 *.ts
 ngrok
+PRODUCT.md
+DESIGN.md
 AGENTS.md
 
 # debug
