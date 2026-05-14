@@ -31,28 +31,27 @@ export default function SelectRolePage() {
   const [error, setError] = useState(null);
 
   const handleSubmit = async () => {
-  if (!selectedRole || !isLoaded) return;
+    if (!selectedRole || !isLoaded) return;
 
-  setIsLoading(true);
-  setError(null);
+    setIsLoading(true);
+    setError(null);
 
-  try {
-    const res = await axios.post("/api/set-role", {
-      role: selectedRole,
-    });
+    try {
+      const res = await axios.post("/api/set-role", {
+        role: selectedRole,
+      });
 
-    // ✅ Correct way to refresh Clerk session metadata
-    await user.reload();
+      // ✅ Correct way to refresh Clerk session metadata
+      await user.reload();
 
-    // Redirect after reload
-    window.location.href = `/${selectedRole}/dashboard`;
-  } catch (err) {
-    console.error(err);
-    setError("Something went wrong. Please try again.");
-    setIsLoading(false);
-  }
-};
-
+      // Redirect after reload
+      window.location.href = `/${selectedRole}/dashboard`;
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong. Please try again.");
+      setIsLoading(false);
+    }
+  };
 
   const roleOptions = [
     {
@@ -89,7 +88,7 @@ export default function SelectRolePage() {
                 <Users className="h-8 w-8 text-foreground" />
               </div>
             </div>
-            <CardTitle className="text-3xl">Welcome to TalentHunt</CardTitle>
+            <CardTitle className="text-3xl">Welcome to CareerQuest</CardTitle>
             <CardDescription className="text-base">
               Choose your role to get started with our platform
             </CardDescription>
@@ -114,7 +113,7 @@ export default function SelectRolePage() {
                       "relative cursor-pointer transition-all duration-200 hover:shadow-md border-2",
                       isSelected
                         ? "ring-2 ring-primary shadow-md"
-                        : "hover:border-muted-foreground/20"
+                        : "hover:border-muted-foreground/20",
                     )}
                     onClick={() => setSelectedRole(option.id)}
                     role="button"

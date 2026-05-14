@@ -62,7 +62,7 @@ export async function POST(req) {
           imageUrl: data.image_url,
           role: data.public_metadata?.role || "candidate",
         },
-        { upsert: true, new: true, strict: false }
+        { upsert: true, new: true, strict: false },
       );
 
       if (data.public_metadata?.role == "recruiter") {
@@ -84,7 +84,7 @@ export async function POST(req) {
         deleteResume(candidate.resumeUrl);
       }
       await Candidate.deleteOne({ clerkId: data.id });
-      
+
       console.log(`All user data deleted for clerkId: ${data.id}`);
     }
 
