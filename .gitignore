@@ -35,6 +35,7 @@ tmp/
 # misc
 .DS_Store
 .impeccable/*
+.pi/*
 *.pem
 *.ts
 ngrok

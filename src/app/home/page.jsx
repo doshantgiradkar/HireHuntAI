@@ -2,275 +2,307 @@
 
 import NewsletterSection from "@/components/newsletter-section";
 import StickyCTA from "@/components/sticky-cta";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, Brain, Clock, Menu, Shield, SparklesIcon,Sparkles, Zap, Play } from "lucide-react";
+import {
+  ArrowRight,
+  Brain,
+  Clock,
+  Menu,
+  Shield,
+  SparklesIcon,
+  X,
+  Zap,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import AnimatedCounter from "@/components/animated-counter";
-import FeatureCard from "@/components/feature-card";
 import HowItWorksSection from "@/components/how-it-works";
 import TestimonialCarousel from "@/components/testimonial-carousel";
 import PricingSection from "@/components/pricing-section";
 import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/footer";
-import { X } from "lucide-react";
-
+import { Search } from "lucide-react";
 
 const Home = () => {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [hasMounted, setHasMounted] = useState(false);
-    const router = useRouter();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
+  const router = useRouter();
 
-    useEffect(() => {
-        setHasMounted(true);
-        const timer = setTimeout(() => setIsLoading(false), 1000);
-        return () => clearTimeout(timer);
-    }, []);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
-    const features = [
-        {
-            icon: <Brain className="h-8 w-8" />,
-            title: "AI-Powered Matching",
-            description: "Intelligent candidate screening with advanced AI algorithms that analyze skills, experience, and cultural fit."
-        },
-        {
-            icon: <Clock className="h-8 w-8" />,
-            title: "Real-time Scheduling",
-            description: "Seamless interview scheduling with automated calendar integration and timezone handling."
-        },
-        {
-            icon: <Shield className="h-8 w-8" />,
-            title: "Secure & Compliant",
-            description: "Enterprise-grade security with full compliance standards including GDPR and SOC 2."
-        }
-    ];
+  const features = [
+    {
+      icon: <Brain className="h-8 w-8 text-[oklch(0.48_0.115_258)]" />,
+      title: "AI shortlisting",
+      description: "Rank candidates fast using skill and role-fit signals.",
+      detail:
+        "Auto-scored summaries surface role-fit evidence first, so recruiters can decide in minutes instead of deep-reading every profile.",
+    },
+    {
+      icon: <Clock className="h-8 w-8 text-[oklch(0.56_0.106_196)]" />,
+      title: "Live scheduling",
+      description:
+        "Coordinate interviews across calendars with fewer back-and-forth loops.",
+    },
+    {
+      icon: <Shield className="h-8 w-8 text-[oklch(0.62_0.148_74)]" />,
+      title: "Secure hiring ops",
+      description:
+        "Run recruiting workflows with enterprise-grade controls and auditability.",
+    },
+  ];
 
-    const stats = [
-        { value: "500+", label: "Companies Trust Us" },
-        { value: "50K+", label: "Interviews Conducted" },
-        { value: "95%", label: "Success Rate" },
-        { value: "24/7", label: "Support Available" }
-    ];
+  const stats = [
+    { value: "500+", label: "Hiring teams onboarded" },
+    { value: "50K+", label: "Interviews completed" },
+    { value: "95%", label: "Workflow completion" },
+    { value: "5 min", label: "To first shortlist" },
+  ];
 
-    if (!hasMounted) {
-        // Prevent SSR/client mismatch
-        return null;
-    }
+  if (!hasMounted) {
+    return null;
+  }
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-                    <div className="text-center space-y-8">
-                        <Skeleton className="h-12 w-3/4 mx-auto" />
-                        <Skeleton className="h-6 w-1/2 mx-auto" />
-                        <div className="flex justify-center space-x-4">
-                            <Skeleton className="h-12 w-32" />
-                            <Skeleton className="h-12 w-32" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-
-
-    return (
-        <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 scroll-smooth">
-            {/* Navigation */}
-            <nav className="relative z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center py-4">
-                        <div className="flex items-center space-x-2">
-                            <div className="w-10 h-10 bg-linear-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                                <SparklesIcon className="h-6 w-6 text-white" />
-                            </div>
-                            <span className="text-xl font-bold text-slate-900 dark:text-white">
-                                HireHunt AI
-                            </span>
-                        </div>
-                        {/* Desktop Navigation */}
-                        <div className="hidden md:flex items-center space-x-8">
-                            <a href="#features" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors">
-                                Features
-                            </a>
-                            <a href="#pricing" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors">
-                                Pricing
-                            </a>
-                            <a href="#about" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors">
-                                About
-                            </a>
-                            <Button variant="outline" className="border-slate-300 dark:border-slate-600" onClick={() => router.push('/sign-in')}>
-                                Login
-                            </Button>
-                            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push('/sign-in')}>
-                                Get Started
-                            </Button>
-                        </div>
-                        {/* Mobile menu button */}
-                        <button
-                            className="md:hidden p-2 rounded-md text-slate-600 dark:text-slate-300"
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        >
-                            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                        </button>
-                    </div>
-                    {/* Mobile Navigation */}
-                    {isMenuOpen && (
-                        <div className="md:hidden py-4 space-y-4 border-t border-slate-200 dark:border-slate-700">
-                            <a href="#features" className="block text-slate-600 dark:text-slate-300 hover:text-blue-600">
-                                Features
-                            </a>
-                            <a href="#pricing" className="block text-slate-600 dark:text-slate-300 hover:text-blue-600">
-                                Pricing
-                            </a>
-                            <a href="#about" className="block text-slate-600 dark:text-slate-300 hover:text-blue-600">
-                                About
-                            </a>
-                            <div className="flex flex-col space-y-2 pt-4">
-                                <Button variant="outline" className="w-full" onClick={() => router.push('/sign-in')}>
-                                    Login
-                                </Button>
-                                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push('/sign-in')}>
-                                    Get Started
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </nav>
-
-            {/* Hero Section */}
-            <div className="relative overflow-hidden">
-                {/* Animated background elements */}
-                <div className="absolute inset-0 overflow-hidden">
-                    <div className="absolute -top-40 -right-40 w-80 h-80 bg-linear-to-r from-blue-400/30 to-purple-400/30 rounded-full blur-3xl animate-pulse"></div>
-                    <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-linear-to-r from-pink-400/30 to-orange-400/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-linear-to-r from-cyan-400/20 to-blue-400/20 rounded-full blur-3xl animate-pulse delay-500"></div>
-                </div>
-
-                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 lg:py-32">
-                    <div className="text-center">
-                        {/* Badge */}
-                        <Badge variant="secondary" className="inline-flex items-center rounded-full bg-linear-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 px-6 py-3 text-sm font-medium text-blue-700 dark:text-blue-300 mb-8 border border-blue-200/50 dark:border-blue-700/50">
-                            <Zap className="h-4 w-4 mr-2" />
-                            <span>Streamline Your Hiring</span>
-                        </Badge>
-
-                        {/* Main Heading */}
-                        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 dark:text-white mb-8 animate-in fade-in slide-in-from-bottom duration-1000">
-                            Transform Your{' '}
-                            <span className="bg-linear-to-r from-blue-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
-                                Interview Process
-                            </span>{' '}
-                            with AI
-                        </h1>
-
-                        {/* Description */}
-                        <p className="mx-auto max-w-2xl text-xl leading-8 text-slate-600 dark:text-slate-300 mb-12 animate-in fade-in slide-in-from-bottom duration-1000 delay-200">
-                            Streamline hiring with intelligent candidate matching, automated scheduling,
-                            and comprehensive interview analytics. Make better hiring decisions faster.
-                        </p>
-
-                        {/* CTA Buttons */}
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-in fade-in slide-in-from-bottom duration-1000 delay-300">
-                            <Button
-                                size="lg"
-                                className="group bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
-                                onClick={() => router.push('/register')}
-                            >
-                                Start Free Trial
-                                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="lg"
-                                className="px-8 py-4 text-lg font-semibold border-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-300"
-                            >
-                                <Play className="mr-2 h-5 w-5" />
-                                Watch Demo
-                            </Button>
-                        </div>
-
-                        {/* Stats */}
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 max-w-4xl mx-auto">
-                            {stats.map((stat, index) => (
-                                <div key={index} className="text-center">
-                                    <AnimatedCounter end={stat.value} />
-                                    <div className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">
-                                        {stat.label}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
+  return (
+    <div className="min-h-screen scroll-smooth bg-[oklch(0.18_0.012_262)] font-kerning-normal text-[oklch(0.92_0.009_255)]">
+      <nav className="fixed w-full z-40 border-b border-[oklch(0.31_0.016_260)] bg-[oklch(0.21_0.014_262/0.96)]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center space-x-2">
+              {/* <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[oklch(0.35_0.02_258)] bg-[oklch(0.24_0.018_262)]">
+                <Search className="h-5 w-5 text-[oklch(0.84_0.02_246)]" />
+              </div>*/}
+              <span className="text-xl font-bold text-[oklch(0.94_0.01_255)]">
+                HireHunt AI
+              </span>
             </div>
 
-            {/* Features Section */}
-            <div id="features" className="py-20 sm:py-24 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-                            Why Choose Agentic Interview?
-                        </h2>
-                        <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-                            Our AI-powered platform revolutionizes how you conduct interviews and make hiring decisions.
-                        </p>
-                    </div>
-
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {features.map((feature, index) => (
-                            <FeatureCard
-                                key={index}
-                                icon={feature.icon}
-                                title={feature.title}
-                                description={feature.description}
-                                delay={index * 200}
-                            />
-                        ))}
-                    </div>
-                </div>
+            <div className="hidden items-center space-x-8 md:flex">
+              <a
+                href="#features"
+                className="rounded-sm text-sm font-medium tracking-[0.01em] text-[oklch(0.74_0.02_250)] transition-colors hover:text-[oklch(0.92_0.014_252)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.705_0.015_286.067)] focus-visible:ring-offset-2 focus-visible:ring-offset-[oklch(0.2_0.016_262)]"
+              >
+                Features
+              </a>
+              <a
+                href="#pricing"
+                className="rounded-sm text-sm font-medium tracking-[0.01em] text-[oklch(0.74_0.02_250)] transition-colors hover:text-[oklch(0.92_0.014_252)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.705_0.015_286.067)] focus-visible:ring-offset-2 focus-visible:ring-offset-[oklch(0.2_0.016_262)]"
+              >
+                Pricing
+              </a>
+              <a
+                href="#how-it-works"
+                className="rounded-sm text-sm font-medium tracking-[0.01em] text-[oklch(0.74_0.02_250)] transition-colors hover:text-[oklch(0.92_0.014_252)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.705_0.015_286.067)] focus-visible:ring-offset-2 focus-visible:ring-offset-[oklch(0.2_0.016_262)]"
+              >
+                How it works
+              </a>
+              <Button
+                className="bg-[oklch(0.62_0.12_252)] text-[oklch(0.2_0.014_262)] hover:bg-[oklch(0.56_0.116_252)]"
+                onClick={() => router.push("/sign-in")}
+              >
+                Sign in
+              </Button>
             </div>
 
-            {/* Testimonials Section */}
-            <div className="py-20 sm:py-24">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-                            What Our Customers Say
-                        </h2>
-                        <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-                            Join hundreds of companies already transforming their hiring process.
-                        </p>
-                    </div>
-                    <TestimonialCarousel />
-                </div>
+            <button
+              className="min-h-11 min-w-11 rounded-md p-2 text-[oklch(0.76_0.02_252)] md:hidden"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-expanded={isMenuOpen}
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
+
+          {isMenuOpen && (
+            <div className="space-y-4 border-t border-[oklch(0.32_0.022_258)] py-4 md:hidden">
+              <a
+                href="#features"
+                className="block rounded-sm text-[oklch(0.74_0.02_250)] hover:text-[oklch(0.92_0.014_252)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.705_0.015_286.067)] focus-visible:ring-offset-2 focus-visible:ring-offset-[oklch(0.2_0.016_262)]"
+              >
+                Features
+              </a>
+              <a
+                href="#pricing"
+                className="block rounded-sm text-[oklch(0.74_0.02_250)] hover:text-[oklch(0.92_0.014_252)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.705_0.015_286.067)] focus-visible:ring-offset-2 focus-visible:ring-offset-[oklch(0.2_0.016_262)]"
+              >
+                Pricing
+              </a>
+              <a
+                href="#how-it-works"
+                className="block rounded-sm text-[oklch(0.74_0.02_250)] hover:text-[oklch(0.92_0.014_252)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.705_0.015_286.067)] focus-visible:ring-offset-2 focus-visible:ring-offset-[oklch(0.2_0.016_262)]"
+              >
+                How it works
+              </a>
+              <div className="flex flex-col space-y-2 pt-4">
+                <Button
+                  className="w-full bg-[oklch(0.62_0.12_252)] text-[oklch(0.2_0.014_262)] hover:bg-[oklch(0.56_0.116_252)]"
+                  onClick={() => router.push("/sign-in")}
+                >
+                  Sign in
+                </Button>
+              </div>
             </div>
-
-            {/* Pricing Section */}
-            <div id="pricing">
-                <PricingSection />
-            </div>
-
-            {/* How It Works Section */}
-            <div id="how-it-works">
-                <HowItWorksSection />
-            </div>
-
-            {/* Newsletter Section */}
-            <NewsletterSection />
-
-            {/* Footer */}
-            <Footer/>
-
-            {/* Sticky CTA */}
-            <StickyCTA />
+          )}
         </div>
-    );
+      </nav>
+
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+          <div className="absolute inset-x-0 top-0 h-72 bg-linear-to-b from-[oklch(0.26_0.015_286/0.4)] to-transparent" />
+          <div className="absolute -left-28 top-24 h-72 w-72 rounded-full bg-[oklch(0.49_0.05_184/0.12)] blur-3xl" />
+          <div className="absolute -right-24 top-32 h-64 w-64 rounded-full bg-[oklch(0.55_0.055_41/0.1)] blur-3xl" />
+        </div>
+
+        <div className="relative mx-auto max-w-9xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-32">
+          <section className="mx-auto max-w-[86ch] text-center">
+            <Badge
+              variant="secondary"
+              className="mb-7 inline-flex items-center rounded-full border border-[oklch(0.44_0.06_84)] bg-[oklch(0.26_0.03_84)] px-5 py-2.5 text-sm font-medium text-[oklch(0.85_0.03_88)]"
+            >
+              <Zap className="mr-2 h-4 w-4 text-[oklch(0.77_0.09_84)]" />
+              <span>Streamline your hiring!</span>
+            </Badge>
+
+            <h1 className="mx-auto mb-6 max-w-[24ch] text-4xl font-semibold leading-[1.06] tracking-tight text-[oklch(0.94_0.01_252)] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom motion-safe:duration-500 sm:text-6xl lg:text-7xl">
+              Build qualified interview slates before the day gets away
+            </h1>
+
+            <p className="mx-auto mb-8 max-w-[66ch] text-base leading-7 text-[oklch(0.77_0.014_252)] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom motion-safe:duration-500 motion-safe:delay-100 sm:text-xl sm:leading-8">
+              Start from one approved role brief, review ranked candidates, and
+              send interview slots in a single recruiter workflow. Fast enough
+              for daily hiring operations, controlled enough for enterprise
+              teams.
+            </p>
+
+            <p className="mx-auto mb-8 max-w-[58ch] text-sm leading-6 text-[oklch(0.73_0.014_252)]">
+              Best for recruiter operations leads and hiring managers running
+              active pipelines.
+            </p>
+
+            <div className="mb-12 flex flex-row items-stretch justify-center gap-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom motion-safe:duration-700 motion-safe:delay-300 sm:flex-row sm:flex-wrap sm:items-center">
+              <Button
+                size="lg"
+                className="group w-full bg-[oklch(0.58_0.09_252)] px-8 py-4 text-lg font-semibold text-[oklch(0.2_0.014_262)] transition-colors duration-200 hover:bg-[oklch(0.54_0.086_252)] focus-visible:ring-2 focus-visible:ring-[oklch(0.66_0.012_286)] focus-visible:ring-offset-2 focus-visible:ring-offset-[oklch(0.18_0.012_262)] sm:w-auto"
+                onClick={() => router.push("/register")}
+              >
+                Begin Onboarding
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Button>
+              <a
+                href="#features"
+                className="text-center text-sm font-medium text-[oklch(0.76_0.016_252)] underline underline-offset-4 hover:text-[oklch(0.86_0.012_252)] sm:text-left"
+              >
+                Review capabilities first
+              </a>
+            </div>
+
+            <div className="mx-auto grid w-full max-w-3xl grid-cols-2 gap-3 border-t border-[oklch(0.31_0.012_260)] pt-7 tabular-nums md:grid-cols-4">
+              {stats.map((stat, index) => (
+                <div
+                  key={index}
+                  className="rounded-xl border border-[oklch(0.31_0.012_260)] bg-[oklch(0.22_0.012_262)] px-3 py-4 text-center"
+                >
+                  <AnimatedCounter end={stat.value} />
+                  <div className="text-sm leading-6 text-[oklch(0.73_0.024_252)]">
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div
+        id="features"
+        className="bg-[oklch(0.2_0.016_258)] py-18 sm:py-22 lg:py-24"
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center sm:mb-14">
+            <h2 className="mb-4 text-3xl font-bold text-[oklch(0.94_0.01_255)] sm:text-4xl">
+              Why teams pick HireHunt AI
+            </h2>
+            <p className="mx-auto max-w-2xl text-xl text-[oklch(0.76_0.02_252)]">
+              Three capabilities that reduce hiring cycle time without adding
+              process overhead.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:gap-5 lg:grid-cols-[1.3fr_0.7fr]">
+            <article className="rounded-2xl border border-[oklch(0.32_0.014_260)] bg-[oklch(0.23_0.013_260)] p-7 sm:p-9">
+              <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-[oklch(0.34_0.024_258)] bg-[oklch(0.25_0.015_262)]">
+                {features[0].icon}
+              </div>
+              <h3 className="mb-3 text-2xl font-semibold text-[oklch(0.93_0.01_252)]">
+                {features[0].title}
+              </h3>
+              <p className="mb-4 max-w-[66ch] text-base leading-7 text-[oklch(0.78_0.016_252)]">
+                {features[0].detail}
+              </p>
+              <p className="text-sm font-medium tracking-[0.01em] text-[oklch(0.72_0.018_252)]">
+                {features[0].description}
+              </p>
+            </article>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 lg:gap-5">
+              {features.slice(1).map((feature, index) => (
+                <article
+                  key={index}
+                  className="flex gap-4 rounded-2xl border border-[oklch(0.31_0.012_260)] bg-[oklch(0.22_0.012_262)] p-5"
+                >
+                  <div className="mt-1">{feature.icon}</div>
+                  <div>
+                    <h3 className="mb-2 text-lg font-semibold text-[oklch(0.92_0.012_252)]">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm leading-6 text-[oklch(0.74_0.016_252)]">
+                      {feature.description}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-[oklch(0.19_0.016_194)] py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-3xl font-bold text-[oklch(0.94_0.01_255)] sm:text-4xl">
+              Trusted by hiring teams
+            </h2>
+            <p className="mx-auto max-w-2xl text-xl text-[oklch(0.76_0.02_252)]">
+              Teams adopt quickly because first value arrives in the first
+              session.
+            </p>
+          </div>
+          <TestimonialCarousel />
+        </div>
+      </div>
+
+      <div id="pricing" className="scroll-mt-20">
+        <PricingSection />
+      </div>
+
+      <div id="how-it-works" className="scroll-mt-20">
+        <HowItWorksSection />
+      </div>
+
+      <NewsletterSection />
+
+      <Footer />
+
+      <StickyCTA />
+    </div>
+  );
 };
 
 export default Home;

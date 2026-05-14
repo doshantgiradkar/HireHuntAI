@@ -1,73 +1,59 @@
 "use client";
 
-import { BarChart3, Brain, Calendar, UserCheck } from "lucide-react";
+import { Brain, Calendar, UserCheck } from "lucide-react";
 
 const HowItWorksSection = () => {
   const steps = [
     {
       icon: <UserCheck className="h-8 w-8" />,
-      title: "Upload Job Requirements",
-      description: "Define your role requirements and ideal candidate profile"
+      title: "Capture role intent",
+      description: "Upload the brief once, then lock interview criteria before review starts."
     },
     {
       icon: <Brain className="h-8 w-8" />,
-      title: "AI Candidate Matching",
-      description: "Our AI analyzes and ranks candidates based on job fit"
+      title: "Review ranked candidates",
+      description: "See role-fit evidence, compare top matches, and approve your shortlist."
     },
     {
       icon: <Calendar className="h-8 w-8" />,
-      title: "Automated Scheduling",
-      description: "Seamlessly schedule interviews with integrated calendars"
+      title: "Launch interview loop",
+      description: "Send slots, confirm interviewers, and keep every participant in sync."
     },
-    {
-      icon: <BarChart3 className="h-8 w-8" />,
-      title: "Get Insights",
-      description: "Receive detailed analytics and hiring recommendations"
-    }
   ];
 
   return (
-    <div className="py-20 sm:py-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+    <div className="bg-[oklch(0.19_0.016_194)] py-18 sm:py-22 lg:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-12 text-center sm:mb-14">
+          <h2 className="mb-4 text-3xl font-bold text-[oklch(0.94_0.01_255)] sm:text-4xl">
             How It Works
           </h2>
-          <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-            Get started in minutes with our streamlined hiring process.
+          <p className="mx-auto max-w-2xl text-xl text-[oklch(0.76_0.02_252)]">
+            One operating flow from intake to confirmed interviews.
           </p>
         </div>
 
-        <div className="relative">
-          {/* Timeline line */}
-          <div className="absolute left-1/2 transform -translate-x-0.5 w-0.5 h-full bg-gradient-to-b from-blue-600 to-purple-600 hidden lg:block"></div>
-          
-          <div className="space-y-12 lg:space-y-24">
+        <div className="grid gap-6 md:gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
+          <aside className="rounded-2xl border border-[oklch(0.33_0.014_258)] bg-[oklch(0.22_0.015_262)] p-6">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-[oklch(0.74_0.03_184)]">Expected outcome</p>
+            <p className="mb-4 text-2xl font-semibold leading-tight text-[oklch(0.93_0.012_252)]">From approved role brief to first interview day in under a week.</p>
+            <p className="text-sm leading-6 text-[oklch(0.75_0.016_252)]">Every handoff stays in one place, so the team spends less time coordinating status and more time making hiring decisions.</p>
+          </aside>
+
+          <div className="space-y-3 md:space-y-4">
             {steps.map((step, index) => (
-              <div key={index} className={`flex items-center ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} flex-col lg:space-x-12`}>
-                <div className="flex-1 text-center lg:text-left">
-                  <div className={`lg:${index % 2 === 0 ? 'pr-12' : 'pl-12'}`}>
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-white mb-4">
-                      {step.icon}
-                    </div>
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-                      {step.title}
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-300 text-lg leading-relaxed">
-                      {step.description}
-                    </p>
+              <article key={index} className="grid gap-4 rounded-2xl border border-[oklch(0.31_0.012_260)] bg-[oklch(0.21_0.013_262)] p-5 sm:grid-cols-[auto_1fr] sm:items-start">
+                <div className="flex items-center gap-3">
+                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[oklch(0.34_0.024_258)] bg-[oklch(0.24_0.016_262)] text-[oklch(0.84_0.02_246)]">
+                    {step.icon}
                   </div>
+                  <span className="text-sm font-semibold text-[oklch(0.78_0.06_184)]">Step {index + 1}</span>
                 </div>
-                
-                {/* Step number */}
-                <div className="relative z-10 flex items-center justify-center w-12 h-12 bg-white dark:bg-slate-900 border-4 border-blue-600 rounded-full text-blue-600 font-bold text-xl lg:mx-6 my-8 lg:my-0">
-                  {index + 1}
+                <div>
+                  <h3 className="mb-2 text-xl font-semibold text-[oklch(0.92_0.01_255)]">{step.title}</h3>
+                  <p className="text-base leading-7 text-[oklch(0.76_0.02_252)]">{step.description}</p>
                 </div>
-                
-                <div className="flex-1 hidden lg:block">
-                  {/* Spacer for alternating layout */}
-                </div>
-              </div>
+              </article>
             ))}
           </div>
         </div>
