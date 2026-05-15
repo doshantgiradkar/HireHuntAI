@@ -75,8 +75,19 @@ function buildRecruiterContext(contextData, pageType) {
         segments.push(`Applications: ${j.applicationsCount || 0}`);
         segments.push(`Salary: ${j.salaryRange?.min || "N/A"} - ${j.salaryRange?.max || "N/A"}`);
       }
+      if (contextData?.applicantsSummary) {
+        segments.push(`Applicants Summary:\n${contextData.applicantsSummary}`);
+      }
+      if (contextData?.stats) {
+        const stats = contextData.stats;
+        segments.push(
+          `Application Stats: Total - ${stats.totalApplied}, Avg Match - ${stats.avgMatchScore}%, ` +
+          `Shortlisted - ${stats.shortlisted}, Interviewed - ${stats.interviewed}, ` +
+          `Hired - ${stats.hired}, Rejected - ${stats.rejected}`
+        );
+      }
       if (contextData?.applications?.length) {
-        segments.push(`Total candidates applied: ${contextData.applications.length}`);
+        segments.push(`Detailed candidate list loaded with ${contextData.applications.length} applications`);
       }
       break;
 
