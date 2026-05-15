@@ -38,6 +38,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import DeleteConfirmationDialog from "@/components/delete-confirmation-model"; // Import the component
 import { useHeader } from "@/store/user.store";
+import RecruiterAIPanel from "@/components/recruiter-ai-panel";
+import RecruiterAIToggle from "@/components/recruiter-ai-toggle";
+import { useRecruiterAI } from "@/hooks/useRecruiterAI";
 import { use } from "react";
 
 export default function Page({ params }) {
@@ -54,6 +57,7 @@ export default function Page({ params }) {
   const router = useRouter();
   const jobId = use(params).id;
   const setTitle = useHeader((state) => state.setTitle);
+  const { isOpen, openPanel, closePanel } = useRecruiterAI("job");
 
   useEffect(() => {
     setTitle("Job Details");
@@ -246,8 +250,16 @@ export default function Page({ params }) {
                 </div>
               </div>
 
-              {/* Edit and Delete Buttons */}
+              {/* Edit, Delete, and AI Toggle Buttons */}
               <div className="flex gap-2">
+                <RecruiterAIToggle
+                  onClick={() =>
+                    openPanel({
+                      job: details,
+                      applications,
+                    })
+                  }
+                />
                 <Button
                   variant="outline"
                   size="icon"
@@ -799,6 +811,16 @@ export default function Page({ params }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog> */}
+      {/* AI Chatbot Panel */}
+      <RecruiterAIPanel
+        isOpen={isOpen}
+        onClose={closePanel}
+        contextData={{
+          job: details,
+          applications,
+        }}
+        pageType="job"
+      />
     </>
   );
 }

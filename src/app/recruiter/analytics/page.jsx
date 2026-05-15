@@ -78,6 +78,9 @@ import {
 
 import { useHeader } from "@/store/user.store";
 import { useRecruiterStore } from "@/store/recruiter.store";
+import RecruiterAIPanel from "@/components/recruiter-ai-panel";
+import RecruiterAIToggle from "@/components/recruiter-ai-toggle";
+import { useRecruiterAI } from "@/hooks/useRecruiterAI";
 
 // Chart colour palette that respects shadcn CSS variables
 const COLORS = [
@@ -128,6 +131,7 @@ function AnalyticsSkeleton() {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function AnalyticsReportsPage() {
   const setTitle = useHeader((state) => state.setTitle);
+  const { isOpen, openPanel, closePanel } = useRecruiterAI("analytics");
 
   const analyticsData = useRecruiterStore((s) => s.analyticsData);
   const analyticsLoading = useRecruiterStore((s) => s.analyticsLoading);
@@ -195,13 +199,22 @@ export default function AnalyticsReportsPage() {
             Track hiring performance, spot bottlenecks, and act on trends.
           </p>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Export data
-            </Button>
-          </DropdownMenuTrigger>
+        <div className="flex items-center gap-2">
+          <RecruiterAIToggle
+            onClick={() =>
+              openPanel({
+                keyMetrics: analyticsData?.keyMetrics,
+                analyticsFilters,
+              })
+            }
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export data
+              </Button>
+            </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Export data set</DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -223,8 +236,9 @@ export default function AnalyticsReportsPage() {
               <Award className="mr-2 h-4 w-4" />
               Skill gap analysis (CSV)
             </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* ── Filters ────────────────────────────────────────────────────────── */}
@@ -1288,6 +1302,19 @@ export default function AnalyticsReportsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* AI Chatbot Panel */}
+      <RecruiterAIPanel
+        isOpen={isOpen}
+        onClose={closePanel}
+        contextData={{
+          keyMetrics: analyticsData?.keyMetrics,
+          analyticsFilters,
+          hiringFunnel: analyticsData?.hiringFunnel,
+          sourcePerformance: analyticsData?.sourcePerformance,
+        }}
+        pageType="analytics"
+      />
     </div>
   );
 }
