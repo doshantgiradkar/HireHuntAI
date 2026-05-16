@@ -27,6 +27,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useHeader } from "@/store/user.store";
+import RecruiterAIPanel from "@/components/recruiter-ai-panel";
+import RecruiterAIToggle from "@/components/recruiter-ai-toggle";
+import { useRecruiterAI } from "@/hooks/useRecruiterAI";
 import axios from "axios";
 import { use } from "react";
 
@@ -39,6 +42,7 @@ export default function CandidateProfile({ params }) {
   const { getToken } = useAuth();
   const { user, isLoaded: isUserLoaded } = useUser();
   const setTitle = useHeader((state) => state.setTitle);
+  const { isOpen, openPanel, closePanel } = useRecruiterAI("candidate");
 
   useEffect(() => {
     fetchCandidateData();
@@ -167,6 +171,14 @@ const getInitials = () => {
                   </div>
                 </div>
 
+                {/* AI Toggle */}
+                <RecruiterAIToggle
+                  onClick={() =>
+                    openPanel({
+                      candidate,
+                    })
+                  }
+                />
               </div>
             </CardContent>
           </Card>
@@ -499,6 +511,16 @@ const getInitials = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Chatbot Panel */}
+      <RecruiterAIPanel
+        isOpen={isOpen}
+        onClose={closePanel}
+        contextData={{
+          candidate,
+        }}
+        pageType="candidate"
+      />
     </div>
   );
 }

@@ -18,6 +18,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import RecruiterAIPanel from "@/components/recruiter-ai-panel";
+import RecruiterAIToggle from "@/components/recruiter-ai-toggle";
+import { useRecruiterAI } from "@/hooks/useRecruiterAI";
 
 function DashboardSkeleton() {
   return (
@@ -85,6 +88,7 @@ function TopJobsPanel({ jobs = [] }) {
 
 export default function RecruiterDashboardPage() {
   const setTitle = useHeader((state) => state.setTitle);
+  const { isOpen, contextData, openPanel, closePanel } = useRecruiterAI("dashboard");
 
   const dashboardData = useRecruiterStore((s) => s.dashboardData);
   const dashboardLoading = useRecruiterStore((s) => s.dashboardLoading);
@@ -141,6 +145,26 @@ export default function RecruiterDashboardPage() {
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+          {/* Header with AI Toggle */}
+          <div className="flex items-center justify-between px-4 lg:px-6">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+              <p className="text-sm text-muted-foreground">
+                Your recruiting metrics at a glance
+              </p>
+            </div>
+            <RecruiterAIToggle
+              onClick={() =>
+                openPanel({
+                  summaryCards,
+                  topJobs,
+                  applicationTrend,
+                  recentJobs,
+                })
+              }
+            />
+          </div>
+
           {/* KPI summary cards */}
           <SectionCards data={summaryCards} />
 
@@ -156,6 +180,19 @@ export default function RecruiterDashboardPage() {
           <TopJobsPanel jobs={topJobs} />
         </div>
       </div>
+
+      {/* AI Chatbot Panel */}
+      <RecruiterAIPanel
+        isOpen={isOpen}
+        onClose={closePanel}
+        contextData={{
+          summaryCards,
+          topJobs,
+          applicationTrend,
+          recentJobs,
+        }}
+        pageType="dashboard"
+      />
     </div>
   );
 }

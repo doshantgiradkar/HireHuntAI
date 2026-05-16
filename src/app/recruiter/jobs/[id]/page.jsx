@@ -38,6 +38,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import DeleteConfirmationDialog from "@/components/delete-confirmation-model"; // Import the component
 import { useHeader } from "@/store/user.store";
+import RecruiterAIPanel from "@/components/recruiter-ai-panel";
+import RecruiterAIToggle from "@/components/recruiter-ai-toggle";
+import { useRecruiterAI } from "@/hooks/useRecruiterAI";
 import { use } from "react";
 
 export default function Page({ params }) {
@@ -54,6 +57,7 @@ export default function Page({ params }) {
   const router = useRouter();
   const jobId = use(params).id;
   const setTitle = useHeader((state) => state.setTitle);
+  const { isOpen, openPanel, closePanel } = useRecruiterAI("job");
 
   useEffect(() => {
     setTitle("Job Details");
@@ -143,6 +147,23 @@ export default function Page({ params }) {
       rejected: "destructive",
     };
     return variants[status] || "secondary";
+  };
+
+  const buildApplicantsSummary = () => {
+    if (!applications || applications.length === 0) return "";
+
+    const summary = applications.map((app) => {
+      const name = getCandidateName(app);
+      const email = app.user?.email || "Unknown";
+      const experience = app.candidate?.totalExperienceDuration || 0;
+      const matchScore = app.eligibility?.matchScore || 0;
+      const status = formatStatusLabel(app.status);
+      const skills = app.candidate?.resume?.skills?.slice(0, 5).join(", ") || "Not specified";
+
+      return `- ${name} (${email}): ${experience}y exp, ${matchScore}% match, Status: ${status}, Top skills: ${skills}`;
+    });
+
+    return `Total applicants: ${applications.length}\n${summary.join("\n")}`;
   };
 
   const handleEdit = () => {
@@ -246,27 +267,46 @@ export default function Page({ params }) {
                 </div>
               </div>
 
-              {/* Edit and Delete Buttons */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleEdit}
-                  className="h-10 w-10 cursor-pointer"
-                  title="Edit job"
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={handleDeleteClick}
-                  className="h-10 w-10 cursor-pointer"
-                  title="Delete job"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+               {/* Edit, Delete, and AI Toggle Buttons */}
+               <div className="flex gap-2">
+                 <RecruiterAIToggle
+                   onClick={() =>
+                     openPanel({
+                       job: details,
+                       applications,
+                       applicantsSummary: buildApplicantsSummary(),
+                       stats: {
+                         totalApplied: applications.length,
+                         avgMatchScore: applications.length > 0 
+                           ? Math.round(applications.reduce((sum, app) => sum + (app.eligibility?.matchScore || 0), 0) / applications.length)
+                           : 0,
+                         shortlisted: applications.filter(app => app.status === "shortlisted").length,
+                         interviewed: applications.filter(app => app.status === "interview_scheduled").length,
+                         hired: applications.filter(app => app.status === "hired").length,
+                         rejected: applications.filter(app => app.status === "rejected").length,
+                       }
+                     })
+                   }
+                 />
+                 <Button
+                   variant="outline"
+                   size="icon"
+                   onClick={handleEdit}
+                   className="h-10 w-10 cursor-pointer"
+                   title="Edit job"
+                 >
+                   <Edit className="h-4 w-4" />
+                 </Button>
+                 <Button
+                   variant="destructive"
+                   size="icon"
+                   onClick={handleDeleteClick}
+                   className="h-10 w-10 cursor-pointer"
+                   title="Delete job"
+                 >
+                   <Trash2 className="h-4 w-4" />
+                 </Button>
+               </div>
             </div>
 
             <Separator />
@@ -799,6 +839,27 @@ export default function Page({ params }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog> */}
+      {/* AI Chatbot Panel */}
+      <RecruiterAIPanel
+        isOpen={isOpen}
+        onClose={closePanel}
+        contextData={{
+          job: details,
+          applications,
+          applicantsSummary: buildApplicantsSummary(),
+          stats: {
+            totalApplied: applications.length,
+            avgMatchScore: applications.length > 0 
+              ? Math.round(applications.reduce((sum, app) => sum + (app.eligibility?.matchScore || 0), 0) / applications.length)
+              : 0,
+            shortlisted: applications.filter(app => app.status === "shortlisted").length,
+            interviewed: applications.filter(app => app.status === "interview_scheduled").length,
+            hired: applications.filter(app => app.status === "hired").length,
+            rejected: applications.filter(app => app.status === "rejected").length,
+          }
+        }}
+        pageType="job"
+      />
     </>
   );
 }

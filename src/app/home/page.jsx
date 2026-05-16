@@ -190,7 +190,7 @@ const Home = () => {
               <Button
                 size="lg"
                 className="group w-full bg-[oklch(0.58_0.09_252)] px-8 py-4 text-lg font-semibold text-[oklch(0.2_0.014_262)] transition-colors duration-200 hover:bg-[oklch(0.54_0.086_252)] focus-visible:ring-2 focus-visible:ring-[oklch(0.66_0.012_286)] focus-visible:ring-offset-2 focus-visible:ring-offset-[oklch(0.18_0.012_262)] sm:w-auto"
-                onClick={() => router.push("/register")}
+                onClick={() => router.push("/sign-in")}
               >
                 Begin Onboarding
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />

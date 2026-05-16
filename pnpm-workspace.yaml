@@ -1,0 +1,8 @@
+allowBuilds:
+  '@clerk/shared': true
+  core-js: true
+  phantomjs-prebuilt: true
+  protobufjs: true
+  puppeteer: true
+  sharp: true
+  unrs-resolver: true
