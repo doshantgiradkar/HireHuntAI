@@ -210,22 +210,22 @@ const RecruiterAIPanel = ({ isOpen, onClose, contextData, pageType }) => {
 
       {/* Slide-in Panel */}
       <div
-        className="fixed right-0 top-0 bottom-0 z-50 flex w-full max-w-md flex-col border-l border-border/80 bg-background shadow-2xl transition-transform duration-300 ease-out"
+        className="fixed right-0 top-0 z-50 flex h-screen w-full sm:max-w-md flex-col border-l border-border/80 bg-background shadow-2xl transition-transform duration-300 ease-out overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-label="AI recruiting assistant"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border/60 bg-gradient-to-r from-primary/10 via-transparent to-transparent px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-primary/15 p-2 text-primary">
+        <div className="flex items-center justify-between border-b border-border/60 bg-gradient-to-r from-primary/10 via-transparent to-transparent px-4 py-3 sm:px-6 sm:py-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="rounded-full bg-primary/15 p-2 text-primary flex-shrink-0">
               <MessageCircle className="h-4 w-4" aria-hidden="true" />
             </div>
-            <div className="flex flex-col">
-              <h2 className="font-semibold text-sm tracking-tight">
+            <div className="flex flex-col min-w-0">
+              <h2 className="font-semibold text-xs sm:text-sm tracking-tight truncate">
                 AI Recruiting Assistant
               </h2>
-              <p className="text-xs text-muted-foreground">Context-aware help</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Context-aware help</p>
             </div>
           </div>
           <Button
@@ -241,15 +241,15 @@ const RecruiterAIPanel = ({ isOpen, onClose, contextData, pageType }) => {
         </div>
 
         {/* Messages Area */}
-        <ScrollArea className="flex-1 px-6 py-4" aria-live="polite" aria-label="Chat messages">
-          <div className="space-y-4">
+        <ScrollArea className="flex-1 overflow-hidden" aria-live="polite" aria-label="Chat messages">
+          <div className="px-4 py-3 sm:px-6 sm:py-4 space-y-3 sm:space-y-4">
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-lg px-4 py-3 text-sm leading-relaxed ${
+                  className={`max-w-[90%] sm:max-w-[85%] rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm leading-relaxed ${
                     message.sender === "user"
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-foreground border border-border/40"
@@ -273,16 +273,16 @@ const RecruiterAIPanel = ({ isOpen, onClose, contextData, pageType }) => {
 
         {/* Error Alert */}
         {error && (
-          <div className="px-6 pt-2 pb-0">
+          <div className="px-4 pt-2 pb-0 sm:px-6">
             <Alert variant="destructive" className="mb-2 py-2">
-              <AlertCircle className="h-3 w-3" />
-              <AlertDescription className="text-xs ml-2">{error}</AlertDescription>
+              <AlertCircle className="h-3 w-3 flex-shrink-0" />
+              <AlertDescription className="text-xs ml-2 line-clamp-2">{error}</AlertDescription>
             </Alert>
           </div>
         )}
 
         {/* Input Area */}
-        <div className="border-t border-border/60 bg-card/50 px-6 py-4 backdrop-blur-sm">
+        <div className="border-t border-border/60 bg-card/50 px-4 py-3 sm:px-6 sm:py-4 backdrop-blur-sm">
           <form onSubmit={handleSubmit} className="flex items-end gap-2">
             <Input
               type="text"
@@ -291,13 +291,13 @@ const RecruiterAIPanel = ({ isOpen, onClose, contextData, pageType }) => {
               onChange={(e) => setInput(e.target.value)}
               disabled={isSending}
               aria-label="Type your question"
-              className="text-sm"
+              className="text-xs sm:text-sm"
             />
             <Button
               type="submit"
               disabled={isSending || !input.trim()}
               size="icon"
-              className="h-9 w-9 flex-shrink-0"
+              className="h-8 sm:h-9 w-8 sm:w-9 flex-shrink-0"
               aria-label="Send message"
             >
               {isSending ? (
