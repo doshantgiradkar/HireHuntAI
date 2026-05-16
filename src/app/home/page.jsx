@@ -2,16 +2,7 @@
 
 import NewsletterSection from "@/components/newsletter-section";
 import StickyCTA from "@/components/sticky-cta";
-import {
-  ArrowRight,
-  Brain,
-  Clock,
-  Menu,
-  Shield,
-  SparklesIcon,
-  X,
-  Zap,
-} from "lucide-react";
+import { ArrowRight, Brain, Clock, Menu, Shield, X, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -21,7 +12,6 @@ import TestimonialCarousel from "@/components/testimonial-carousel";
 import PricingSection from "@/components/pricing-section";
 import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/footer";
-import { Search } from "lucide-react";
 
 const Home = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -75,7 +65,7 @@ const Home = () => {
                 <Search className="h-5 w-5 text-[oklch(0.84_0.02_246)]" />
               </div>*/}
               <span className="text-xl font-bold text-[oklch(0.94_0.01_255)]">
-                HireHunt AI
+                interview management system
               </span>
             </div>
 
@@ -227,7 +217,7 @@ const Home = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center sm:mb-14">
             <h2 className="mb-4 text-3xl font-bold text-[oklch(0.94_0.01_255)] sm:text-4xl">
-              Why teams pick HireHunt AI
+              Why teams pick us?
             </h2>
             <p className="mx-auto max-w-2xl text-xl text-[oklch(0.76_0.02_252)]">
               Three capabilities that reduce hiring cycle time without adding
