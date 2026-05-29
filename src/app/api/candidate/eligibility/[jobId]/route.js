@@ -40,7 +40,7 @@ export async function semanticSimilarity(resumeText, jobText) {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
   // 2. Get the model instance
-  const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+  const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
 
   // 3. Execute batch embeddings
   const result = await model.batchEmbedContents({

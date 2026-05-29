@@ -39,9 +39,6 @@ tmp/
 *.pem
 *.ts
 ngrok
-PRODUCT.md
-DESIGN.md
-AGENTS.md
 
 # debug
 npm-debug.log*
@@ -64,3 +61,15 @@ next-env.d.ts
 # clerk configuration (can include secrets)
 /.clerk/
 .opencode/
+
+# Agentic AI
+PRODUCT.md
+DESIGN.md
+AGENTS.md
+ARCHITECTURE.md
+CODEBASE_EXPLORATION.md
+DOCUMENTATION_INDEX.md
+IMPLEMENTATION_SUMMARY.md
+QUICK_REFERENCE.md
+QUICKSTART.md
+SHORTLISTING_FEATURE_GUIDE.md

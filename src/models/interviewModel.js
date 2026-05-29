@@ -64,6 +64,12 @@ const interviewSessionSchema = new mongoose.Schema({
     type: [candidateSubSchema],
     required: true
   },
+  // Session-level status tracking
+  status: {
+    type: String,
+    enum: ['scheduled', 'in-progress', 'completed', 'expired'],
+    default: 'scheduled'
+  },
   startAt: {
     type: Date,
     required: true // Removed default Date.now
