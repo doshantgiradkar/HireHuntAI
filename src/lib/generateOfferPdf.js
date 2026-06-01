@@ -3,80 +3,19 @@ import os from "os";
 import path from "path";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
-// Your data (using the provided JSON)
-const recruiterData = {
-  name: "Juktion Pvt Ltd",
-  logo: "https://res.cloudinary.com/di1870vlc/image/upload/v1767951589/hirehuntai/logo/n1gnxmkwkjexehrrzako.jpg",
-  address: {
-    line: "192, Q.No. 23/5, LIG Colony Near Hasanbag Police Chowki, Nandanwan",
-    city: "Nagpur",
-    state: "Maharashtra",
-    pinCode: "440009",
-    country: "India"
-  },
-  admin: {
-    name: "DEV MULKALWAR",
-    email: "junktioncompany@gmail.com",
-    phone: "9322259967",
-    role: "Admin"
-  },
-  industry: "Junk Collection",
-  companyType: "Startup",
-  founded: "2022",
-  headquarters: "Nagpur",
-  website: "www.junktion.com",
-  size: "11"
-};
-
-const jobData = {
-  title: "Java Fullstack Developer",
-  description: "We are seeking a Junior Full Stack Developer with 1-3 years of experience to join our growing team. The ideal candidate is passionate about building scalable web applications, thrives in a fast-paced environment, and enjoys working collaboratively with cross-functional teams. This role requires strong problem-solving skills, attention to detail, and a willingness to learn new technologies. You will be responsible for developing and maintaining both frontend and backend systems, collaborating with product teams, and ensuring code quality through testing and code reviews.",
-  location: "Nagpur",
-  workMode: "Onsite",
-  employmentType: "Full-time",
-  experienceLevel: "Mid",
-  experienceYear: 4,
-  salaryRange: {
-    min: 700000,
-    max: 799999,
-    currency: "INR"
-  },
-  skills: ["java", "spring boot", "sql", "mysql", "devops"],
-  openings: 1,
-  postedAt: { "$date": "2026-01-17T08:38:27.683Z" },
-  applicationDeadline: { "$date": "2026-01-28T18:30:00.000Z" }
-};
-
-// Candidate data for testing
-const candidateData = {
-  name: "Rahul Sharma",
-  email: "rahul.sharma@example.com",
-  phone: "+91 9876543210",
-  address: {
-    line: "123, Tech Park Apartments",
-    city: "Pune",
-    state: "Maharashtra",
-    pinCode: "411001",
-    country: "India"
-  },
-  experience: "3 years",
-  currentCompany: "Tech Solutions Inc.",
-  signatureImage: "https://res.cloudinary.com/di1870vlc/image/upload/v1767951589/hirehuntai/logo/n1gnxmkwkjexehrrzako.jpg"
-};
-
 function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-IN', {
-    maximumFractionDigits: 0
+  return new Intl.NumberFormat("en-IN", {
+    maximumFractionDigits: 0,
   }).format(amount);
 }
 
 function formatDate(dateString) {
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
+    return date.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     });
   } catch (e) {
     return "January 17, 2026";
@@ -89,14 +28,14 @@ function formatRupees(amount) {
 
 // Helper function to wrap text into lines
 function wrapText(text, maxWidth, font, fontSize) {
-  const words = text.split(' ');
+  const words = text.split(" ");
   const lines = [];
-  let currentLine = '';
+  let currentLine = "";
 
   for (const word of words) {
     const testLine = currentLine ? `${currentLine} ${word}` : word;
     const textWidth = font.widthOfTextAtSize(testLine, fontSize);
-    
+
     if (textWidth > maxWidth && currentLine) {
       lines.push(currentLine);
       currentLine = word;
@@ -104,18 +43,49 @@ function wrapText(text, maxWidth, font, fontSize) {
       currentLine = testLine;
     }
   }
-  
+
   if (currentLine) {
     lines.push(currentLine);
   }
-  
+
   return lines;
 }
 
-async function generateProfessionalOfferLetter() {
+export async function generateOfferLetterPDF({
+  recruiter,
+  candidate,
+  user,
+  job,
+  joiningDate,
+  expiresAt,
+}) {
   try {
+    const recruiterData = recruiter;
+
+    const candidateData = {
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      address: candidate.address || {
+        line: "",
+        city: "",
+        state: "",
+        pinCode: "",
+        country: "India",
+      },
+    };
+
+    const jobData = {
+      ...(job.toObject?.() ?? job),
+
+      postedAt: job.postedAt || new Date(),
+
+      applicationDeadline: expiresAt || job.applicationDeadline,
+
+      joiningDate,
+    };
+
     console.log("Starting pixel-perfect PDF generation...");
-    
+
     const pdfDoc = await PDFDocument.create();
     const regularFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
     const boldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
@@ -151,7 +121,7 @@ async function generateProfessionalOfferLetter() {
       font: boldFont,
       color: ACCENT_BLUE,
     });
-    
+
     // TITLE - Centered
     const titleText = "OFFER OF EMPLOYMENT";
     const titleWidth = boldFont.widthOfTextAtSize(titleText, 20);
@@ -162,20 +132,20 @@ async function generateProfessionalOfferLetter() {
       font: boldFont,
       color: PRIMARY_BLUE,
     });
-    
+
     y -= 75;
-    
+
     // Date
-    page1.drawText(`Date: ${formatDate(jobData.postedAt.$date)}`, {
+    page1.drawText(`Date: ${formatDate(jobData.postedAt)}`, {
       x: MARGIN_LEFT,
       y: y,
       size: 11,
       font: regularFont,
       color: rgb(0, 0, 0),
     });
-    
+
     y -= 40;
-    
+
     // TO Section
     page1.drawText("TO:", {
       x: MARGIN_LEFT,
@@ -184,7 +154,7 @@ async function generateProfessionalOfferLetter() {
       font: boldFont,
       color: rgb(0, 0, 0),
     });
-    
+
     y -= 22;
     page1.drawText(candidateData.name, {
       x: MARGIN_LEFT,
@@ -193,7 +163,7 @@ async function generateProfessionalOfferLetter() {
       font: boldFont,
       color: rgb(0, 0, 0),
     });
-    
+
     y -= 18;
     page1.drawText(candidateData.address.line, {
       x: MARGIN_LEFT,
@@ -202,16 +172,19 @@ async function generateProfessionalOfferLetter() {
       font: regularFont,
       color: rgb(0, 0, 0),
     });
-    
+
     y -= 16;
-    page1.drawText(`${candidateData.address.city}, ${candidateData.address.state} - ${candidateData.address.pinCode}`, {
-      x: MARGIN_LEFT,
-      y: y,
-      size: 11,
-      font: regularFont,
-      color: rgb(0, 0, 0),
-    });
-    
+    page1.drawText(
+      `${candidateData.address.city}, ${candidateData.address.state} - ${candidateData.address.pinCode}`,
+      {
+        x: MARGIN_LEFT,
+        y: y,
+        size: 11,
+        font: regularFont,
+        color: rgb(0, 0, 0),
+      },
+    );
+
     y -= 16;
     page1.drawText(candidateData.address.country, {
       x: MARGIN_LEFT,
@@ -220,25 +193,25 @@ async function generateProfessionalOfferLetter() {
       font: regularFont,
       color: rgb(0, 0, 0),
     });
-    
+
     y -= 35;
-    
+
     // Greeting
-    page1.drawText(`Dear ${candidateData.name.split(' ')[0]},`, {
+    page1.drawText(`Dear ${candidateData.name.split(" ")[0]},`, {
       x: MARGIN_LEFT,
       y: y,
       size: 11,
       font: regularFont,
       color: rgb(0, 0, 0),
     });
-    
+
     y -= 25;
-    
+
     // Introduction paragraph
     const introText = `We are delighted to extend an offer of employment to you for the position of ${jobData.title} at ${recruiterData.name}. After careful consideration of your qualifications and experience, we are confident that you will make a valuable contribution to our team and help us achieve our goals.`;
-    
+
     const introLines = wrapText(introText, CONTENT_WIDTH, regularFont, 11);
-    introLines.forEach(line => {
+    introLines.forEach((line) => {
       page1.drawText(line, {
         x: MARGIN_LEFT,
         y: y,
@@ -250,20 +223,23 @@ async function generateProfessionalOfferLetter() {
     });
 
     y -= 5;
-    page1.drawText("This offer is subject to the terms and conditions outlined below:", {
-      x: MARGIN_LEFT,
-      y: y,
-      size: 11,
-      font: regularFont,
-      color: rgb(0, 0, 0),
-    });
+    page1.drawText(
+      "This offer is subject to the terms and conditions outlined below:",
+      {
+        x: MARGIN_LEFT,
+        y: y,
+        size: 11,
+        font: regularFont,
+        color: rgb(0, 0, 0),
+      },
+    );
 
     y -= 30;
 
     // OFFER DETAILS BOX
     const boxHeight = 170;
     const boxY = y;
-    
+
     // Draw box background
     page1.drawRectangle({
       x: MARGIN_LEFT - 10,
@@ -302,12 +278,18 @@ async function generateProfessionalOfferLetter() {
 
     const rightDetails = [
       { label: "Experience Level:", value: jobData.experienceLevel },
-      { label: "Required Experience:", value: `${jobData.experienceYear} years` },
-      { label: "Start Date:", value: "February 1, 2027" },
+      {
+        label: "Required Experience:",
+        value: `${jobData.experienceYear} years`,
+      },
+      {
+        label: "Start Date:",
+        value: formatDate(joiningDate),
+      },
       { label: "Probation Period:", value: "3 months" },
     ];
 
-    leftDetails.forEach(detail => {
+    leftDetails.forEach((detail) => {
       page1.drawText(detail.label, {
         x: leftX,
         y: leftY,
@@ -325,7 +307,7 @@ async function generateProfessionalOfferLetter() {
       leftY -= 18;
     });
 
-    rightDetails.forEach(detail => {
+    rightDetails.forEach((detail) => {
       page1.drawText(detail.label, {
         x: rightX,
         y: rightY,
@@ -359,15 +341,24 @@ async function generateProfessionalOfferLetter() {
     y -= 25;
 
     const compensationDetails = [
-      { label: "Annual Salary:", value: `${formatRupees(jobData.salaryRange.min)} - ${formatRupees(jobData.salaryRange.max)}` },
+      {
+        label: "Annual Salary:",
+        value: `${formatRupees(jobData.salaryRange.min)} - ${formatRupees(jobData.salaryRange.max)}`,
+      },
       { label: "Salary Frequency:", value: "Monthly (via bank transfer)" },
-      { label: "Performance Bonus:", value: "Up to 15% of annual salary (based on performance)" },
-      { label: "Health Insurance:", value: "Medical coverage for self and family" },
+      {
+        label: "Performance Bonus:",
+        value: "Up to 15% of annual salary (based on performance)",
+      },
+      {
+        label: "Health Insurance:",
+        value: "Medical coverage for self and family",
+      },
       { label: "Provident Fund:", value: "12% employer contribution" },
       { label: "Annual Leave:", value: "18 Paid Leaves + 12 Casual Leaves" },
     ];
 
-    compensationDetails.forEach(detail => {
+    compensationDetails.forEach((detail) => {
       const labelWidth = boldFont.widthOfTextAtSize(detail.label, 10);
       page1.drawText(detail.label, {
         x: MARGIN_LEFT,
@@ -376,8 +367,13 @@ async function generateProfessionalOfferLetter() {
         font: boldFont,
         color: rgb(0, 0, 0),
       });
-      
-      const valueLines = wrapText(detail.value, CONTENT_WIDTH - labelWidth - 10, regularFont, 10);
+
+      const valueLines = wrapText(
+        detail.value,
+        CONTENT_WIDTH - labelWidth - 10,
+        regularFont,
+        10,
+      );
       let valueY = y;
       valueLines.forEach((line, idx) => {
         page1.drawText(line, {
@@ -389,14 +385,14 @@ async function generateProfessionalOfferLetter() {
         });
         valueY -= 14;
       });
-      
-      y -= (valueLines.length * 14 + 4);
+
+      y -= valueLines.length * 14 + 4;
     });
 
     // IMPORTANT NOTICE BOX - Fixed at 120 from bottom
     const noticeBoxY = 120;
     const noticeBoxHeight = 48;
-    
+
     page1.drawRectangle({
       x: MARGIN_LEFT,
       y: noticeBoxY - noticeBoxHeight,
@@ -415,15 +411,19 @@ async function generateProfessionalOfferLetter() {
       color: WARNING_TEXT,
     });
 
-    page1.drawText(`IMPORTANT: Please respond to this offer by ${formatDate(jobData.applicationDeadline.$date)}`, {
-      x: MARGIN_LEFT + 30,
-      y: noticeBoxY - 22,
-      size: 10.5,
-      font: boldFont,
-      color: WARNING_TEXT,
-    });
+    page1.drawText(
+      `IMPORTANT: Please respond to this offer by ${formatDate(expiresAt)}`,
+      {
+        x: MARGIN_LEFT + 30,
+        y: noticeBoxY - 22,
+        size: 10.5,
+        font: boldFont,
+        color: WARNING_TEXT,
+      },
+    );
 
-    const noticeSubText = "Your offer will be considered withdrawn if we do not receive your acceptance by this date.";
+    const noticeSubText =
+      "Your offer will be considered withdrawn if we do not receive your acceptance by this date.";
     page1.drawText(noticeSubText, {
       x: MARGIN_LEFT + 30,
       y: noticeBoxY - 38,
@@ -485,8 +485,13 @@ async function generateProfessionalOfferLetter() {
 
     y -= 20;
 
-    const descLines = wrapText(jobData.description, CONTENT_WIDTH - 10, regularFont, 10);
-    descLines.forEach(line => {
+    const descLines = wrapText(
+      jobData.description,
+      CONTENT_WIDTH - 10,
+      regularFont,
+      10,
+    );
+    descLines.forEach((line) => {
       page2.drawText(line, {
         x: MARGIN_LEFT + 10,
         y: y,
@@ -511,22 +516,60 @@ async function generateProfessionalOfferLetter() {
     y -= 18;
 
     const terms = [
-      { num: "2.1", text: "This offer is contingent upon satisfactory verification of your educational qualifications, employment history, background checks, and references." },
-      { num: "2.2", text: "You will be required to submit original documents for verification before joining." },
-      { num: "2.3", text: "Employment is subject to a probation period of 3 months, which may be extended at the company's discretion based on performance." },
-      { num: "2.4", text: "During probation, either party may terminate employment with one week's notice." },
-      { num: "2.5", text: "After confirmation, the notice period will be 30 days for resignation." },
-      { num: "2.6", text: "You are required to maintain confidentiality of all company information during and after your employment." },
-      { num: "2.7", text: "You must comply with all company policies, rules, and regulations as amended from time to time." },
-      { num: "2.8", text: "Intellectual property created during employment belongs to the company." },
-      { num: "2.9", text: "The company reserves the right to modify compensation and benefits as per business requirements, with appropriate notice." },
-      { num: "2.10", text: "This offer supersedes all previous discussions and agreements." },
-      { num: "2.11", text: "Any disputes arising from this employment will be subject to the jurisdiction of courts in Nagpur, Maharashtra." },
+      {
+        num: "2.1",
+        text: "This offer is contingent upon satisfactory verification of your educational qualifications, employment history, background checks, and references.",
+      },
+      {
+        num: "2.2",
+        text: "You will be required to submit original documents for verification before joining.",
+      },
+      {
+        num: "2.3",
+        text: "Employment is subject to a probation period of 3 months, which may be extended at the company's discretion based on performance.",
+      },
+      {
+        num: "2.4",
+        text: "During probation, either party may terminate employment with one week's notice.",
+      },
+      {
+        num: "2.5",
+        text: "After confirmation, the notice period will be 30 days for resignation.",
+      },
+      {
+        num: "2.6",
+        text: "You are required to maintain confidentiality of all company information during and after your employment.",
+      },
+      {
+        num: "2.7",
+        text: "You must comply with all company policies, rules, and regulations as amended from time to time.",
+      },
+      {
+        num: "2.8",
+        text: "Intellectual property created during employment belongs to the company.",
+      },
+      {
+        num: "2.9",
+        text: "The company reserves the right to modify compensation and benefits as per business requirements, with appropriate notice.",
+      },
+      {
+        num: "2.10",
+        text: "This offer supersedes all previous discussions and agreements.",
+      },
+      {
+        num: "2.11",
+        text: "Any disputes arising from this employment will be subject to the jurisdiction of courts in Nagpur, Maharashtra.",
+      },
     ];
 
-    terms.forEach(term => {
-      const termLines = wrapText(term.text, CONTENT_WIDTH - 40, regularFont, 9.5);
-      
+    terms.forEach((term) => {
+      const termLines = wrapText(
+        term.text,
+        CONTENT_WIDTH - 40,
+        regularFont,
+        9.5,
+      );
+
       page2.drawText(term.num, {
         x: MARGIN_LEFT + 10,
         y: y,
@@ -534,7 +577,7 @@ async function generateProfessionalOfferLetter() {
         font: boldFont,
         color: rgb(0, 0, 0),
       });
-      
+
       let termY = y;
       termLines.forEach((line, idx) => {
         page2.drawText(line, {
@@ -546,13 +589,13 @@ async function generateProfessionalOfferLetter() {
         });
         termY -= 13;
       });
-      
+
       y = termY - 6;
     });
 
     // SIGNATURE SECTION - Fixed position
     const sigY = 240;
-    
+
     // Separator line
     page2.drawLine({
       start: { x: MARGIN_LEFT, y: sigY },
@@ -586,7 +629,7 @@ async function generateProfessionalOfferLetter() {
       color: rgb(0.3, 0.3, 0.3),
     });
 
-    page2.drawText(recruiterData.admin.name, {
+    page2.drawText(recruiterData.admin?.name || recruiterData.name, {
       x: MARGIN_LEFT,
       y: sigY - 70,
       size: 10,
@@ -594,7 +637,7 @@ async function generateProfessionalOfferLetter() {
       color: rgb(0, 0, 0),
     });
 
-    page2.drawText(recruiterData.admin.role, {
+    page2.drawText(recruiterData.admin?.role || "Authorized Signatory", {
       x: MARGIN_LEFT,
       y: sigY - 84,
       size: 9,
@@ -612,7 +655,7 @@ async function generateProfessionalOfferLetter() {
 
     // Candidate Signature (Right)
     const rightSigX = PAGE_WIDTH / 2 + 30;
-    
+
     page2.drawText("CANDIDATE ACCEPTANCE", {
       x: rightSigX,
       y: sigY - 20,
@@ -635,14 +678,6 @@ async function generateProfessionalOfferLetter() {
       end: { x: PAGE_WIDTH - MARGIN_RIGHT, y: sigY - 55 },
       thickness: 1,
       color: rgb(0.3, 0.3, 0.3),
-    });
-    
-    page2.drawText("Signature", {
-      x: rightSigX,
-      y: sigY - 67,
-      size: 8,
-      font: italicFont,
-      color: GRAY_TEXT,
     });
 
     // Name line
@@ -679,8 +714,10 @@ async function generateProfessionalOfferLetter() {
     });
 
     const currentYear = new Date().getFullYear();
-    const offerId = `JKT-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-    
+    const offerId = `JKT-${Math.floor(Math.random() * 10000)
+      .toString()
+      .padStart(4, "0")}`;
+
     page2.drawText(`Page 2 of 2`, {
       x: MARGIN_LEFT,
       y: footer2Y - 12,
@@ -705,51 +742,25 @@ async function generateProfessionalOfferLetter() {
       color: GRAY_TEXT,
     });
 
-    page2.drawText("This is an electronically generated document and is legally binding.", {
-      x: MARGIN_LEFT,
-      y: footer2Y - 24,
-      size: 7,
-      font: italicFont,
-      color: GRAY_TEXT,
-    });
+    page2.drawText(
+      "This is an electronically generated document and is legally binding.",
+      {
+        x: MARGIN_LEFT,
+        y: footer2Y - 24,
+        size: 7,
+        font: italicFont,
+        color: GRAY_TEXT,
+      },
+    );
 
     // =================== SAVE PDF ===================
     const pdfBytes = await pdfDoc.save();
-    const outputPath = path.join(
-      os.homedir(),
-      "Desktop",
-      `Offer_Letter_${candidateData.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`
-    );
 
-    fs.writeFileSync(outputPath, pdfBytes);
+    const tempPath = path.join(os.tmpdir(), `offer_letter_${Date.now()}.pdf`);
 
-    console.log("\n" + "=".repeat(60));
-    console.log("✅ PIXEL-PERFECT PROFESSIONAL OFFER LETTER GENERATED!");
-    console.log("=".repeat(60));
-    console.log(`📁 File saved at: ${outputPath}`);
-    console.log("\n📊 OFFER SUMMARY:");
-    console.log("─".repeat(60));
-    console.log(`🏢 Company      : ${recruiterData.name}`);
-    console.log(`💼 Position     : ${jobData.title}`);
-    console.log(`👤 Candidate    : ${candidateData.name}`);
-    console.log(`💰 Salary       : ${formatRupees(jobData.salaryRange.min)} - ${formatRupees(jobData.salaryRange.max)}/year`);
-    console.log(`📍 Location     : ${jobData.location} (${jobData.workMode})`);
-    console.log(`📅 Offer Date   : ${formatDate(jobData.postedAt.$date)}`);
-    console.log(`⏰ Response Due : ${formatDate(jobData.applicationDeadline.$date)}`);
-    console.log(`📄 Pages        : 2`);
-    console.log(`🆔 Offer ID     : ${offerId}`);
-    console.log("─".repeat(60));
-    console.log("✨ Features:");
-    console.log("  • Pixel-perfect alignment and spacing");
-    console.log("  • Professional color scheme");
-    console.log("  • Properly wrapped text (no overflow)");
-    console.log("  • Fixed positioned boxes and signatures");
-    console.log("  • Two-column layout for details");
-    console.log("  • Legal disclaimer and footer");
-    console.log("─".repeat(60));
-    console.log("✅ PDF generation completed successfully!");
-    console.log("=".repeat(60) + "\n");
-    
+    fs.writeFileSync(tempPath, pdfBytes);
+
+    return tempPath;
   } catch (err) {
     console.error("\n" + "=".repeat(60));
     console.error("❌ ERROR GENERATING PDF:");
@@ -759,6 +770,3 @@ async function generateProfessionalOfferLetter() {
     console.error("=".repeat(60) + "\n");
   }
 }
-
-// Run the generator
-generateProfessionalOfferLetter();

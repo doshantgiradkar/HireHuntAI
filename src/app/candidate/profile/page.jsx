@@ -28,15 +28,20 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useHeader } from "@/store/user.store";
+import { ErrorPopup } from "@/components/error_popup";
 
 export default function CandidateProfile() {
   const [candidate, setCandidate] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState({
+    open: false,
+    title: "",
+    message: "",
+  });
   const router = useRouter();
   const { getToken } = useAuth();
   const { user, isLoaded: isUserLoaded } = useUser();
-  const setTitle = useHeader(state => state.setTitle)
+  const setTitle = useHeader((state) => state.setTitle);
 
   useEffect(() => {
     fetchCandidateData();
@@ -59,7 +64,11 @@ export default function CandidateProfile() {
 
       setCandidate(data.candidate);
     } catch (err) {
-      setError(err.message);
+      setError({
+        open: true,
+        title: "Error!",
+        message: "Failed to withdraw application",
+      });
     } finally {
       setLoading(false);
     }
@@ -110,16 +119,6 @@ export default function CandidateProfile() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
   if (!candidate) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -134,6 +133,12 @@ export default function CandidateProfile() {
 
   return (
     <div className="min-h-screen bg-background">
+      <ErrorPopup
+        open={error.open}
+        onOpenChange={(open) => setError((prev) => ({ ...prev, open }))}
+        title={error.title}
+        message={error.message}
+      />
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header Section with User Info */}
         <div className="mb-8">
@@ -293,7 +298,7 @@ export default function CandidateProfile() {
                         user.publicMetadata.hasResume ? "default" : "secondary"
                       }
                     >
-                      { user.publicMetadata.hasResume ? "Yes" : "No" }
+                      {user.publicMetadata.hasResume ? "Yes" : "No"}
                     </Badge>
                   </div>
                   {candidate.appliedJobs?.length > 0 && (
@@ -389,7 +394,11 @@ export default function CandidateProfile() {
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {candidate.resume.skills.map((skill, index) => (
-                      <Badge key={index} variant="secondary"> {skill} </Badge> ))}
+                      <Badge key={index} variant="secondary">
+                        {" "}
+                        {skill}{" "}
+                      </Badge>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -411,7 +420,10 @@ export default function CandidateProfile() {
                       className={index > 0 ? "pt-4 border-t" : ""}
                     >
                       <h3 className="font-semibold text-base flex">
-                        {exp.jobTitle} <p  className="grow"/> <span className="text-sm text-foreground font-light">{exp.months} months</span>
+                        {exp.jobTitle} <p className="grow" />{" "}
+                        <span className="text-sm text-foreground font-light">
+                          {exp.months} months
+                        </span>
                       </h3>
                       {exp.jobDesc && (
                         <p className="text-sm text-muted-foreground mt-2">
@@ -483,7 +495,9 @@ export default function CandidateProfile() {
                       className={index > 0 ? "pt-4 border-t" : ""}
                     >
                       <div className="flex items-start justify-between gap-4">
-                        <h3 className="font-semibold text-base">{project.title}</h3>
+                        <h3 className="font-semibold text-base">
+                          {project.title}
+                        </h3>
                         {project.url && (
                           <a
                             href={project.url}

@@ -51,7 +51,6 @@ const interviewSessionSchema = new mongoose.Schema({
   jobId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    unique: true,
     ref: 'Job',
   },
   assessmentId: {

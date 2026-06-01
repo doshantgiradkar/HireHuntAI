@@ -73,11 +73,24 @@ export async function POST(request) {
     await connect();
     const jobId = new URL(request.url).searchParams.get("jobId");
 
+    if (!jobId) {
+      return NextResponse.json(
+        { 
+          error: "Missing jobId parameter",
+          details: "Please provide a valid job ID in the request."
+        },
+        { status: 400 }
+      );
+    }
+
     // Fetch Job Details
     const job = await jobModel.findById(jobId, { title: 1, description: 1, skills: 1 });
     if (!job) {
       return NextResponse.json(
-        { error: "Job not found." },
+        { 
+          error: "Job not found",
+          details: "The job position you're trying to schedule for no longer exists."
+        },
         { status: 404 }
       );
     }
@@ -90,7 +103,10 @@ export async function POST(request) {
 
     if (!applications || applications.length === 0) {
       return NextResponse.json(
-        { error: "No applications found for this job yet." },
+        { 
+          error: "No applications found for this job",
+          details: "There are no active applications to schedule interviews for."
+        },
         { status: 400 }
       );
     }
@@ -117,58 +133,106 @@ export async function POST(request) {
 
     // If no candidates qualify (edge case), you might want to handle it
     if (candidateList.length === 0) {
-      return NextResponse.json({ error: "No eligible candidates found above percentile cutoff." }, { status: 400 });
-    }
-
-    const questions = await getQuestions(job.title, job.description, job.skills);
-
-    if (!questions || questions.length === 0) {
       return NextResponse.json(
-        { error: "Failed to generate questions." },
-        { status: 500 }
+        { 
+          error: "No eligible candidates found",
+          details: "No candidates meet the percentile cutoff for this job."
+        },
+        { status: 400 }
       );
     }
 
-    // Create Assessment Document
-    const newAssessment = await Assessment.create({
-      title: `${job.title} Assessment`,
-      questions: questions.map((q) => ({
-        text: q.text,
-        modelAnswer: q.modelAnswer,
-        score: q.score,
-      })),
-    });
+    try {
+      const questions = await getQuestions(job.title, job.description, job.skills);
 
-    const twentyfourHoursFromNow = new Date();
-    twentyfourHoursFromNow.setHours(twentyfourHoursFromNow.getHours() + 24);
+      if (!questions || questions.length === 0) {
+        return NextResponse.json(
+          { 
+            error: "Failed to generate interview questions",
+            details: "The AI service encountered an issue. Please try again later."
+          },
+          { status: 500 }
+        );
+      }
 
-    const fourHoursLater = new Date(twentyfourHoursFromNow);
-    fourHoursLater.setHours(fourHoursLater.getHours() + 4);
+      // Create Assessment Document
+      const newAssessment = await Assessment.create({
+        title: `${job.title} Assessment`,
+        questions: questions.map((q) => ({
+          text: q.text,
+          modelAnswer: q.modelAnswer,
+          score: q.score,
+        })),
+      });
 
-    const newInterview = await Interview.create({
-      jobId: jobId,
-      candidates: candidateList,
-      assessmentId: newAssessment._id,
-      status: "scheduled",
-      startAt: twentyfourHoursFromNow,
-      endAt: fourHoursLater,
-      duration: 240 // 4 hours in minutes
-    });
+      const twentyfourHoursFromNow = new Date();
+      twentyfourHoursFromNow.setHours(twentyfourHoursFromNow.getHours() + 24);
 
-    return NextResponse.json(
-      {
-        message: "Interview session created successfully",
-        interviewId: newInterview._id,
-        candidatesSelected: candidateList.length,
-        percentileCutoffScore: cutoffScore
-      },
-      { status: 201 }
-    );
+      const fourHoursLater = new Date(twentyfourHoursFromNow);
+      fourHoursLater.setHours(fourHoursLater.getHours() + 4);
 
+      const newInterview = await Interview.create({
+        jobId: jobId,
+        candidates: candidateList,
+        assessmentId: newAssessment._id,
+        status: "scheduled",
+        startAt: twentyfourHoursFromNow,
+        endAt: fourHoursLater,
+        duration: 240 // 4 hours in minutes
+      });
+
+      return NextResponse.json(
+        {
+          message: "Interview session created successfully",
+          interviewId: newInterview._id,
+          candidatesSelected: candidateList.length,
+          percentileCutoffScore: cutoffScore
+        },
+        { status: 201 }
+      );
+    } catch (aiError) {
+      // Handle AI service errors specifically
+      if (aiError.status === 503 || aiError.message?.includes("high demand")) {
+        return NextResponse.json(
+          { 
+            error: "AI service temporarily unavailable",
+            details: "The service is experiencing high demand. Please try again in a few moments."
+          },
+          { status: 503 }
+        );
+      }
+      throw aiError;
+    }
   } catch (error) {
-    console.error("Error in Assessment API:", error);
+    console.error("Error in Interview API:", error);
+    
+    // Handle specific error types
+    if (error.name === "ValidationError") {
+      return NextResponse.json(
+        { 
+          error: "Validation error",
+          details: Object.values(error.errors).map(e => e.message).join(", ")
+        },
+        { status: 400 }
+      );
+    }
+
+    if (error.name === "MongoError" || error.code === 11000) {
+      return NextResponse.json(
+        { 
+          error: "Database error",
+          details: "An interview session for this configuration already exists."
+        },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Internal Server Error", details: error.message },
+      { 
+        error: "Internal server error",
+        details: "Something went wrong. Please try again or contact support if the problem persists.",
+        ...(process.env.NODE_ENV === 'development' && { debug: error.message })
+      },
       { status: 500 }
     );
   }

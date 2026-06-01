@@ -84,33 +84,33 @@ import { useRecruiterAI } from "@/hooks/useRecruiterAI";
 
 // Chart colour palette that respects shadcn CSS variables
 const COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
 ];
 
 // Themed tooltip styles that override recharts defaults
 const tooltipStyle = {
   contentStyle: {
-    backgroundColor: "hsl(var(--popover))",
-    border: "1px solid hsl(var(--border))",
+    backgroundColor: "var(--popover)",
+    border: "1px solid var(--border)",
     borderRadius: "var(--radius)",
-    color: "hsl(var(--popover-foreground))",
+    color: "var(--popover-foreground)",
     fontSize: "12px",
     boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
     padding: "8px 12px",
   },
   itemStyle: {
-    color: "hsl(var(--popover-foreground))",
+    color: "var(--popover-foreground)",
   },
   labelStyle: {
-    color: "hsl(var(--muted-foreground))",
+    color: "var(--popover-foreground)",
     fontWeight: 500,
     marginBottom: 4,
   },
-  cursor: { fill: "hsl(var(--muted))", opacity: 0.5 },
+  cursor: { fill: "var(--muted)", opacity: 0.5 },
 };
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -215,27 +215,27 @@ export default function AnalyticsReportsPage() {
                 Export data
               </Button>
             </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Export data set</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => exportAnalyticsReport("full")}>
-              <FileText className="mr-2 h-4 w-4" />
-              Full analytics data (CSV)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => exportAnalyticsReport("funnel")}>
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Hiring funnel data (CSV)
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => exportAnalyticsReport("recruiter")}
-            >
-              <Users className="mr-2 h-4 w-4" />
-              Job performance data (CSV)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => exportAnalyticsReport("skills")}>
-              <Award className="mr-2 h-4 w-4" />
-              Skill gap analysis (CSV)
-            </DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Export data set</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => exportAnalyticsReport("full")}>
+                <FileText className="mr-2 h-4 w-4" />
+                Full analytics data (CSV)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportAnalyticsReport("funnel")}>
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Hiring funnel data (CSV)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => exportAnalyticsReport("recruiter")}
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Job performance data (CSV)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportAnalyticsReport("skills")}>
+                <Award className="mr-2 h-4 w-4" />
+                Skill gap analysis (CSV)
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -245,11 +245,11 @@ export default function AnalyticsReportsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center">
-             <Filter className="mr-2 h-4 w-4" aria-hidden="true" />
-             Filter data
-           </CardTitle>
-         </CardHeader>
-         <CardContent>
+            <Filter className="mr-2 h-4 w-4" aria-hidden="true" />
+            Filter data
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="flex flex-wrap items-center gap-3 md:gap-4">
             {/* Date range */}
             <div className="flex items-center gap-2">
@@ -258,7 +258,10 @@ export default function AnalyticsReportsPage() {
                 value={analyticsFilters.dateRange}
                 onValueChange={(v) => setAnalyticsFilters({ dateRange: v })}
               >
-                <SelectTrigger className="w-full min-w-44 sm:w-44" aria-label="Date range">
+                <SelectTrigger
+                  className="w-full min-w-44 sm:w-44"
+                  aria-label="Date range"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -276,7 +279,10 @@ export default function AnalyticsReportsPage() {
               value={analyticsFilters.department}
               onValueChange={(v) => setAnalyticsFilters({ department: v })}
             >
-              <SelectTrigger className="w-full min-w-44 sm:w-44" aria-label="Department">
+              <SelectTrigger
+                className="w-full min-w-44 sm:w-44"
+                aria-label="Department"
+              >
                 <SelectValue placeholder="Department" />
               </SelectTrigger>
               <SelectContent>
@@ -294,7 +300,10 @@ export default function AnalyticsReportsPage() {
               value={analyticsFilters.location}
               onValueChange={(v) => setAnalyticsFilters({ location: v })}
             >
-              <SelectTrigger className="w-full min-w-44 sm:w-44" aria-label="Location">
+              <SelectTrigger
+                className="w-full min-w-44 sm:w-44"
+                aria-label="Location"
+              >
                 <SelectValue placeholder="Location" />
               </SelectTrigger>
               <SelectContent>
@@ -406,12 +415,27 @@ export default function AnalyticsReportsPage() {
       {/* ── Tabs ───────────────────────────────────────────────────────────── */}
       <Tabs defaultValue="funnel" className="space-y-4">
         <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto p-1">
-          <TabsTrigger className="min-h-10 whitespace-nowrap" value="funnel">Hiring Funnel</TabsTrigger>
-          <TabsTrigger className="min-h-10 whitespace-nowrap" value="sources">Source Attribution</TabsTrigger>
-          <TabsTrigger className="min-h-10 whitespace-nowrap" value="ai-insights">AI Insights</TabsTrigger>
-          <TabsTrigger className="min-h-10 whitespace-nowrap" value="jobs">Job Performance</TabsTrigger>
-          <TabsTrigger className="min-h-10 whitespace-nowrap" value="skills">Skill Analysis</TabsTrigger>
-          <TabsTrigger className="min-h-10 whitespace-nowrap" value="trends">Trends</TabsTrigger>
+          <TabsTrigger className="min-h-10 whitespace-nowrap" value="funnel">
+            Hiring Funnel
+          </TabsTrigger>
+          <TabsTrigger className="min-h-10 whitespace-nowrap" value="sources">
+            Source Attribution
+          </TabsTrigger>
+          <TabsTrigger
+            className="min-h-10 whitespace-nowrap"
+            value="ai-insights"
+          >
+            AI Insights
+          </TabsTrigger>
+          <TabsTrigger className="min-h-10 whitespace-nowrap" value="jobs">
+            Job Performance
+          </TabsTrigger>
+          <TabsTrigger className="min-h-10 whitespace-nowrap" value="skills">
+            Skill Analysis
+          </TabsTrigger>
+          <TabsTrigger className="min-h-10 whitespace-nowrap" value="trends">
+            Trends
+          </TabsTrigger>
         </TabsList>
 
         {/* ── Hiring Funnel ──────────────────────────────────────────────── */}
@@ -420,9 +444,9 @@ export default function AnalyticsReportsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Hiring Funnel Overview</CardTitle>
-                  <CardDescription>
-                    Number of candidates at each hiring stage
-                  </CardDescription>
+                <CardDescription>
+                  Number of candidates at each hiring stage
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={350}>
@@ -436,7 +460,7 @@ export default function AnalyticsReportsPage() {
                       labelStyle={tooltipStyle.labelStyle}
                       cursor={tooltipStyle.cursor}
                     />
-                    <Bar dataKey="count" fill="hsl(var(--primary))" />
+                    <Bar dataKey="count" fill={"var(--foreground)"} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -446,7 +470,7 @@ export default function AnalyticsReportsPage() {
               <CardHeader>
                 <CardTitle>Stage Conversion Rates</CardTitle>
                 <CardDescription>
-                    Share of candidates who move to the next stage
+                  Share of candidates who move to the next stage
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -476,13 +500,13 @@ export default function AnalyticsReportsPage() {
             <CardHeader>
               <CardTitle>Candidate Flow Over Time</CardTitle>
               <CardDescription>
-                  Weekly movement through hiring stages
+                Weekly movement through hiring stages
               </CardDescription>
             </CardHeader>
             <CardContent>
               {candidateFlowTrend.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-12">
-                    No weekly trend data for this period.
+                  No weekly trend data for this period.
                 </p>
               ) : (
                 <ResponsiveContainer width="100%" height={300}>
@@ -535,9 +559,7 @@ export default function AnalyticsReportsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Interview Success Rates</CardTitle>
-              <CardDescription>
-                  Outcomes by interview type
-              </CardDescription>
+              <CardDescription>Outcomes by interview type</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -617,7 +639,7 @@ export default function AnalyticsReportsPage() {
               <CardHeader>
                 <CardTitle>Source Performance</CardTitle>
                 <CardDescription>
-                   Candidates and hires by source channel
+                  Candidates and hires by source channel
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -649,9 +671,7 @@ export default function AnalyticsReportsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Conversion by Source</CardTitle>
-                <CardDescription>
-                   Hire rate by source channel
-                </CardDescription>
+                <CardDescription>Hire rate by source channel</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -682,7 +702,7 @@ export default function AnalyticsReportsPage() {
             <CardHeader>
               <CardTitle>Detailed Source Analytics</CardTitle>
               <CardDescription>
-                 Detailed source metrics for this period
+                Detailed source metrics for this period
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -764,7 +784,7 @@ export default function AnalyticsReportsPage() {
                         labelStyle={tooltipStyle.labelStyle}
                         cursor={tooltipStyle.cursor}
                       />
-                      <Bar dataKey="count" fill="hsl(var(--primary))" />
+                      <Bar dataKey="count" fill="var(--primary)" />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
@@ -775,7 +795,7 @@ export default function AnalyticsReportsPage() {
               <CardHeader>
                 <CardTitle>Score Distribution by Range</CardTitle>
                 <CardDescription>
-                   Share of candidates in each AI score range
+                  Share of candidates in each AI score range
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -823,7 +843,7 @@ export default function AnalyticsReportsPage() {
             <CardHeader>
               <CardTitle>AI Interview Performance</CardTitle>
               <CardDescription>
-                 Performance metrics for AI interviews
+                Performance metrics for AI interviews
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -846,7 +866,7 @@ export default function AnalyticsReportsPage() {
                     )}
                   />
                   <p className="text-xs text-muted-foreground">
-                   Share of total candidates screened by AI
+                    Share of total candidates screened by AI
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -880,7 +900,7 @@ export default function AnalyticsReportsPage() {
             <CardHeader>
               <CardTitle>Job Performance Leaderboard</CardTitle>
               <CardDescription>
-                  Metrics per job posting for this period
+                Metrics per job posting for this period
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -986,13 +1006,13 @@ export default function AnalyticsReportsPage() {
             <CardHeader>
               <CardTitle>Skill Gap Analysis</CardTitle>
               <CardDescription>
-                 Required skills compared with available candidate skills
+                Required skills compared with available candidate skills
               </CardDescription>
             </CardHeader>
             <CardContent>
               {skillGap.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-12">
-                    No skill data for this period.
+                  No skill data for this period.
                 </p>
               ) : (
                 <ResponsiveContainer width="100%" height={350}>
@@ -1024,7 +1044,7 @@ export default function AnalyticsReportsPage() {
             <CardHeader>
               <CardTitle>Detailed Skill Breakdown</CardTitle>
               <CardDescription>
-                 Skill availability and hiring gaps by category
+                Skill availability and hiring gaps by category
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1114,9 +1134,9 @@ export default function AnalyticsReportsPage() {
                             Expand {s.skill} sourcing channels
                           </p>
                           <p className="text-xs text-muted-foreground">
-                             {s.gap} open position{s.gap > 1 ? "s" : ""} unfilled,
-                             consider widening the candidate pool or adjusting
-                             requirements.
+                            {s.gap} open position{s.gap > 1 ? "s" : ""}{" "}
+                            unfilled, consider widening the candidate pool or
+                            adjusting requirements.
                           </p>
                         </div>
                       </div>
@@ -1158,14 +1178,14 @@ export default function AnalyticsReportsPage() {
                     <Line
                       type="monotone"
                       dataKey="avgDays"
-                      stroke="hsl(var(--primary))"
+                      stroke="var(--primary)"
                       strokeWidth={2}
                       name="Actual (days)"
                     />
                     <Line
                       type="monotone"
                       dataKey="target"
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="var(--muted-foreground)"
                       strokeDasharray="5 5"
                       name="Target (30d)"
                     />
@@ -1229,7 +1249,7 @@ export default function AnalyticsReportsPage() {
                     <span>AI pass rate: {keyMetrics.aiPassRate ?? 0}%</span>
                     <span className="flex items-center text-green-600">
                       <TrendingUp className="h-3 w-3 mr-1" />
-                       AI-supported screening
+                      AI-supported screening
                     </span>
                   </div>
                 </div>
@@ -1245,7 +1265,7 @@ export default function AnalyticsReportsPage() {
                 Insights
               </CardTitle>
               <CardDescription>
-                 Key observations based on current metrics
+                Key observations based on current metrics
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1288,11 +1308,9 @@ export default function AnalyticsReportsPage() {
                       <p className="text-sm font-medium">Skill gaps detected</p>
                       <p className="text-xs text-muted-foreground">
                         {criticalSkillGaps.length} skill
-                        {criticalSkillGaps.length > 1
-                          ? "s"
-                          : ""}{" "}
-                        have a significant supply gap, consider expanding
-                        sourcing channels.
+                        {criticalSkillGaps.length > 1 ? "s" : ""} have a
+                        significant supply gap, consider expanding sourcing
+                        channels.
                       </p>
                     </div>
                   </div>

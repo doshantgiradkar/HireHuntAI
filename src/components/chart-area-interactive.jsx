@@ -116,7 +116,7 @@ export function ChartAreaInteractive({ data = [] }) {
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         <ChartContainer
           config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
+          className="aspect-auto h-62.5 w-full"
         >
           <AreaChart data={filteredData}>
             <defs>
@@ -177,14 +177,14 @@ export function ChartAreaInteractive({ data = [] }) {
             />
             <Area
               dataKey="hired"
-              type="natural"
+              type="monotone"
               fill="url(#fillHired)"
               stroke="var(--color-hired)"
               stackId="a"
             />
             <Area
               dataKey="applications"
-              type="natural"
+              type="monotone"
               fill="url(#fillApplications)"
               stroke="var(--color-applications)"
               stackId="a"

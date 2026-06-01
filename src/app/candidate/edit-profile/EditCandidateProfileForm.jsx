@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ErrorPopup } from "@/components/error_popup";
 
 export default function EditCandidateProfileForm({ initialData, onSubmit }) {
   const [formData, setFormData] = useState({
@@ -64,6 +65,11 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
   const [newSocial, setNewSocial] = useState({ name: "", url: "" });
   const { isSignedIn, user } = useUser();
   const { getToken } = useAuth();
+  const [error, setError] = useState({
+    open: false,
+    title: "",
+    message: "",
+  });
 
   /* ---------------- HANDLERS ---------------- */
   const updateAddress = (field, value) => {
@@ -218,15 +224,35 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
     <form
       onSubmit={async (e) => {
         e.preventDefault();
-        const res = await axios.put("/api/candidate", formData, {
-          withCredentials: true,
-        });
-        if (res.status == 200) {
-          window.location.href = "/candidate/profile";
+        try {
+          const res = await axios.put("/api/candidate", formData, {
+            withCredentials: true,
+          });
+          if (res.status == 200) {
+            window.location.href = "/candidate/profile";
+          } else {
+            setError({
+              open: true,
+              message: "Fill all the required Fields",
+              title: "Error storing user",
+            });
+          }
+        } catch {
+          setError({
+            open: true,
+            message: "Fill all the required Fields",
+            title: "Error storing user",
+          });
         }
       }}
       className="container mx-auto px-4 py-8 max-w-6xl"
     >
+      <ErrorPopup
+        open={error.open}
+        message={error.message}
+        title={error.title}
+        onOpenChange={(open) => setError((prev) => ({ ...prev, open }))}
+      />
       {/* ================= BASIC INFO ================= */}
       <Card className="mb-8">
         <CardContent className="pt-6">
@@ -821,7 +847,10 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
               )}
 
               {(formData.resume.projects || []).map((project, index) => (
-                <div key={index} className="relative space-y-4 border rounded-md p-4">
+                <div
+                  key={index}
+                  className="relative space-y-4 border rounded-md p-4"
+                >
                   <div className="flex gap-4">
                     <Input
                       className="grow"
@@ -841,7 +870,9 @@ export default function EditCandidateProfileForm({ initialData, onSubmit }) {
                       onClick={() =>
                         updateResume(
                           "projects",
-                          (formData.resume.projects || []).filter((_, i) => i !== index),
+                          (formData.resume.projects || []).filter(
+                            (_, i) => i !== index,
+                          ),
                         )
                       }
                     >

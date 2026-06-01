@@ -1,5 +1,11 @@
-"use client"
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+"use client";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useSpeech } from "@/hooks/useSpeech";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
@@ -40,7 +46,6 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
@@ -67,13 +72,15 @@ const initialTranscriptData = [];
  *   The user clicks "Submit" / "Skip" to finalise and advance.
  *   The toggle button only pauses/resumes the mic; it does NOT advance.
  */
-function useInterviewSpeechRecognition(questions = [], onAllQuestionsCompleted = null) {
+function useInterviewSpeechRecognition(
+  questions = [],
+  onAllQuestionsCompleted = null,
+) {
   const {
     isListening,
     isSpeaking,
     transcript,
     sttSupported,
-    ttsSupported,
     error: speechError,
     startListening,
     stopListening,
@@ -86,13 +93,15 @@ function useInterviewSpeechRecognition(questions = [], onAllQuestionsCompleted =
   const questionList = Array.isArray(questions) ? questions : [];
 
   /* ---- state ---- */
-  const [transcriptMessages, setTranscriptMessages] = useState(initialTranscriptData);
+  const [transcriptMessages, setTranscriptMessages] = useState(
+    initialTranscriptData,
+  );
   const [hasStarted, setHasStarted] = useState(false);
   const [currentTranscript, setCurrentTranscript] = useState("");
 
   /* ---- refs for values accessed inside async/callbacks ---- */
-  const questionIndexRef = useRef(0);           // next question to ask
-  const isBusySpeakingRef = useRef(false);       // true while AI is speaking
+  const questionIndexRef = useRef(0); // next question to ask
+  const isBusySpeakingRef = useRef(false); // true while AI is speaking
   const hasStartedRef = useRef(false);
 
   /* sync transcript from hook into local state */
@@ -101,76 +110,104 @@ function useInterviewSpeechRecognition(questions = [], onAllQuestionsCompleted =
   }, [transcript]);
 
   /* ---- helpers ---- */
-  const getQuestionMeta = useCallback((index) => {
-    const item = questionList[index];
-    if (!item) return null;
-    if (typeof item === "string") {
-      return { questionId: String(index + 1), text: item };
-    }
-    const questionId =
-      item?.questionId != null ? String(item.questionId) :
-      item?._id != null        ? String(item._id) :
-      String(index + 1);
-    const text = typeof item?.text === "string" ? item.text : "";
-    return { questionId, text };
-  }, [questionList]);
+  const getQuestionMeta = useCallback(
+    (index) => {
+      const item = questionList[index];
+      if (!item) return null;
+      if (typeof item === "string") {
+        return { questionId: String(index + 1), text: item };
+      }
+      const questionId =
+        item?.questionId != null
+          ? String(item.questionId)
+          : item?._id != null
+            ? String(item._id)
+            : String(index + 1);
+      const text = typeof item?.text === "string" ? item.text : "";
+      return { questionId, text };
+    },
+    [questionList],
+  );
 
   /* ---- core: speak a question, await it, then open the mic ---- */
-  const askQuestion = useCallback(async (index) => {
-    if (index >= questionList.length) return;
-    const meta = getQuestionMeta(index);
-    if (!meta?.text) return;
+  const askQuestion = useCallback(
+    async (index) => {
+      if (index >= questionList.length) return;
+      const meta = getQuestionMeta(index);
+      if (!meta?.text) return;
 
-    // 1. Stop mic while AI speaks
-    stopListening();
+      // 1. Stop mic while AI speaks
+      stopListening();
 
-    // 2. Add question to transcript panel
-    setTranscriptMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        questionId: meta.questionId,
-        questionText: meta.text,
-        answer: "",
-        status: "asked",
-        askedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      },
-    ]);
+      // 2. Add question to transcript panel
+      setTranscriptMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          questionId: meta.questionId,
+          questionText: meta.text,
+          answer: "",
+          status: "asked",
+          askedAt: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
+      ]);
 
-    // 3. Speak the question and WAIT for it to finish
-    isBusySpeakingRef.current = true;
-    await speak(meta.text);
-    isBusySpeakingRef.current = false;
+      // 3. Speak the question and WAIT for it to finish
+      isBusySpeakingRef.current = true;
+      await speak(meta.text);
+      isBusySpeakingRef.current = false;
 
-    // 4. Advance index
-    questionIndexRef.current = index + 1;
+      // 4. Advance index
+      questionIndexRef.current = index + 1;
 
-    // 5. Clear previous answer transcript and open mic
-    resetTranscript();
-    if (hasStartedRef.current && sttSupported) {
-      startListening();
-    }
-  }, [questionList, getQuestionMeta, speak, stopListening, startListening, resetTranscript, sttSupported]);
+      // 5. Clear previous answer transcript and open mic
+      resetTranscript();
+      if (hasStartedRef.current && sttSupported) {
+        startListening();
+      }
+    },
+    [
+      questionList,
+      getQuestionMeta,
+      speak,
+      stopListening,
+      startListening,
+      resetTranscript,
+      sttSupported,
+    ],
+  );
 
   /* ---- set answer on last pending question ---- */
-  const setAnswerForLastPending = useCallback((answerText, status = "answered") => {
-    const normalised = String(answerText || "").trim();
-    setTranscriptMessages((prev) => {
-      let idx = -1;
-      for (let i = prev.length - 1; i >= 0; i--) {
-        if (!prev[i]?.answer) { idx = i; break; }
-      }
-      if (idx === -1) return prev;
-      const updated = [...prev];
-      updated[idx] = {
-        ...updated[idx],
-        answer: normalised,
-        status,
-        answeredAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      return updated;
-    });
-  }, []);
+  const setAnswerForLastPending = useCallback(
+    (answerText, status = "answered") => {
+      const normalised = String(answerText || "").trim();
+      setTranscriptMessages((prev) => {
+        let idx = -1;
+        for (let i = prev.length - 1; i >= 0; i--) {
+          if (!prev[i]?.answer) {
+            idx = i;
+            break;
+          }
+        }
+        if (idx === -1) return prev;
+        const updated = [...prev];
+        updated[idx] = {
+          ...updated[idx],
+          answer: normalised,
+          status,
+          answeredAt: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+        return updated;
+      });
+    },
+    [],
+  );
 
   /* ---- public API ---- */
 
@@ -189,29 +226,40 @@ function useInterviewSpeechRecognition(questions = [], onAllQuestionsCompleted =
     }, 600);
   }, [askQuestion, warmup]);
 
-  const submitAnswer = useCallback((answerText) => {
-    const cleaned = String(answerText || "").trim();
-    if (!cleaned) return false;
+  const submitAnswer = useCallback(
+    (answerText) => {
+      const cleaned = String(answerText || "").trim();
+      if (!cleaned) return false;
 
-    const last = transcriptMessages[transcriptMessages.length - 1];
-    if (!last || last.answer) return false;
+      const last = transcriptMessages[transcriptMessages.length - 1];
+      if (!last || last.answer) return false;
 
-    // Stop mic & save
-    stopListening();
-    setAnswerForLastPending(cleaned, "answered");
-    resetTranscript();
+      // Stop mic & save
+      stopListening();
+      setAnswerForLastPending(cleaned, "answered");
+      resetTranscript();
 
-    // Ask next question after a beat
-    const nextIdx = questionIndexRef.current;
-    if (nextIdx < questionList.length) {
-      setTimeout(() => askQuestion(nextIdx), 600);
-    } else {
-      // AUTO SUBMIT: Current question was the last one
-      if (onAllQuestionsCompleted) {
-        setTimeout(() => onAllQuestionsCompleted(), 1000);
+      // Ask next question after a beat
+      const nextIdx = questionIndexRef.current;
+      if (nextIdx < questionList.length) {
+        setTimeout(() => askQuestion(nextIdx), 600);
+      } else {
+        // AUTO SUBMIT: Current question was the last one
+        if (onAllQuestionsCompleted) {
+          setTimeout(() => onAllQuestionsCompleted(), 1000);
+        }
       }
-    }
-  }, [transcriptMessages, stopListening, resetTranscript, setAnswerForLastPending, questionList.length, askQuestion, onAllQuestionsCompleted]);
+    },
+    [
+      transcriptMessages,
+      stopListening,
+      resetTranscript,
+      setAnswerForLastPending,
+      questionList.length,
+      askQuestion,
+      onAllQuestionsCompleted,
+    ],
+  );
 
   const skipCurrentQuestion = useCallback(() => {
     if (!hasStartedRef.current || isBusySpeakingRef.current) return;
@@ -231,7 +279,15 @@ function useInterviewSpeechRecognition(questions = [], onAllQuestionsCompleted =
         setTimeout(() => onAllQuestionsCompleted(), 1000);
       }
     }
-  }, [transcriptMessages, stopListening, resetTranscript, setAnswerForLastPending, questionList.length, askQuestion, onAllQuestionsCompleted]);
+  }, [
+    transcriptMessages,
+    stopListening,
+    resetTranscript,
+    setAnswerForLastPending,
+    questionList.length,
+    askQuestion,
+    onAllQuestionsCompleted,
+  ]);
 
   /**
    * Toggle only pauses/resumes the mic.
@@ -336,18 +392,28 @@ function useLocalMediaStream() {
 
       streamRef.current = mediaStream;
       setStream(mediaStream);
-
     } catch (error) {
       console.error("Failed to get user media:", error);
 
-      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
-        setPermissionError("Camera and microphone access denied. Please allow permissions in your browser settings.");
+      if (
+        error.name === "NotAllowedError" ||
+        error.name === "PermissionDeniedError"
+      ) {
+        setPermissionError(
+          "Camera and microphone access denied. Please allow permissions in your browser settings.",
+        );
       } else if (error.name === "NotFoundError") {
-        setPermissionError("No camera or microphone found. Please connect a device and try again.");
+        setPermissionError(
+          "No camera or microphone found. Please connect a device and try again.",
+        );
       } else if (error.name === "NotReadableError") {
-        setPermissionError("Camera or microphone is already in use by another application.");
+        setPermissionError(
+          "Camera or microphone is already in use by another application.",
+        );
       } else {
-        setPermissionError("Failed to access camera and microphone. Please check your device settings.");
+        setPermissionError(
+          "Failed to access camera and microphone. Please check your device settings.",
+        );
       }
     } finally {
       setIsInitializing(false);
@@ -356,7 +422,7 @@ function useLocalMediaStream() {
 
   const cleanup = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => {
+      streamRef.current.getTracks().forEach((track) => {
         track.stop();
       });
       streamRef.current = null;
@@ -400,7 +466,7 @@ function VideoCard({
   useEffect(() => {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
-      videoRef.current.play().catch(e => {
+      videoRef.current.play().catch((e) => {
         console.log("Video play failed:", e);
       });
     }
@@ -415,10 +481,11 @@ function VideoCard({
   const showVideo = stream && isVideoEnabled && !permissionError;
 
   return (
-    <Card className={`h-full flex flex-col border-2 ${isFullscreen ? 'border-primary/50' : 'border-transparent'} hover:border-primary/30 transition-colors`}>
+    <Card
+      className={`h-full flex flex-col border-2 ${isFullscreen ? "border-primary/50" : "border-transparent"} hover:border-primary/30 transition-colors`}
+    >
       <CardContent className="relative flex-1 p-2 sm:p-3 md:p-4">
         <div className="relative w-full h-full bg-linear-to-br from-gray-900 to-black rounded-lg overflow-hidden">
-
           {showVideo ? (
             <video
               ref={videoRef}
@@ -439,7 +506,9 @@ function VideoCard({
 
                 <div className="relative z-10">
                   <Avatar className="h-16 w-16 sm:h-20 md:h-24 lg:h-32 sm:w-20 md:w-24 lg:w-32 border-2 sm:border-3 md:border-4 border-background">
-                    <AvatarFallback className={`text-lg sm:text-xl md:text-2xl ${isAI ? 'bg-linear-to-br from-blue-500 to-purple-600' : 'bg-linear-to-br from-gray-700 to-gray-900'}`}>
+                    <AvatarFallback
+                      className={`text-lg sm:text-xl md:text-2xl ${isAI ? "bg-linear-to-br from-blue-500 to-purple-600" : "bg-linear-to-br from-gray-700 to-gray-900"}`}
+                    >
                       {isAI ? (
                         <Bot className="h-8 w-8 sm:h-10 md:h-12 sm:w-10 md:w-12 text-white" />
                       ) : (
@@ -456,7 +525,9 @@ function VideoCard({
             <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-4 z-20">
               <div className="text-center max-w-sm">
                 <AlertTriangle className="h-8 w-8 sm:h-10 md:h-12 sm:w-10 md:w-12 text-yellow-500 mx-auto mb-2 sm:mb-3" />
-                <p className="text-xs sm:text-sm text-white mb-1 sm:mb-2 font-medium">Camera Access Required</p>
+                <p className="text-xs sm:text-sm text-white mb-1 sm:mb-2 font-medium">
+                  Camera Access Required
+                </p>
                 <p className="text-xs text-gray-300">{permissionError}</p>
               </div>
             </div>
@@ -479,12 +550,18 @@ function VideoCard({
 
           <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex gap-1 sm:gap-2 z-10">
             {isMuted && (
-              <div className="bg-destructive/80 backdrop-blur-sm p-1.5 sm:p-2 rounded-md" aria-label="Microphone muted">
+              <div
+                className="bg-destructive/80 backdrop-blur-sm p-1.5 sm:p-2 rounded-md"
+                aria-label="Microphone muted"
+              >
                 <MicOff className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
               </div>
             )}
             {!isVideoEnabled && (
-              <div className="bg-secondary/80 backdrop-blur-sm p-1.5 sm:p-2 rounded-md" aria-label="Camera off">
+              <div
+                className="bg-secondary/80 backdrop-blur-sm p-1.5 sm:p-2 rounded-md"
+                aria-label="Camera off"
+              >
                 <VideoOff className="h-3 w-3 sm:h-4 sm:w-4" />
               </div>
             )}
@@ -492,7 +569,9 @@ function VideoCard({
 
           <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 right-2 sm:right-3 flex items-center justify-between z-10">
             <div className="bg-background/80 backdrop-blur-sm px-2 sm:px-3 py-1 sm:py-2 rounded-md">
-              <p className="font-medium text-xs sm:text-sm md:text-base">{name}</p>
+              <p className="font-medium text-xs sm:text-sm md:text-base">
+                {name}
+              </p>
             </div>
 
             <Button
@@ -536,7 +615,9 @@ function TranscriptPanel({
 
   useEffect(() => {
     if (autoScroll && scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]",
+      );
       if (scrollContainer) {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
@@ -548,7 +629,12 @@ function TranscriptPanel({
       {
         id: `${entry.id || index}-q`,
         speaker: "AI Interviewer",
-        timestamp: entry.askedAt || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        timestamp:
+          entry.askedAt ||
+          new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
         message: entry.questionText || "Question",
         isAI: true,
         isLive: false,
@@ -559,7 +645,12 @@ function TranscriptPanel({
       items.push({
         id: `${entry.id || index}-a`,
         speaker: "You",
-        timestamp: entry.answeredAt || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        timestamp:
+          entry.answeredAt ||
+          new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
         message: entry.answer,
         isAI: false,
         isLive: false,
@@ -574,7 +665,10 @@ function TranscriptPanel({
     allMessages.push({
       id: "live-transcript",
       speaker: "You",
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
       message: currentTranscript,
       isAI: false,
       isLive: true,
@@ -586,9 +680,14 @@ function TranscriptPanel({
       <div className="p-3 sm:p-4 border-b flex items-center justify-between bg-card/50 shrink-0">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-          <h3 className="font-semibold text-sm sm:text-base">Live Transcript</h3>
+          <h3 className="font-semibold text-sm sm:text-base">
+            Live Transcript
+          </h3>
           {isListening && (
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+            <Badge
+              variant="outline"
+              className="bg-green-50 text-green-700 border-green-200 text-xs"
+            >
               <div className="h-2 w-2 rounded-full bg-green-500 mr-1 animate-pulse"></div>
               <span className="hidden sm:inline">Listening</span>
             </Badge>
@@ -627,8 +726,8 @@ function TranscriptPanel({
                     msg.isAI
                       ? "bg-muted border"
                       : msg.isLive
-                      ? "bg-primary/80 border-2 border-primary/50"
-                      : "bg-primary text-primary-foreground"
+                        ? "bg-primary/80 border-2 border-primary/50"
+                        : "bg-primary text-primary-foreground"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1 sm:mb-2 gap-2 flex-wrap">
@@ -639,9 +738,13 @@ function TranscriptPanel({
                       {msg.speaker}
                       {msg.isLive && " (live)"}
                     </Badge>
-                    <span className="text-xs opacity-70 shrink-0">{msg.timestamp}</span>
+                    <span className="text-xs opacity-70 shrink-0">
+                      {msg.timestamp}
+                    </span>
                   </div>
-                  <p className="text-xs sm:text-sm wrap-break-words">{msg.message}</p>
+                  <p className="text-xs sm:text-sm wrap-break-words">
+                    {msg.message}
+                  </p>
                 </div>
               </div>
             ))}
@@ -661,7 +764,9 @@ function TranscriptPanel({
                       <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse delay-75"></div>
                       <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse delay-150"></div>
                     </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Speaking...</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      Speaking...
+                    </p>
                   </div>
                 </div>
               </div>
@@ -748,12 +853,18 @@ function ControlBar({
             </div>
             <Separator orientation="vertical" className="h-4 sm:h-5 md:h-6" />
             {hasStream ? (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+              <Badge
+                variant="outline"
+                className="bg-green-50 text-green-700 border-green-200 text-xs"
+              >
                 <div className="h-2 w-2 rounded-full bg-green-500 mr-1 animate-pulse"></div>
                 <span className="hidden sm:inline">Connected</span>
               </Badge>
             ) : (
-              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs">
+              <Badge
+                variant="outline"
+                className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs"
+              >
                 <div className="h-2 w-2 rounded-full bg-yellow-500 mr-1"></div>
                 <span className="hidden sm:inline">Disconnected</span>
               </Badge>
@@ -796,7 +907,9 @@ function ControlBar({
                 size="icon"
                 onClick={onToggleListening}
                 className={`h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full`}
-                aria-label={isListening ? "Mute microphone" : "Unmute microphone"}
+                aria-label={
+                  isListening ? "Mute microphone" : "Unmute microphone"
+                }
                 disabled={isSpeaking}
               >
                 {isListening ? (
@@ -837,8 +950,9 @@ function ControlBar({
                 <DialogHeader>
                   <DialogTitle>End Interview Session?</DialogTitle>
                   <DialogDescription>
-                    This will end the current interview. Your progress and transcript will be saved.
-                    Are you sure you want to end the interview?
+                    This will end the current interview. Your progress and
+                    transcript will be saved. Are you sure you want to end the
+                    interview?
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
@@ -923,7 +1037,9 @@ export default function InterviewLayout() {
         if (!jobId) {
           const listResponse = await axios.get("/api/interview");
           const match = Array.isArray(listResponse.data)
-            ? listResponse.data.find((item) => String(item?._id) === String(interviewId))
+            ? listResponse.data.find(
+                (item) => String(item?._id) === String(interviewId),
+              )
             : null;
           jobId = match?.jobId?._id ?? match?.jobId;
           if (jobId && typeof jobId !== "string") {
@@ -935,7 +1051,9 @@ export default function InterviewLayout() {
           throw new Error("Missing jobId for interview request.");
         }
 
-        const response = await axios.get(`/api/interview/${interviewId}?jobId=${jobId}`);
+        const response = await axios.get(
+          `/api/interview/${interviewId}?jobId=${jobId}`,
+        );
         if (!isMounted) {
           return;
         }
@@ -1010,26 +1128,26 @@ export default function InterviewLayout() {
     const handleBeforeUnload = (event) => {
       if (interviewStarted && !isEndingInterview) {
         event.preventDefault();
-        event.returnValue = '';
-        return '';
+        event.returnValue = "";
+        return "";
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [interviewStarted, isEndingInterview]);
 
   useEffect(() => {
     const handleDisableActions = (event) => {
       if (interviewStarted) {
-        if (event.type === 'contextmenu') {
+        if (event.type === "contextmenu") {
           event.preventDefault();
-        } else if (event.type === 'keydown') {
-          const isCtrlC = (event.ctrlKey || event.metaKey) && event.key === 'c';
-          const isCtrlV = (event.ctrlKey || event.metaKey) && event.key === 'v';
+        } else if (event.type === "keydown") {
+          const isCtrlC = (event.ctrlKey || event.metaKey) && event.key === "c";
+          const isCtrlV = (event.ctrlKey || event.metaKey) && event.key === "v";
           if (isCtrlC || isCtrlV) {
             event.preventDefault();
           }
@@ -1037,17 +1155,22 @@ export default function InterviewLayout() {
       }
     };
 
-    window.addEventListener('contextmenu', handleDisableActions);
-    window.addEventListener('keydown', handleDisableActions);
+    window.addEventListener("contextmenu", handleDisableActions);
+    window.addEventListener("keydown", handleDisableActions);
 
     return () => {
-      window.removeEventListener('contextmenu', handleDisableActions);
-      window.removeEventListener('keydown', handleDisableActions);
+      window.removeEventListener("contextmenu", handleDisableActions);
+      window.removeEventListener("keydown", handleDisableActions);
     };
   }, [interviewStarted]);
 
   const handleStartInterview = async () => {
-    if (isStartingInterview || isLoadingInterview || questionItems.length === 0 || interviewError) {
+    if (
+      isStartingInterview ||
+      isLoadingInterview ||
+      questionItems.length === 0 ||
+      interviewError
+    ) {
       return;
     }
     setIsStartingInterview(true);
@@ -1075,7 +1198,10 @@ export default function InterviewLayout() {
           ...entry,
           answer: liveAnswer,
           status: "answered",
-          answeredAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          answeredAt: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
         };
       }
       if (isLastPending && !liveAnswer && entry.status === "asked") {
@@ -1090,7 +1216,7 @@ export default function InterviewLayout() {
     const transcriptByQuestionId = new Map(
       finalTranscript
         .filter((entry) => entry?.questionId != null)
-        .map((entry) => [String(entry.questionId), entry])
+        .map((entry) => [String(entry.questionId), entry]),
     );
 
     const storageTranscript = questionItems.map((question) => {
@@ -1151,7 +1277,6 @@ export default function InterviewLayout() {
     return (
       <div className="flex items-center justify-center h-full m-auto px-4">
         <div className="flex flex-col items-center text-center space-y-4 bg-background border rounded-2xl shadow-sm p-8 max-w-md w-full">
-
           {/* Status Icon */}
           <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-100 text-green-600">
             <CircleCheck className="w-7 h-7" />
@@ -1164,9 +1289,9 @@ export default function InterviewLayout() {
 
           {/* Description */}
           <p className="text-sm text-muted-foreground">
-            Thank you for participating. Your responses have been successfully submitted.
+            Thank you for participating. Your responses have been successfully
+            submitted.
           </p>
-
         </div>
       </div>
     );
@@ -1176,13 +1301,19 @@ export default function InterviewLayout() {
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Submission Overlay */}
       <Dialog open={isEndingInterview}>
-        <DialogContent className="sm:max-w-md text-center py-10" showCloseButton={false}>
+        <DialogContent
+          className="sm:max-w-md text-center py-10"
+          showCloseButton={false}
+        >
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
             <DialogHeader>
-              <DialogTitle className="text-xl">Processing Interview</DialogTitle>
+              <DialogTitle className="text-xl">
+                Processing Interview
+              </DialogTitle>
               <DialogDescription className="text-base pt-2">
-                We're saving your transcript and generating your evaluation results. Please don't close this window.
+                We're saving your transcript and generating your evaluation
+                results. Please don't close this window.
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -1194,7 +1325,8 @@ export default function InterviewLayout() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h1 className="text-base sm:text-lg md:text-xl font-bold">
-                AI Technical Interview{candidateDisplayName ? ` — ${candidateDisplayName}` : ""}
+                AI Technical Interview
+                {candidateDisplayName ? ` — ${candidateDisplayName}` : ""}
               </h1>
               <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                 Real-time AI-powered interview session with speech recognition
@@ -1203,7 +1335,10 @@ export default function InterviewLayout() {
             <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
               {interviewStarted && (
                 <>
-                  <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                  <Badge
+                    variant="outline"
+                    className="bg-red-50 text-red-700 border-red-200 text-xs"
+                  >
                     <div className="h-2 w-2 rounded-full bg-red-500 mr-1 animate-pulse"></div>
                     Live
                   </Badge>
@@ -1212,7 +1347,10 @@ export default function InterviewLayout() {
                     <span className="hidden sm:inline">Recording</span>
                   </Badge>
                   {isListening && supportsSpeechRecognition && (
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                    <Badge
+                      variant="outline"
+                      className="bg-green-50 text-green-700 border-green-200 text-xs"
+                    >
                       <div className="h-2 w-2 rounded-full bg-green-500 mr-1 animate-pulse"></div>
                       <span className="hidden sm:inline">Transcribing</span>
                     </Badge>
@@ -1229,7 +1367,9 @@ export default function InterviewLayout() {
           <Alert variant="warning" className="bg-yellow-50 border-yellow-200">
             <AlertTriangle className="h-4 w-4 text-yellow-600" />
             <AlertDescription className="text-yellow-800">
-              Note: Speech-to-text is not supported by your browser (e.g. Firefox). Please use Chrome, Edge or Thorium for the best experience, or continue by typing.
+              Note: Speech-to-text is not supported by your browser (e.g.
+              Firefox). Please use Chrome, Edge or Thorium for the best
+              experience, or continue by typing.
             </AlertDescription>
           </Alert>
         </div>
@@ -1256,11 +1396,15 @@ export default function InterviewLayout() {
         {!interviewStarted ? (
           <StartInterviewScreen
             onStartInterview={handleStartInterview}
-            isInitializing={isStartingInterview || isInitializing || isLoadingInterview}
-            isReadyToStart={!isLoadingInterview && !interviewError && questionItems.length > 0}
+            isInitializing={
+              isStartingInterview || isInitializing || isLoadingInterview
+            }
+            isReadyToStart={
+              !isLoadingInterview && !interviewError && questionItems.length > 0
+            }
             permissionError={permissionError}
           />
-        ):(
+        ) : (
           <div className="h-full flex flex-col md:flex-row gap-2 md:gap-4 items-center justify-center">
             {/* Mobile Layout: Videos side by side, transcript below */}
             <div className="md:hidden flex flex-col h-full">
@@ -1273,8 +1417,8 @@ export default function InterviewLayout() {
                   isMuted={false}
                   isSpeaking={isSpeaking}
                   isVideoEnabled={true}
-                  isFullscreen={fullscreenMode === 'ai'}
-                  onToggleFullscreen={() => handleToggleFullscreen('ai')}
+                  isFullscreen={fullscreenMode === "ai"}
+                  onToggleFullscreen={() => handleToggleFullscreen("ai")}
                   stream={null}
                 />
                 <VideoCard
@@ -1284,8 +1428,8 @@ export default function InterviewLayout() {
                   isMuted={false}
                   isSpeaking={isListening}
                   isVideoEnabled={true}
-                  isFullscreen={fullscreenMode === 'candidate'}
-                  onToggleFullscreen={() => handleToggleFullscreen('candidate')}
+                  isFullscreen={fullscreenMode === "candidate"}
+                  onToggleFullscreen={() => handleToggleFullscreen("candidate")}
                   stream={candidateStream}
                   permissionError={permissionError}
                 />
@@ -1320,8 +1464,8 @@ export default function InterviewLayout() {
                     isMuted={false}
                     isSpeaking={isSpeaking}
                     isVideoEnabled={true}
-                    isFullscreen={fullscreenMode === 'ai'}
-                    onToggleFullscreen={() => handleToggleFullscreen('ai')}
+                    isFullscreen={fullscreenMode === "ai"}
+                    onToggleFullscreen={() => handleToggleFullscreen("ai")}
                     stream={null}
                   />
                 </div>
@@ -1333,8 +1477,10 @@ export default function InterviewLayout() {
                     isMuted={false}
                     isSpeaking={isListening}
                     isVideoEnabled={true}
-                    isFullscreen={fullscreenMode === 'candidate'}
-                    onToggleFullscreen={() => handleToggleFullscreen('candidate')}
+                    isFullscreen={fullscreenMode === "candidate"}
+                    onToggleFullscreen={() =>
+                      handleToggleFullscreen("candidate")
+                    }
                     stream={candidateStream}
                     permissionError={permissionError}
                   />
@@ -1369,8 +1515,8 @@ export default function InterviewLayout() {
                   isMuted={false}
                   isSpeaking={isSpeaking}
                   isVideoEnabled={true}
-                  isFullscreen={fullscreenMode === 'ai'}
-                  onToggleFullscreen={() => handleToggleFullscreen('ai')}
+                  isFullscreen={fullscreenMode === "ai"}
+                  onToggleFullscreen={() => handleToggleFullscreen("ai")}
                   stream={null}
                 />
                 <VideoCard
@@ -1380,8 +1526,8 @@ export default function InterviewLayout() {
                   isMuted={false}
                   isSpeaking={isListening}
                   isVideoEnabled={true}
-                  isFullscreen={fullscreenMode === 'candidate'}
-                  onToggleFullscreen={() => handleToggleFullscreen('candidate')}
+                  isFullscreen={fullscreenMode === "candidate"}
+                  onToggleFullscreen={() => handleToggleFullscreen("candidate")}
                   stream={candidateStream}
                   permissionError={permissionError}
                 />

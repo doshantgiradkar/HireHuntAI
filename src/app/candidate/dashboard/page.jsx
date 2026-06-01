@@ -31,6 +31,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import axios from "axios";
 import { useMemo } from "react";
 import { Users } from "lucide-react";
+import { ErrorPopup } from "@/components/error_popup";
 
 const Page = () => {
   const setTitle = useHeader((state) => state.setTitle);
@@ -39,13 +40,18 @@ const Page = () => {
   const [topJobs, setTopJobs] = useState([]);
   const [applications, setApplications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState({
+    open: false,
+    title: "",
+    message: "",
+  });
 
   useEffect(() => {
     setTitle("Candidate Dashboard");
   }, [setTitle]);
 
   useEffect(() => {
-    axios.get("/api/job", { withCredentials: true }).then((res) => {
+    axios.get("/api/job/top", { withCredentials: true }).then((res) => {
       setTopJobs(res.data.jobs);
       setIsLoading(false);
     });
@@ -70,7 +76,12 @@ const Page = () => {
       window.location.reload();
     } catch (err) {
       console.error("Error withdrawing application:", err);
-      alert("Failed to withdraw application. Please try again.");
+      setError({
+        open: true,
+        title: "Error Withdrawing Application",
+        message:
+          "There was an error while withdrawing application. Please try again!",
+      });
     }
   };
 
@@ -127,6 +138,12 @@ const Page = () => {
 
   return (
     <div className="w-full min-h-screen bg-background">
+      <ErrorPopup
+        open={error.open}
+        title={error.title}
+        message={error.message}
+        onOpenChange={(open) => setError((prev) => ({ ...prev, open }))}
+      />
       <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8 space-y-6 sm:space-y-8 max-w-7xl">
         {/* Statistics Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -196,7 +213,6 @@ const Page = () => {
               View All Jobs
             </Button>
           </div>
-
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (

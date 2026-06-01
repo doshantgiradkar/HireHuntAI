@@ -65,7 +65,7 @@ const Home = () => {
                 <Search className="h-5 w-5 text-[oklch(0.84_0.02_246)]" />
               </div>*/}
               <span className="text-xl font-bold text-[oklch(0.94_0.01_255)]">
-                interview management system
+                CareerQuest AI
               </span>
             </div>
 

@@ -39,6 +39,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { redirect, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { useHeader } from "@/store/user.store";
+import { ErrorPopup } from "@/components/error_popup";
 
 export default function JobSearchPage() {
   return (
@@ -72,7 +73,11 @@ function JobSearchContent() {
   const [jobs, setJobs] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState({
+    open: false,
+    title: "",
+    message: "",
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const getParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState(getParams.get("page_no") || 1);
@@ -96,9 +101,17 @@ function JobSearchContent() {
         const data = await response.data;
         setJobs(data.jobs || []);
         setTotalCount(data.count || 0);
-        setError(null);
+        setError({
+          open: false,
+          title: "",
+          message: "",
+        });
       } catch (err) {
-        setError(err.message);
+        setError({
+          open: true,
+          title: "Error!",
+          message: "Unable to find relavent jobs",
+        });
       } finally {
         setLoading(false);
       }
@@ -126,7 +139,11 @@ function JobSearchContent() {
       window.location.reload();
     } catch (err) {
       console.error("Error withdrawing application:", err);
-      alert("Failed to withdraw application. Please try again.");
+      setError({
+        open: true,
+        title: "Error!",
+        message: "Failed to withdraw application",
+      });
     }
   };
 
@@ -195,16 +212,6 @@ function JobSearchContent() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-center min-h-[50vh]">
-        <Alert variant="destructive" className="max-w-md">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
       {/* Header */}
@@ -216,6 +223,13 @@ function JobSearchContent() {
           Discover {totalCount.toLocaleString()} opportunities waiting for you
         </p>
       </div>
+
+      <ErrorPopup
+        open={error.open}
+        onOpenChange={(open) => setError((prev) => ({ ...prev, open }))}
+        title={error.title}
+        message={error.message}
+      />
 
       {/* Search Bar */}
       <div className="mb-6 sm:mb-8 w-full">

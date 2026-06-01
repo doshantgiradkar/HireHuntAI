@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
-const SCORE_MODEL = "gemini-1.5-flash";
+const SCORE_MODEL = "gemini-2.5-flash";
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
@@ -63,9 +63,15 @@ ${JSON.stringify(evaluations)}
   };
 };
 
-export async function calculateInterviewScore({ assessment = null, questions = [], transcriptEntries = [] }) {
+export async function calculateInterviewScore({
+  assessment = null,
+  questions = [],
+  transcriptEntries = [],
+}) {
   const normalizedQuestions = Array.isArray(questions) ? questions : [];
-  const normalizedTranscript = Array.isArray(transcriptEntries) ? transcriptEntries : [];
+  const normalizedTranscript = Array.isArray(transcriptEntries)
+    ? transcriptEntries
+    : [];
 
   const transcriptByQuestionId = new Map();
   normalizedTranscript.forEach((entry) => {
@@ -84,8 +90,8 @@ export async function calculateInterviewScore({ assessment = null, questions = [
       question?._id != null
         ? String(question._id)
         : question?.questionId != null
-        ? String(question.questionId)
-        : String(index + 1);
+          ? String(question.questionId)
+          : String(index + 1);
 
     const maxScore = Number.isFinite(Number(question?.score))
       ? clamp(Number(question.score), 0, 100)
@@ -136,7 +142,9 @@ export async function calculateInterviewScore({ assessment = null, questions = [
     };
   }
 
-  const answeredEvaluations = evaluations.filter((entry) => entry.hasCandidateAnswer);
+  const answeredEvaluations = evaluations.filter(
+    (entry) => entry.hasCandidateAnswer,
+  );
   let scored = {
     perQuestion: [],
     engine: "gemini",
@@ -151,10 +159,16 @@ export async function calculateInterviewScore({ assessment = null, questions = [
   const modelResultByQuestionId = new Map();
   const modelResultByIndex = new Map();
   scored.perQuestion.forEach((entry) => {
-    if (entry?.questionId != null && !modelResultByQuestionId.has(String(entry.questionId))) {
+    if (
+      entry?.questionId != null &&
+      !modelResultByQuestionId.has(String(entry.questionId))
+    ) {
       modelResultByQuestionId.set(String(entry.questionId), entry);
     }
-    if (Number.isFinite(Number(entry?.index)) && !modelResultByIndex.has(Number(entry.index))) {
+    if (
+      Number.isFinite(Number(entry?.index)) &&
+      !modelResultByIndex.has(Number(entry.index))
+    ) {
       modelResultByIndex.set(Number(entry.index), entry);
     }
   });
@@ -183,15 +197,18 @@ export async function calculateInterviewScore({ assessment = null, questions = [
       maxScore: item.maxScore,
       awardedScore,
       feedback: String(
-        modelResult?.feedback ||
-          "Score unavailable from model response."
+        modelResult?.feedback || "Score unavailable from model response.",
       ),
     };
   });
 
-  const totalScore = perQuestion.reduce((sum, row) => sum + row.awardedScore, 0);
+  const totalScore = perQuestion.reduce(
+    (sum, row) => sum + row.awardedScore,
+    0,
+  );
   const maxScore = perQuestion.reduce((sum, row) => sum + row.maxScore, 0);
-  const percentage = maxScore > 0 ? Number(((totalScore / maxScore) * 100).toFixed(2)) : 0;
+  const percentage =
+    maxScore > 0 ? Number(((totalScore / maxScore) * 100).toFixed(2)) : 0;
 
   return {
     totalScore: Number(totalScore.toFixed(2)),

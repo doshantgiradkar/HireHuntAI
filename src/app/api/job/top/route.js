@@ -1,14 +1,15 @@
 import { connect } from "@/lib/db";
-import {calculateMatchScoreByJobs} from "@/lib/matchJobs";
+import { calculateMatchScoreByJobs } from "@/lib/matchJobs";
+import ApplicationModel from "@/models/applicationModel";
 import jobModel from "@/models/jobModel";
 import { checkAuth } from "@/utils/checkAuth";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const { userId } = await auth()
+  const { userId } = await auth();
   const authResult = await checkAuth({
-    allowedRoles: ["recruiter"],
+    allowedRoles: ["candidate"],
   });
   if (!authResult.authenticated) {
     return NextResponse.json(
@@ -29,18 +30,34 @@ export async function GET() {
       allJobs.map(async (job) => {
         const score = await calculateMatchScoreByJobs(userId, job);
         return { job, score };
-      })
+      }),
     );
 
-    scoredJobs.sort((a, b) => b.score - a.score);
-    const topScored = scoredJobs.slice(0, count);
+    const jobs = scoredJobs.slice(0, count);
 
-    const jobsWithScore = topScored.map(({ job, score }) => ({
-      ...job.toObject(),
-      matchScore: score,
-    }));
+    const jobsWithScore = (
+      await Promise.all(
+        jobs.map(async ({ job, score }) => {
+          const application = await ApplicationModel.findOne({
+            jobId: job._id,
+            candidateClerkId: userId,
+          }).select(["status", "applicationId"]);
+          var hasApplied = false;
+          if (application) {
+            hasApplied = true;
+          }
+          return {
+            ...job.toObject(),
+            matchScore: score,
+            hasApplied,
+          };
+        }),
+      )
+    ).sort(
+      (a, b) => (b.matchScore.matchScore ?? 0) - (a.matchScore.matchScore ?? 0),
+    );
 
-    return NextResponse.json({ jobsWithScore, count }, { status: 200 });
+    return NextResponse.json({ jobs: jobsWithScore, count }, { status: 200 });
   } catch (error) {
     console.error("JOB_GET_ERROR:", error);
     return NextResponse.json(

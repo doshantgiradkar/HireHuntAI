@@ -8,7 +8,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node ./src/lib/test.js"
+    "test": "node tests/runAllTests.js",
+    "test:shortlisting": "node tests/shortlistingLogic.test.js",
+    "test:email": "node tests/emailService.test.js",
+    "test:cron": "node tests/cronJobs.integration.test.js",
+    "test:api": "node tests/cronApi.test.js",
+    "test:e2e": "node tests/e2e.test.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.7",

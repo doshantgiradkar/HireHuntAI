@@ -6,9 +6,10 @@
  * - Interview scheduling confirmations
  * - Rejection notifications
  */
-
 import nodemailer from "nodemailer";
 
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
 // Initialize email transporter
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -72,6 +73,92 @@ export async function sendShortlistNotification({
       error.message,
     );
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Send offerletter notification to candidate
+ */
+export async function sendOfferLetterEmail({
+  candidateEmail,
+  candidateName,
+  companyName,
+  jobTitle,
+  offerLetterUrl,
+  joiningDate,
+  expiresAt,
+}) {
+  try {
+    if (!transporter.options.auth.user) {
+      return {
+        success: false,
+        reason: "SMTP not configured",
+      };
+    }
+
+    const htmlContent = `
+      <h2>Congratulations! Your Offer Letter is Ready</h2>
+
+      <p>Dear ${candidateName},</p>
+
+      <p>
+        We are pleased to offer you the position of
+        <strong>${jobTitle}</strong>
+        at
+        <strong>${companyName}</strong>.
+      </p>
+
+      <h3>Offer Details</h3>
+
+      <ul>
+        <li><strong>Position:</strong> ${jobTitle}</li>
+        <li><strong>Company:</strong> ${companyName}</li>
+        <li><strong>Joining Date:</strong> ${new Date(
+          joiningDate,
+        ).toLocaleDateString()}</li>
+        <li><strong>Offer Valid Until:</strong> ${new Date(
+          expiresAt,
+        ).toLocaleDateString()}</li>
+      </ul>
+
+      <p>
+        Please review your offer letter using the link below:
+      </p>
+
+      <p>
+        <a href="${offerLetterUrl}">
+          View Offer Letter
+        </a>
+      </p>
+
+      <p>
+        We look forward to welcoming you to our team.
+      </p>
+
+      <p>
+        Best Regards,<br/>
+        ${companyName}
+      </p>
+    `;
+
+    const result = await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: candidateEmail,
+      subject: `Offer Letter - ${jobTitle} | ${companyName}`,
+      html: htmlContent,
+    });
+
+    return {
+      success: true,
+      messageId: result.messageId,
+    };
+  } catch (error) {
+    console.error("Offer letter email failed:", error);
+
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 }
 

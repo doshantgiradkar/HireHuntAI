@@ -7,11 +7,44 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { connect } from "@/lib/db";
 import { deleteResume, uploadResume } from "@/utils/claudinary";
 import { checkAuth } from "@/utils/checkAuth";
+import User from "@/models/userModel";
 
 export const config = {
   api: {
     bodyParser: false,
   },
+};
+
+const creatUserIfNotExist = async (userId) => {
+  const user = await User.findOne({ clerkId: userId });
+
+  console.log(user);
+  if (!user) {
+    const client = await clerkClient();
+    const data = await client.users.getUser(userId);
+    console.log(data);
+
+    const email = data.emailAddresses?.[0]?.emailAddress;
+
+    const resp = await User.findOneAndUpdate(
+      { email },
+      {
+        clerkId: data.id,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        imageUrl: data.imageUrl,
+        role: data.publicMetadata?.role || "candidate",
+      },
+      {
+        upsert: true,
+        new: true,
+        runValidators: true,
+        setDefaultsOnInsert: true,
+      },
+    );
+
+    console.log(`User synced: ${data.id}`);
+  }
 };
 
 export async function POST(req) {
@@ -28,6 +61,13 @@ export async function POST(req) {
   }
 
   const userId = authResult.userId;
+
+  try {
+    creatUserIfNotExist(userId);
+  } catch {
+    console.error("Failed to create User.");
+  }
+
   let resumePath;
   let resumeName;
   try {
@@ -98,7 +138,7 @@ export async function POST(req) {
         appliedJobs: parsed.appliedJobs || [],
         totalExperienceDuration: parsed.totalExperienceDuration || 0,
       });
-      const client  =  await clerkClient();
+      const client = await clerkClient();
       client.users.updateUserMetadata(userId, {
         publicMetadata: {
           hasResume: true,
@@ -123,7 +163,7 @@ export async function POST(req) {
         ...parsed.resume,
         resumeUrl: (await result).secure_url,
       };
-      const client  =  await clerkClient();
+      const client = await clerkClient();
       client.users.updateUserMetadata(userId, {
         publicMetadata: {
           hasResume: true,

@@ -170,22 +170,22 @@ export default function JobApplicationDetailsPage({ params }) {
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
-  if (!id) return;
+    if (!id) return;
 
-  const fetchApplication = async () => {
-    try {
-      const res = await axios.get(`/api/application/${id}`);
-      console.log("application data:",res.data);
-      setApplication(res.data);
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to load application");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchApplication = async () => {
+      try {
+        const res = await axios.get(`/api/application/${id}`);
+        console.log("application data:", res.data);
+        setApplication(res.data);
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to load application");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchApplication();
-}, [id]);
+    fetchApplication();
+  }, [id]);
 
   if (loading) {
     return (
@@ -321,14 +321,6 @@ export default function JobApplicationDetailsPage({ params }) {
                       </a>
                     </Button>
                   )}
-                  <Button variant="outline" className="gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Message
-                  </Button>
-                  <Button className="gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Schedule Interview
-                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -594,10 +586,6 @@ export default function JobApplicationDetailsPage({ params }) {
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => window.history.back()}>
                 Back to Applications
-              </Button>
-              <Button>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Make Decision
               </Button>
             </div>
           </div>

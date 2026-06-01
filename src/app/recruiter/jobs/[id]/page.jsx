@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
@@ -14,10 +14,10 @@ import {
   CheckCircle2,
   FileText,
   Timer,
-  ExternalLink,
   Mail,
   Award,
   Download,
+  TicketCheck,
   Edit,
   Trash2,
 } from "lucide-react";
@@ -42,6 +42,8 @@ import RecruiterAIPanel from "@/components/recruiter-ai-panel";
 import RecruiterAIToggle from "@/components/recruiter-ai-toggle";
 import { useRecruiterAI } from "@/hooks/useRecruiterAI";
 import { use } from "react";
+import ScheduleInterviewDialog from "@/components/schedule-interview-dialog";
+import HireDialog from "@/components/hire-dialog";
 
 export default function Page({ params }) {
   const [loading, setLoading] = useState(true);
@@ -53,6 +55,10 @@ export default function Page({ params }) {
   const [activeTab, setActiveTab] = useState("description");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [hireDialogOpen, setHireDialogOpen] = useState(false);
+  const [scheduleSuccess, setScheduleSuccess] = useState(false);
+  const [hireSuccess, setHireSuccess] = useState(false);
 
   const router = useRouter();
   const jobId = use(params).id;
@@ -75,14 +81,16 @@ export default function Page({ params }) {
       }
     };
 
+    fetchCandidates();
     fetchJobDetails();
   }, [jobId]);
 
   useEffect(() => {
-    if (activeTab === "candidates" && applications.length === 0) {
-      fetchCandidates();
+    if (scheduleSuccess) {
+      const timer = setTimeout(() => setScheduleSuccess(false), 3000);
+      return () => clearTimeout(timer);
     }
-  }, [activeTab]);
+  }, [scheduleSuccess]);
 
   const fetchCandidates = async () => {
     setCandidatesLoading(true);
@@ -158,7 +166,9 @@ export default function Page({ params }) {
       const experience = app.candidate?.totalExperienceDuration || 0;
       const matchScore = app.eligibility?.matchScore || 0;
       const status = formatStatusLabel(app.status);
-      const skills = app.candidate?.resume?.skills?.slice(0, 5).join(", ") || "Not specified";
+      const skills =
+        app.candidate?.resume?.skills?.slice(0, 5).join(", ") ||
+        "Not specified";
 
       return `- ${name} (${email}): ${experience}y exp, ${matchScore}% match, Status: ${status}, Top skills: ${skills}`;
     });
@@ -267,46 +277,77 @@ export default function Page({ params }) {
                 </div>
               </div>
 
-               {/* Edit, Delete, and AI Toggle Buttons */}
-               <div className="flex gap-2">
-                 <RecruiterAIToggle
-                   onClick={() =>
-                     openPanel({
-                       job: details,
-                       applications,
-                       applicantsSummary: buildApplicantsSummary(),
-                       stats: {
-                         totalApplied: applications.length,
-                         avgMatchScore: applications.length > 0 
-                           ? Math.round(applications.reduce((sum, app) => sum + (app.eligibility?.matchScore || 0), 0) / applications.length)
-                           : 0,
-                         shortlisted: applications.filter(app => app.status === "shortlisted").length,
-                         interviewed: applications.filter(app => app.status === "interview_scheduled").length,
-                         hired: applications.filter(app => app.status === "hired").length,
-                         rejected: applications.filter(app => app.status === "rejected").length,
-                       }
-                     })
-                   }
-                 />
-                 <Button
-                   variant="outline"
-                   size="icon"
-                   onClick={handleEdit}
-                   className="h-10 w-10 cursor-pointer"
-                   title="Edit job"
-                 >
-                   <Edit className="h-4 w-4" />
-                 </Button>
-                 <Button
-                   variant="destructive"
-                   size="icon"
-                   onClick={handleDeleteClick}
-                   className="h-10 w-10 cursor-pointer"
-                   title="Delete job"
-                 >
-                   <Trash2 className="h-4 w-4" />
-                 </Button>
-               </div>
+              {/* Schedule, Edit, Delete, and AI Toggle Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setHireDialogOpen(true)}
+                  className="cursor-pointer"
+                  title="Hire a candidate now"
+                >
+                  <TicketCheck className="h-4 w-4 mr-2" />
+                  Hire Now
+                </Button>
+                <Button
+                  onClick={() => setScheduleDialogOpen(true)}
+                  className="cursor-pointer"
+                  title="Schedule interview for candidates"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Schedule Now
+                </Button>
+                <RecruiterAIToggle
+                  onClick={() =>
+                    openPanel({
+                      job: details,
+                      applications,
+                      applicantsSummary: buildApplicantsSummary(),
+                      stats: {
+                        totalApplied: applications.length,
+                        avgMatchScore:
+                          applications.length > 0
+                            ? Math.round(
+                                applications.reduce(
+                                  (sum, app) =>
+                                    sum + (app.eligibility?.matchScore || 0),
+                                  0,
+                                ) / applications.length,
+                              )
+                            : 0,
+                        shortlisted: applications.filter(
+                          (app) => app.status === "shortlisted",
+                        ).length,
+                        interviewed: applications.filter(
+                          (app) => app.status === "interview_scheduled",
+                        ).length,
+                        hired: applications.filter(
+                          (app) => app.status === "hired",
+                        ).length,
+                        rejected: applications.filter(
+                          (app) => app.status === "rejected",
+                        ).length,
+                      },
+                    })
+                  }
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleEdit}
+                  className="h-10 w-10 cursor-pointer"
+                  title="Edit job"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={handleDeleteClick}
+                  className="h-10 w-10 cursor-pointer"
+                  title="Delete job"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <Separator />
@@ -321,7 +362,7 @@ export default function Page({ params }) {
                 <p className="text-base font-semibold">
                   {formatSalary(
                     details.salaryRange?.min,
-                    details.salaryRange?.max
+                    details.salaryRange?.max,
                   )}
                 </p>
               </div>
@@ -356,6 +397,17 @@ export default function Page({ params }) {
             </div>
           </CardHeader>
         </Card>
+
+        {/* Success Alert */}
+        {scheduleSuccess && (
+          <Alert className="mb-6 border-green-200 bg-green-50">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              Interview session scheduled successfully. Candidates will be
+              notified.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Tabs */}
         <Tabs
@@ -440,7 +492,7 @@ export default function Page({ params }) {
                         <p className="text-sm text-muted-foreground">
                           {formatSalary(
                             details.salaryRange?.min,
-                            details.salaryRange?.max
+                            details.salaryRange?.max,
                           )}
                         </p>
                       </div>
@@ -449,7 +501,9 @@ export default function Page({ params }) {
                     <div className="flex items-start gap-3">
                       <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
                       <div className="space-y-1">
-                        <p className="text-sm font-medium">Number of Openings</p>
+                        <p className="text-sm font-medium">
+                          Number of Openings
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {details.openings}{" "}
                           {details.openings === 1 ? "position" : "positions"}
@@ -482,7 +536,9 @@ export default function Page({ params }) {
                     <div className="flex items-start gap-3">
                       <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
                       <div className="space-y-1">
-                        <p className="text-sm font-medium">Total Applications</p>
+                        <p className="text-sm font-medium">
+                          Total Applications
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {details.applicationsCount || 0} applications
                         </p>
@@ -493,7 +549,9 @@ export default function Page({ params }) {
                       <div className="flex items-start gap-3">
                         <Award className="h-5 w-5 text-muted-foreground mt-0.5" />
                         <div className="space-y-1">
-                          <p className="text-sm font-medium">Experience Level</p>
+                          <p className="text-sm font-medium">
+                            Experience Level
+                          </p>
                           <p className="text-sm text-muted-foreground">
                             {details.experienceLevel}
                           </p>
@@ -580,7 +638,7 @@ export default function Page({ params }) {
                               <button
                                 onClick={() =>
                                   router.push(
-                                    `/recruiter/candidate/${app.candidateId}`
+                                    `/recruiter/candidate/${app.candidateId}`,
                                   )
                                 }
                                 className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
@@ -675,7 +733,7 @@ export default function Page({ params }) {
                                   size="sm"
                                   onClick={() =>
                                     router.push(
-                                      `/recruiter/applications/${app._id}`
+                                      `/recruiter/applications/${app._id}`,
                                     )
                                   }
                                   className="cursor-pointer"
@@ -708,7 +766,7 @@ export default function Page({ params }) {
           </TabsContent>
         </Tabs>
       </div>
-      
+
       <DeleteConfirmationDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
@@ -849,16 +907,50 @@ export default function Page({ params }) {
           applicantsSummary: buildApplicantsSummary(),
           stats: {
             totalApplied: applications.length,
-            avgMatchScore: applications.length > 0 
-              ? Math.round(applications.reduce((sum, app) => sum + (app.eligibility?.matchScore || 0), 0) / applications.length)
-              : 0,
-            shortlisted: applications.filter(app => app.status === "shortlisted").length,
-            interviewed: applications.filter(app => app.status === "interview_scheduled").length,
-            hired: applications.filter(app => app.status === "hired").length,
-            rejected: applications.filter(app => app.status === "rejected").length,
-          }
+            avgMatchScore:
+              applications.length > 0
+                ? Math.round(
+                    applications.reduce(
+                      (sum, app) => sum + (app.eligibility?.matchScore || 0),
+                      0,
+                    ) / applications.length,
+                  )
+                : 0,
+            shortlisted: applications.filter(
+              (app) => app.status === "shortlisted",
+            ).length,
+            interviewed: applications.filter(
+              (app) => app.status === "interview_scheduled",
+            ).length,
+            hired: applications.filter((app) => app.status === "hired").length,
+            rejected: applications.filter((app) => app.status === "rejected")
+              .length,
+          },
         }}
         pageType="job"
+      />
+
+      {/* Schedule Interview Dialog */}
+      <ScheduleInterviewDialog
+        open={scheduleDialogOpen}
+        onOpenChange={setScheduleDialogOpen}
+        jobId={jobId}
+        applications={applications}
+        onScheduleSuccess={() => {
+          setScheduleSuccess(true);
+          fetchCandidates();
+        }}
+      />
+
+      <HireDialog
+        open={hireDialogOpen}
+        onOpenChange={setHireDialogOpen}
+        jobId={jobId}
+        applications={applications}
+        onHireSuccess={() => {
+          setHireSuccess(true);
+          fetchCandidates();
+        }}
       />
     </>
   );

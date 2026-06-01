@@ -1,10 +1,8 @@
 export const runtime = "nodejs";
 
 import { Webhook } from "svix";
-import { NextResponse } from "next/server";
 import { connect } from "@/lib/db";
 import User from "@/models/userModel";
-import { strict } from "assert";
 import recruiterModel from "@/models/recruiterModel";
 import Candidate from "@/models/candidateModel";
 import { deleteLogo, deleteResume } from "@/utils/claudinary";

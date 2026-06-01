@@ -44,7 +44,7 @@ const recruiterRoutes = {
       url: "/recruiter/jobs",
       icon: IconListDetails,
     },
-     {
+    {
       title: "Interviews",
       url: "/recruiter/interviews",
       icon: IconCamera,
@@ -70,7 +70,7 @@ const recruiterRoutes = {
       title: "About",
       url: "/recruiter/about",
       icon: IconInfoCircle,
-    }
+    },
   ],
 };
 
@@ -123,7 +123,7 @@ const candidateRoutes = {
       title: "About",
       url: "/candidate/about",
       icon: IconInfoCircle,
-    }
+    },
   ],
 };
 
@@ -148,8 +148,7 @@ export function AppSidebar({
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <a href="/">
-                <SparklesIcon className="size-5!" />
-                <span className="text-base font-semibold">HireHunt AI</span>
+                <span className="text-base font-semibold">CareerQuest AI</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

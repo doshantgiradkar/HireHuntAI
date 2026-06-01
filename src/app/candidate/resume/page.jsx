@@ -13,12 +13,18 @@ import { useHeader } from "@/store/user.store";
 import { Upload, FileText, X, ChevronDown } from "lucide-react";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
+import { ErrorPopup } from "@/components/error_popup";
 
 const ResumeViewerPage = () => {
   const [resumeFile, setResumeFile] = useState(null);
   const [resumeUrl, setResumeUrl] = useState(null);
   const [isLoading, setLoading] = useState(false);
   const [showResume, setShowResume] = useState(false);
+  const [error, setError] = useState({
+    open: false,
+    title: "",
+    message: "",
+  });
   const setTitle = useHeader((state) => state.setTitle);
   const fileInputRef = useRef(null);
 
@@ -26,7 +32,6 @@ const ResumeViewerPage = () => {
     if (!resumeFile) return;
     const formData = new FormData();
     formData.append("resume", resumeFile);
-    const clerkToken = await window.Clerk.session.getToken();
 
     setLoading(true);
     const resp = await axios.post("/api/candidate/resume", formData, {
@@ -35,9 +40,14 @@ const ResumeViewerPage = () => {
         "Content-Type": "multipart/form-data",
       },
     });
+    setLoading(false);
 
     if (resp.status != 200) {
-      alert(resp.data.message);
+      setError({
+        open: true,
+        title: "Failed to upload resume!",
+        message: "Parsing model is busy, Please try again in a moment",
+      });
     } else {
       window.location.href = "/candidate/edit-profile";
     }
@@ -72,6 +82,12 @@ const ResumeViewerPage = () => {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-background via-background to-muted/20">
+      <ErrorPopup
+        open={error.open}
+        message={error.message}
+        title={error.title}
+        onOpenChange={(open) => setError((prev) => ({ ...prev, open }))}
+      />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-4">
         {/* Upload Section */}
         <div className="flex items-center justify-center min-h-[calc(100vh-30rem)]">

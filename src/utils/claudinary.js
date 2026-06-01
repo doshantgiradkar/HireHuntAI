@@ -13,10 +13,7 @@ cloudinary.config({
 
 const uploadToCloudinary = async (
   filePath,
-  {
-    folder = "resume",
-    resource_type = "auto",
-  } = {}
+  { folder = "resume", resource_type = "auto" } = {},
 ) => {
   if (!filePath) throw new Error("No file path provided");
 
@@ -73,8 +70,7 @@ export const uploadResume = async (filePath) =>
     resource_type: "raw",
   });
 
-export const deleteResume = async (url) =>
-  deleteFromCloudinary(url, "raw");
+export const deleteResume = async (url) => deleteFromCloudinary(url, "raw");
 
 export const uploadLogo = async (filePath) =>
   uploadToCloudinary(filePath, {
@@ -82,5 +78,13 @@ export const uploadLogo = async (filePath) =>
     resource_type: "image",
   });
 
-export const deleteLogo = async (url) =>
-  deleteFromCloudinary(url, "image");
+export const deleteLogo = async (url) => deleteFromCloudinary(url, "image");
+
+export const uploadOfferLetter = async (filePath) =>
+  uploadToCloudinary(filePath, {
+    folder: "offer-letters",
+    resource_type: "raw",
+  });
+
+export const deleteOfferLetter = async (url) =>
+  deleteFromCloudinary(url, "raw");
