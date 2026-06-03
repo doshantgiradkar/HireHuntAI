@@ -33,7 +33,9 @@ export async function GET() {
       }),
     );
 
-    const jobs = scoredJobs.slice(0, count);
+    const jobs = scoredJobs
+      .sort((a, b) => b.score.matchScore - a.score.matchScore)
+      .slice(0, count);
 
     const jobsWithScore = (
       await Promise.all(

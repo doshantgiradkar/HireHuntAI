@@ -72,12 +72,16 @@ const ResumeViewerPage = () => {
 
   useEffect(() => {
     setTitle("Upload Your Resume");
-    axios.get("/api/candidate/resume/url").then((resp) => {
-      if (resp.status !== 200) {
-        setResumeUrl("");
-      }
-      setResumeUrl(resp.data.resumeUrl);
-    });
+    try {
+      axios.get("/api/candidate/resume/url").then((resp) => {
+        if (resp.status !== 200) {
+          setResumeUrl("");
+        }
+        setResumeUrl(resp.data.resumeUrl);
+      });
+    } catch (err) {
+      return;
+    }
   }, [setTitle, setResumeUrl]);
 
   return (
