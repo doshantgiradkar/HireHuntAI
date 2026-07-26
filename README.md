@@ -34,7 +34,7 @@ An **Agentic Interview Management System** that leverages AI to automate and str
 - **Dark Mode Support** - Theme switching capability
 - **Mobile Responsive** - Fully responsive UI with Radix UI components
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Frontend
 - **Framework:** Next.js 15.3.3
