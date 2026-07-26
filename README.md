@@ -1,4 +1,4 @@
-# HireHuntAI 🤖
+# HireHuntAI
 
 An **Agentic Interview Management System** that leverages AI to automate and streamline the hiring process. This system intelligently manages candidate applications, conducts automated interviews, and provides comprehensive recruitment analytics.
 
@@ -15,7 +15,7 @@ An **Agentic Interview Management System** that leverages AI to automate and str
 - [Contributing](#contributing)
 - [License](#license)
 
-## ✨ Features
+## Features
 
 ### Core Functionality
 - **Intelligent Candidate Shortlisting** - Automated candidate filtering and ranking based on ATS scores
@@ -72,7 +72,7 @@ An **Agentic Interview Management System** that leverages AI to automate and str
 - **Templating:** Mustache, Handlebars
 - **Environment:** dotenv
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js 16+ (with ES Module support)
@@ -129,7 +129,7 @@ An **Agentic Interview Management System** that leverages AI to automate and str
 5. **Open in browser:**
    Navigate to http://localhost:3000
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 HireHuntAI/
@@ -274,7 +274,7 @@ For detailed test documentation, see tests/README.md
 
 All API routes are protected by Clerk authentication.
 
-## 📦 Key Dependencies
+## Key Dependencies
 
 - **Next.js** - React framework for production
 - **Mongoose** - MongoDB object modeling
@@ -289,17 +289,7 @@ All API routes are protected by Clerk authentication.
 - **Google Generative AI** - AI interview capabilities
 - **OpenAI** - Alternative AI capabilities
 
-## 🤝 Contributing
-
-Contributions are welcome! To contribute:
-
-1. Fork the repository
-2. Create a feature branch (git checkout -b feature/amazing-feature)
-3. Commit your changes (git commit -m 'Add amazing feature')
-4. Push to the branch (git push origin feature/amazing-feature)
-5. Open a Pull Request
-
-## 📄 License
+## License
 
 This project is licensed under the **GNU General Public License v3.0** - see the LICENSE file for details.
 
