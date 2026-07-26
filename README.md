@@ -2,7 +2,7 @@
 
 An **Agentic Interview Management System** that leverages AI to automate and streamline the hiring process. This system intelligently manages candidate applications, conducts automated interviews, and provides comprehensive recruitment analytics.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Features](#features)
 - [Tech Stack](#tech-stack)
@@ -160,7 +160,7 @@ HireHuntAI/
 └── package.json
 ```
 
-## ⚙️ Configuration
+## Configuration
 
 ### Database Setup
 
@@ -193,7 +193,7 @@ Use connection string format: `mongodb+srv://username:password@cluster.mongodb.n
 - Get API key from https://platform.openai.com/api-keys
 - Add to OPENAI_API_KEY
 
-## 💻 Usage
+## Usage
 
 ### Development Commands
 
@@ -237,7 +237,7 @@ The system automatically shortlists candidates based on:
 - Sends notifications
 - Manually triggerable via API
 
-## 🧪 Testing
+## Testing
 
 The project includes comprehensive test suites covering all major features:
 
@@ -260,7 +260,7 @@ Test reports are generated at tests/report.html after running the full test suit
 
 For detailed test documentation, see tests/README.md
 
-## 📡 API Reference
+## API Reference
 
 ### Cron Endpoints
 
@@ -293,14 +293,14 @@ All API routes are protected by Clerk authentication.
 
 This project is licensed under the **GNU General Public License v3.0** - see the LICENSE file for details.
 
-## 🙋 Support
+## Support
 
 For issues, questions, or suggestions:
 - Open an Issue on GitHub
 - Check existing documentation in the tests/ directory
 - Review test files for usage examples
 
-## 📚 Additional Resources
+## Additional Resources
 
 - [Next.js Documentation](https://nextjs.org/docs)
 - [MongoDB Documentation](https://docs.mongodb.com/)
